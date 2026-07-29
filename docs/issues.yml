@@ -7,7 +7,7 @@ milestones:
   - name: Phase 1 — Image lifecycle
     epics:
       - id: CDO-001
-        status: open
+        status: done
         title: Repository foundation (submodules, templates, local parity)
         overview:
           problem: No org reusable workflows for production OCI images.
@@ -26,7 +26,7 @@ milestones:
           - CI-008
         tasks:
           - id: CDO-001-T1
-            status: open
+            status: done
             title: Author README scripts templates and handoff
             instructions:
               files:
@@ -39,7 +39,7 @@ milestones:
               - CI-008
 
       - id: CDO-002
-        status: open
+        status: done
         title: Lint and build reusable workflows
         overview:
           problem: Consumers need hadolint, structure-test, size and efficiency gates.
@@ -58,7 +58,7 @@ milestones:
           - DOCKER-PERF-001
         tasks:
           - id: CDO-002-T1
-            status: open
+            status: done
             title: Implement container-lint and container-build
             instructions:
               files:
@@ -70,7 +70,7 @@ milestones:
               - DOCKER-LINT-001
 
       - id: CDO-003
-        status: open
+        status: done
         title: Image scan workflow (Trivy Syft Grype)
         overview:
           problem: cpp-security only scans source trees; images need dedicated scan.
@@ -87,7 +87,7 @@ milestones:
           - DOCKER-SEC-002
         tasks:
           - id: CDO-003-T1
-            status: open
+            status: done
             title: Implement container-scan
             instructions:
               files:
@@ -98,7 +98,7 @@ milestones:
               - DOCKER-SEC-001
 
       - id: CDO-004
-        status: open
+        status: done
         title: Multi-registry publish with gated signing
         overview:
           problem: Need GHCR + Docker Hub same-digest publish; signing blocked on private Free plan.
@@ -116,7 +116,7 @@ milestones:
           - DOCKER-SEC-004
         tasks:
           - id: CDO-004-T1
-            status: open
+            status: done
             title: Implement container-publish
             instructions:
               files:
@@ -127,7 +127,7 @@ milestones:
               - DOCKER-DELIV-001
 
       - id: CDO-005
-        status: open
+        status: done
         title: IaC and Compose validation workflow
         overview:
           problem: home-assistant and others duplicate KICS and compose config jobs.
@@ -144,7 +144,7 @@ milestones:
           - DOCKER-LINT-003
         tasks:
           - id: CDO-005-T1
-            status: open
+            status: done
             title: Implement container-iac
             instructions:
               files:
