@@ -20,8 +20,8 @@ Guardrails pack: [docker/](https://github.com/pirlruc/guardrails/tree/main/docke
 
 | Phase / epic | Status |
 |--------------|--------|
-| Phase 1 — CDO-001…CDO-005 | Done in `docs/issues.yml` (sync to close on GitHub) |
-| Phase 2 — CDO-006 | Open (no `container-devcontainer.yml` yet) |
+| Phase 1 — CDO-001…CDO-005 | Done; GitHub issues #2–#11 closed |
+| Phase 2 — CDO-006 | Open (#12 epic, #13 task) |
 
 ## Commands
 
@@ -45,16 +45,15 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Suggested next work
 
-1. After merge of [PR #1](https://github.com/pirlruc/containerdevops/pull/1): run
-   `issues-sync.py` (create Phase 1/2 issues; close CDO-001…CDO-005).
-2. Re-pin consumers (`gitlab-mcp`, etc.) to the post-PR #1 SHA.
-3. CDO-006: devcontainer lint/build verification.
-4. Home-assistant migration onto `container-iac` / image-scan jobs.
+1. Re-pin consumers (`gitlab-mcp`, etc.) to `main` SHA after
+   [PR #1](https://github.com/pirlruc/containerdevops/pull/1) (`e707707`).
+2. CDO-006: devcontainer lint/build verification (#12 / #13).
+3. Home-assistant migration onto `container-iac` / image-scan jobs.
 
 ## Recent history
 
-- Dependabot grouped GitHub Actions majors (buildx/build-push/artifact/attest/…)
-  on `dependabot/github_actions/github-actions-bcac8a90aa` (PR #1); CodeQL pin
-  comments corrected to `# v4.37.3`.
+- Merged [PR #1](https://github.com/pirlruc/containerdevops/pull/1): Dependabot
+  GitHub Actions group majors + CodeQL comment fix; synced issues (10 closed,
+  CDO-006 left open).
 
 *Last updated: 2026-07-30*
