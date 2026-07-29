@@ -1,0 +1,16 @@
+schemaVersion: "2.0.0"
+# Consumer-specific: adjust user, env, and paths for your image.
+metadataTest:
+  user:
+    uid: 65532
+    gid: 65532
+commandTests:
+  - name: "non-root id"
+    command: "id"
+    args: ["-u"]
+    expectedOutput: ["65532"]
+fileExistenceTests:
+  - name: "no package manager leftovers (example)"
+    path: "/var/lib/apt/lists"
+    shouldExist: false
+    optional: true

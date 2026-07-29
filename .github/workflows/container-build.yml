@@ -1,0 +1,137 @@
+name: Container Build (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      context:
+        required: false
+        type: string
+        default: .
+      dockerfile:
+        required: false
+        type: string
+        default: Dockerfile
+      image_name:
+        description: Local tag for the loaded image
+        required: false
+        type: string
+        default: containerdevops-ci:local
+      structure_test_config:
+        required: false
+        type: string
+        default: container-structure-test.yml
+      platforms:
+        description: Platforms for buildx (load supports single platform)
+        required: false
+        type: string
+        default: linux/amd64
+      blocking:
+        required: false
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      context:
+        type: string
+        default: .
+      dockerfile:
+        type: string
+        default: Dockerfile
+      image_name:
+        type: string
+        default: containerdevops-ci:local
+      structure_test_config:
+        type: string
+        default: container-structure-test.yml
+      platforms:
+        type: string
+        default: linux/amd64
+      blocking:
+        type: boolean
+        default: false
+
+env:
+  ADVISORY: ${{ inputs.blocking == false }}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364edf1e46 # v4.2.2
+
+      - name: Checkout containerdevops scripts
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364edf1e46 # v4.2.2
+        with:
+          repository: pirlruc/containerdevops
+          path: _containerdevops
+          sparse-checkout: |
+            scripts
+            docs/guardrails/docker
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      - name: Install tooling
+        run: bash _containerdevops/scripts/install-container-tools.sh
+
+      - name: Build (load)
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.dockerfile }}
+          load: true
+          tags: ${{ inputs.image_name }}
+          platforms: ${{ inputs.platforms }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: container-structure-test
+        if: hashFiles(inputs.structure_test_config) != ''
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        run: |
+          container-structure-test test \
+            --image "${{ inputs.image_name }}" \
+            --config "${{ inputs.structure_test_config }}"
+
+      - name: Image size gate
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        run: |
+          FILE="_containerdevops/docs/guardrails/docker/profile.thresholds.yml"
+          [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
+          MAX="$(bash _containerdevops/scripts/read-thresholds.sh image_max_size_mb "$FILE")"
+          bash _containerdevops/scripts/check-image-size.sh "${{ inputs.image_name }}" "${MAX}"
+
+      - name: Dive efficiency
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        run: |
+          FILE="_containerdevops/docs/guardrails/docker/profile.thresholds.yml"
+          [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
+          MIN="$(bash _containerdevops/scripts/read-thresholds.sh min_image_efficiency_percent "$FILE")"
+          dive --ci --json dive-report.json "${{ inputs.image_name }}" || true
+          if [[ -f dive-report.json ]]; then
+            bash _containerdevops/scripts/check-image-efficiency.sh "${MIN}" dive-report.json
+          else
+            echo "dive JSON missing — treat as advisory miss"
+            [[ "${{ env.ADVISORY }}" == "true" ]] || exit 1
+          fi
+
+      - name: Save image tarball
+        if: always()
+        run: |
+          docker save "${{ inputs.image_name }}" -o image.tar
+          docker image inspect "${{ inputs.image_name }}" --format '{{.Id}}' > image-id.txt
+
+      - name: Upload image artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: container-image
+          path: |
+            image.tar
+            image-id.txt
+            dive-report.json
+          if-no-files-found: ignore
+          retention-days: 3

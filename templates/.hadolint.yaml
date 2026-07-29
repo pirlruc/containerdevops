@@ -1,0 +1,3 @@
+failure-threshold: warning
+ignored:
+  - DL3008  # apt pin — often traded for slim rebuild cadence

@@ -1,0 +1,142 @@
+name: Container IaC (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      paths:
+        description: Comma-separated paths for KICS (-p)
+        required: false
+        type: string
+        default: .
+      exclude_paths:
+        description: Comma-separated KICS exclude paths
+        required: false
+        type: string
+        default: ""
+      compose_files:
+        description: Space-separated compose files for docker compose config
+        required: false
+        type: string
+        default: ""
+      kics_config:
+        required: false
+        type: string
+        default: .github/kics.config
+      blocking:
+        required: false
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      paths:
+        type: string
+        default: .
+      exclude_paths:
+        type: string
+        default: ""
+      compose_files:
+        type: string
+        default: ""
+      kics_config:
+        type: string
+        default: .github/kics.config
+      blocking:
+        type: boolean
+        default: false
+
+env:
+  ADVISORY: ${{ inputs.blocking == false }}
+  # checkmarx/kics:v2.1.20-debian linux/amd64 (see home-assistant job-kics.sh)
+  KICS_IMAGE: checkmarx/kics@sha256:aaf7bd6147f45b3717d4868be71d1c5ab2dceefbe9a2f95d3980d1ce8be6655a
+
+jobs:
+  iac:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364edf1e46 # v4.2.2
+
+      - name: Checkout containerdevops scripts
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364edf1e46 # v4.2.2
+        with:
+          repository: pirlruc/containerdevops
+          path: _containerdevops
+          sparse-checkout: |
+            scripts
+            docs/guardrails/docker
+          sparse-checkout-cone-mode: false
+
+      - name: Resolve iac_fail_on
+        id: thr
+        run: |
+          FILE="_containerdevops/docs/guardrails/docker/profile.thresholds.yml"
+          [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
+          echo "fail_on=$(bash _containerdevops/scripts/read-thresholds.sh iac_fail_on "$FILE")" >> "$GITHUB_OUTPUT"
+
+      - name: Pull KICS (digest-pinned)
+        run: docker pull "${KICS_IMAGE}"
+
+      - name: KICS scan
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        run: |
+          mkdir -p kics-results
+          PATHS="${{ inputs.paths }}"
+          EXCL="${{ inputs.exclude_paths }}"
+          CFG="${{ inputs.kics_config }}"
+          ARGS=(-p)
+          IFS=',' read -ra P <<< "${PATHS}"
+          for p in "${P[@]}"; do
+            ARGS+=("/src/${p#/}")
+          done
+          EXTRA=()
+          if [[ -n "${EXCL}" ]]; then
+            EXTRA+=(-e)
+            IFS=',' read -ra E <<< "${EXCL}"
+            for e in "${E[@]}"; do
+              EXTRA+=("/src/${e#/}")
+            done
+          fi
+          CONFIG_ARGS=()
+          [[ -f "${CFG}" ]] && CONFIG_ARGS=(--config "/src/${CFG}")
+          docker run --rm --platform linux/amd64 \
+            -v "${GITHUB_WORKSPACE}:/src:ro" \
+            -v "${GITHUB_WORKSPACE}/kics-results:/reports" \
+            "${KICS_IMAGE}" \
+            /app/bin/kics scan \
+              "${ARGS[@]}" \
+              "${EXTRA[@]}" \
+              -o /reports \
+              "${CONFIG_ARGS[@]}" \
+              --report-formats sarif,json \
+              --fail-on "${{ steps.thr.outputs.fail_on }}" \
+              --no-progress
+
+      - name: Compose config
+        if: inputs.compose_files != ''
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        run: |
+          # shellcheck disable=SC2086
+          for f in ${{ inputs.compose_files }}; do
+            echo "Validating ${f}"
+            docker compose -f "${f}" config --quiet
+          done
+
+      - name: Upload KICS results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: kics-results
+          path: kics-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload KICS SARIF
+        if: always() && hashFiles('kics-results/results.sarif') != ''
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v3
+        with:
+          sarif_file: kics-results/results.sarif
+          category: kics

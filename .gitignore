@@ -1,0 +1,17 @@
+.venv/
+.tools/
+__pycache__/
+*.pyc
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+image.tar
+image-id.txt
+dive-report.json
+scan-results/
+kics-results/
+ci-artifacts/
+*.swp
+.DS_Store

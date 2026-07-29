@@ -1,0 +1,179 @@
+name: Container Publish (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      context:
+        required: false
+        type: string
+        default: .
+      dockerfile:
+        required: false
+        type: string
+        default: Dockerfile
+      image_name:
+        description: Unqualified image name (e.g. gitlab-mcp)
+        required: true
+        type: string
+      github_owner:
+        description: GHCR owner (defaults to github.repository_owner)
+        required: false
+        type: string
+        default: ""
+      dockerhub_image:
+        description: Full Docker Hub image (namespace/name); empty skips Hub push
+        required: false
+        type: string
+        default: ""
+      platforms:
+        required: false
+        type: string
+        default: linux/amd64,linux/arm64
+      sign:
+        description: Cosign + provenance (intended for public repos)
+        required: false
+        type: boolean
+        default: false
+      blocking:
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: false
+      DOCKERHUB_TOKEN:
+        required: false
+  workflow_dispatch:
+    inputs:
+      context:
+        type: string
+        default: .
+      dockerfile:
+        type: string
+        default: Dockerfile
+      image_name:
+        type: string
+        required: true
+      dockerhub_image:
+        type: string
+        default: ""
+      platforms:
+        type: string
+        default: linux/amd64,linux/arm64
+      sign:
+        type: boolean
+        default: false
+      blocking:
+        type: boolean
+        default: false
+
+env:
+  ADVISORY: ${{ inputs.blocking == false }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364edf1e46 # v4.2.2
+
+      - name: Checkout containerdevops scripts
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364edf1e46 # v4.2.2
+        with:
+          repository: pirlruc/containerdevops
+          path: _containerdevops
+          sparse-checkout: |
+            scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@4574d27a4764455b42196d70a065bc6853246a25 # v3.4.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        if: inputs.dockerhub_image != ''
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Owner
+        id: owner
+        run: |
+          OWNER="${{ inputs.github_owner }}"
+          if [[ -z "${OWNER}" ]]; then OWNER="${{ github.repository_owner }}"; fi
+          echo "owner=${OWNER}" >> "$GITHUB_OUTPUT"
+          {
+            echo "images<<EOF"
+            echo "ghcr.io/${OWNER}/${{ inputs.image_name }}"
+            if [[ -n "${{ inputs.dockerhub_image }}" ]]; then
+              echo "${{ inputs.dockerhub_image }}"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 # v5.6.1
+        with:
+          images: ${{ steps.owner.outputs.images }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        id: build
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: ${{ inputs.platforms }}
+          provenance: false
+          sbom: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Install cosign
+        if: inputs.sign
+        run: bash _containerdevops/scripts/install-container-tools.sh
+
+      - name: Cosign sign (keyless)
+        if: inputs.sign
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          COSIGN_YES: "true"
+        run: |
+          digest="${{ steps.build.outputs.digest }}"
+          while IFS= read -r tag; do
+            [[ -z "${tag}" ]] && continue
+            cosign sign --yes "${tag}@${digest}"
+          done <<< "${{ steps.meta.outputs.tags }}"
+
+      - name: Attest provenance
+        if: inputs.sign
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-name: ghcr.io/${{ steps.owner.outputs.owner }}/${{ inputs.image_name }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true

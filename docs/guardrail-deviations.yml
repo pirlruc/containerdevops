@@ -1,0 +1,8 @@
+# Recorded departures from the guardrails pinned at docs/guardrails/.
+#
+# Field definitions: https://github.com/pirlruc/guardrails#deviation-rule
+# Approval flow:     https://github.com/pirlruc/methodologies/blob/1.1.0/github-issue-adr/docs/process/guardrail-compliance.md
+#
+# Being stricter than the org default is always allowed and needs no entry here.
+
+deviations: []

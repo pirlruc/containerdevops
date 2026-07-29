@@ -1,0 +1,2 @@
+# Syft config — consumers may extend.
+# Default CLI flags in container-scan.yml emit CycloneDX + SPDX.

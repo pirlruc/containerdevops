@@ -1,0 +1,37 @@
+# Create-once thin caller — seeded by sync-container-tooling.sh
+name: Container
+
+on:
+  workflow_dispatch:
+    inputs:
+      blocking:
+        description: Fail the job on gate errors
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    uses: pirlruc/containerdevops/.github/workflows/container-lint.yml@PLACEHOLDER_SHA
+    with:
+      dockerfile: Dockerfile
+      blocking: ${{ inputs.blocking }}
+
+  build:
+    needs: lint
+    uses: pirlruc/containerdevops/.github/workflows/container-build.yml@PLACEHOLDER_SHA
+    with:
+      context: .
+      dockerfile: Dockerfile
+      structure_test_config: container-structure-test.yml
+      blocking: ${{ inputs.blocking }}
+
+  scan:
+    needs: build
+    uses: pirlruc/containerdevops/.github/workflows/container-scan.yml@PLACEHOLDER_SHA
+    with:
+      image: containerdevops-ci:local
+      image_artifact: container-image
+      blocking: ${{ inputs.blocking }}

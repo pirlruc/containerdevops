@@ -1,0 +1,185 @@
+# Authored backlog for containerdevops.
+#
+# Schema: https://github.com/pirlruc/github-scaffold/blob/main/docs/issues-schema.md
+# Methodology: https://github.com/pirlruc/methodologies/tree/1.1.0/github-issue-adr
+
+milestones:
+  - name: Phase 1 — Image lifecycle
+    epics:
+      - id: CDO-001
+        status: open
+        title: Repository foundation (submodules, templates, local parity)
+        overview:
+          problem: No org reusable workflows for production OCI images.
+          goal: Standalone containerdevops with pinned guardrails/scaffold and local parity script.
+        architecture:
+          target: repository root
+          modules:
+            - scripts/check-container-local.sh
+            - templates/
+            - docs/guardrails
+        acceptance_criteria:
+          - Submodules pinned; sync-container-tooling seeds consumers
+          - check-container-local.sh documents host-vs-Docker resolution
+        guardrail_refs:
+          - DOCKER-BUILD-003
+          - CI-008
+        tasks:
+          - id: CDO-001-T1
+            status: open
+            title: Author README scripts templates and handoff
+            instructions:
+              files:
+                - README.md
+                - scripts/
+                - templates/
+            verification:
+              - test -f scripts/check-container-local.sh
+            guardrail_refs:
+              - CI-008
+
+      - id: CDO-002
+        status: open
+        title: Lint and build reusable workflows
+        overview:
+          problem: Consumers need hadolint, structure-test, size and efficiency gates.
+          goal: container-lint.yml and container-build.yml with ADVISORY/blocking contract.
+        architecture:
+          target: .github/workflows/container-lint.yml and container-build.yml
+          modules:
+            - .github/workflows/container-lint.yml
+            - .github/workflows/container-build.yml
+        acceptance_criteria:
+          - Thresholds read from docker/profile.thresholds.yml
+          - Image tarball uploaded as artifact
+        guardrail_refs:
+          - DOCKER-LINT-001
+          - DOCKER-TEST-001
+          - DOCKER-PERF-001
+        tasks:
+          - id: CDO-002-T1
+            status: open
+            title: Implement container-lint and container-build
+            instructions:
+              files:
+                - .github/workflows/container-lint.yml
+                - .github/workflows/container-build.yml
+            verification:
+              - actionlint .github/workflows/container-lint.yml
+            guardrail_refs:
+              - DOCKER-LINT-001
+
+      - id: CDO-003
+        status: open
+        title: Image scan workflow (Trivy Syft Grype)
+        overview:
+          problem: cpp-security only scans source trees; images need dedicated scan.
+          goal: container-scan.yml against built images with SARIF upload.
+        architecture:
+          target: .github/workflows/container-scan.yml
+          modules:
+            - .github/workflows/container-scan.yml
+        acceptance_criteria:
+          - Scans image artifact or registry ref
+          - Fail-on severity from profile.thresholds.yml
+        guardrail_refs:
+          - DOCKER-SEC-001
+          - DOCKER-SEC-002
+        tasks:
+          - id: CDO-003-T1
+            status: open
+            title: Implement container-scan
+            instructions:
+              files:
+                - .github/workflows/container-scan.yml
+            verification:
+              - actionlint .github/workflows/container-scan.yml
+            guardrail_refs:
+              - DOCKER-SEC-001
+
+      - id: CDO-004
+        status: open
+        title: Multi-registry publish with gated signing
+        overview:
+          problem: Need GHCR + Docker Hub same-digest publish; signing blocked on private Free plan.
+          goal: container-publish.yml with sign input defaulting off for private repos.
+        architecture:
+          target: .github/workflows/container-publish.yml
+          modules:
+            - .github/workflows/container-publish.yml
+        acceptance_criteria:
+          - Dual images via metadata-action
+          - Cosign and attest steps gated on sign
+        guardrail_refs:
+          - DOCKER-DELIV-001
+          - DOCKER-SEC-003
+          - DOCKER-SEC-004
+        tasks:
+          - id: CDO-004-T1
+            status: open
+            title: Implement container-publish
+            instructions:
+              files:
+                - .github/workflows/container-publish.yml
+            verification:
+              - actionlint .github/workflows/container-publish.yml
+            guardrail_refs:
+              - DOCKER-DELIV-001
+
+      - id: CDO-005
+        status: open
+        title: IaC and Compose validation workflow
+        overview:
+          problem: home-assistant and others duplicate KICS and compose config jobs.
+          goal: container-iac.yml reusable for KICS + compose config.
+        architecture:
+          target: .github/workflows/container-iac.yml
+          modules:
+            - .github/workflows/container-iac.yml
+        acceptance_criteria:
+          - Digest-pinned KICS image
+          - iac_fail_on from thresholds
+        guardrail_refs:
+          - DOCKER-LINT-002
+          - DOCKER-LINT-003
+        tasks:
+          - id: CDO-005-T1
+            status: open
+            title: Implement container-iac
+            instructions:
+              files:
+                - .github/workflows/container-iac.yml
+            verification:
+              - actionlint .github/workflows/container-iac.yml
+            guardrail_refs:
+              - DOCKER-LINT-002
+
+  - name: Phase 2 — Devcontainer
+    epics:
+      - id: CDO-006
+        status: open
+        title: Devcontainer lint and build verification
+        overview:
+          problem: cpp-infra hadolints Dockerfiles but there is no shared devcontainer gate.
+          goal: Reusable workflow verifying .devcontainer Dockerfiles and builds.
+        architecture:
+          target: future container-devcontainer.yml
+          modules:
+            - .github/workflows/
+        acceptance_criteria:
+          - Absorbs hadolint step currently in cpp-infra.yml
+          - Optional build of devcontainer image in CI
+        guardrail_refs:
+          - DOCKER-LINT-001
+          - DOCKER-BUILD-003
+        tasks:
+          - id: CDO-006-T1
+            status: open
+            title: Design and implement container-devcontainer workflow
+            instructions:
+              files:
+                - .github/workflows/container-devcontainer.yml
+            verification:
+              - actionlint .github/workflows/container-devcontainer.yml
+            guardrail_refs:
+              - DOCKER-LINT-001
