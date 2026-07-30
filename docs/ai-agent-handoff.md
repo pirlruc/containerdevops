@@ -38,6 +38,10 @@ python3 .github/scaffold/scripts/issues-sync.py \
   (and callers) under a User account.
 - Signing / provenance (`sign: true`) needs a public repo or Enterprise Cloud;
   consumers record `DOCKER-SEC-003` / `DOCKER-SEC-004` deviations while private.
+- Product Dockerfiles that `FROM dhi.io/…` need Hub credentials passed into
+  `container-build` / `container-publish` as `DOCKERHUB_USERNAME` /
+  `DOCKERHUB_TOKEN` so the job can `docker login dhi.io` (Community DHI is free;
+  auth is still required to pull).
 - Sparse checkout of this repo into `_containerdevops` must include
   `scripts` and `docs/guardrails/docker` for threshold reads.
 - This repo has no self-caller CI; PR checks are empty until a consumer exercises

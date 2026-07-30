@@ -27,6 +27,10 @@ All workflows: `workflow_call` + `workflow_dispatch`, `blocking` default `false`
 | `structure_test_config` | `container-structure-test.yml` |
 | `platforms` | `linux/amd64` |
 
+Optional secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` — when set, the job
+logs in to **`dhi.io`** before Buildx so Community Docker Hardened Image `FROM`
+lines can pull. Pass the same Hub credentials used for Docker Hub publish.
+
 Uploads `container-image` artifact (`image.tar`).
 
 ## container-scan.yml
@@ -45,7 +49,9 @@ Uploads `container-image` artifact (`image.tar`).
 | `platforms` | `linux/amd64,linux/arm64` |
 | `sign` | `false` |
 
-Secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` when Hub enabled. Permissions:
+Secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` when Hub enabled **or** when
+the Dockerfile pulls from `dhi.io`. The publish job logs in to `dhi.io` when
+those secrets are present (in addition to GHCR / Hub push logins). Permissions:
 `packages: write`, `id-token: write`, `attestations: write`.
 
 ## container-iac.yml
