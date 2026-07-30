@@ -38,6 +38,11 @@ on:
         required: false
         type: boolean
         default: false
+      dhi_login:
+        description: Log in to dhi.io before build (needs DOCKERHUB_* secrets)
+        required: false
+        type: boolean
+        default: false
     secrets:
       DOCKERHUB_USERNAME:
         required: false
@@ -64,6 +69,9 @@ on:
         type: boolean
         default: false
       blocking:
+        type: boolean
+        default: false
+      dhi_login:
         type: boolean
         default: false
 
@@ -97,7 +105,7 @@ jobs:
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
       - name: Log in to dhi.io
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: inputs.dhi_login
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: dhi.io

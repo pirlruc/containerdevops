@@ -28,6 +28,7 @@ All workflows: `workflow_call` + `workflow_dispatch`, `blocking` default `false`
 | `platforms` | `linux/amd64` |
 
 Optional secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` — when set, the job
+Optional input: `dhi_login` (default false) — when true, log in to dhi.io using those secrets. Do not use `secrets` in `if:` on reusable workflows.
 logs in to **`dhi.io`** before Buildx so Community Docker Hardened Image `FROM`
 lines can pull. Pass the same Hub credentials used for Docker Hub publish.
 
