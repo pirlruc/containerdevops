@@ -57,10 +57,10 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364edf1e46 # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Checkout containerdevops scripts
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364edf1e46 # v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: pirlruc/containerdevops
           path: _containerdevops
