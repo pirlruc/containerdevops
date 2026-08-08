@@ -7,9 +7,9 @@ mkdir -p "${DEST}"
 export PATH="${DEST}:${PATH}"
 
 HADOLINT_VERSION="${HADOLINT_VERSION:-2.12.0}"
-TRIVY_VERSION="${TRIVY_VERSION:-0.65.0}"
-SYFT_VERSION="${SYFT_VERSION:-1.27.1}"
-GRYPE_VERSION="${GRYPE_VERSION:-0.92.2}"
+TRIVY_VERSION="${TRIVY_VERSION:-0.73.0}"
+SYFT_VERSION="${SYFT_VERSION:-1.50.0}"
+GRYPE_VERSION="${GRYPE_VERSION:-0.116.1}"
 DIVE_VERSION="${DIVE_VERSION:-0.12.0}"
 CST_VERSION="${CST_VERSION:-1.19.3}"
 COSIGN_VERSION="${COSIGN_VERSION:-2.4.3}"
@@ -57,13 +57,17 @@ install_if_missing trivy bash -c "
 "
 
 install_if_missing syft bash -c "
-  curl -sSfL 'https://raw.githubusercontent.com/anchore/syft/main/install.sh' \
-    | sh -s -- -b '${DEST}' v${SYFT_VERSION}
+  curl -sSfL -o /tmp/syft.tgz \
+    'https://github.com/anchore/syft/releases/download/v${SYFT_VERSION}/syft_${SYFT_VERSION}_linux_amd64.tar.gz'
+  tar -xzf /tmp/syft.tgz -C '${DEST}' syft
+  rm -f /tmp/syft.tgz
 "
 
 install_if_missing grype bash -c "
-  curl -sSfL 'https://raw.githubusercontent.com/anchore/grype/main/install.sh' \
-    | sh -s -- -b '${DEST}' v${GRYPE_VERSION}
+  curl -sSfL -o /tmp/grype.tgz \
+    'https://github.com/anchore/grype/releases/download/v${GRYPE_VERSION}/grype_${GRYPE_VERSION}_linux_amd64.tar.gz'
+  tar -xzf /tmp/grype.tgz -C '${DEST}' grype
+  rm -f /tmp/grype.tgz
 "
 
 install_if_missing dive bash -c "

@@ -79,7 +79,7 @@ jobs:
 
       - name: Install tooling
         env:
-          INSTALL_ONLY: trivy
+          INSTALL_ONLY: trivy,syft,grype
         run: bash _containerdevops/scripts/install-container-tools.sh
 
       - name: Trivy image scan
