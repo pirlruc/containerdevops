@@ -38,8 +38,10 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - Private reusable workflows need Actions access_level `user` on this repo
   (and callers) under a User account.
 - Private consumers must pass secret `checkout_token` (PAT / fine-grained with
-  `contents:read` on this repo) into every `uses:` call. Without it, the nested
-  sparse checkout of `pirlruc/containerdevops` fails with REST `Not Found`.
+  `contents:read` on this repo) and input `scripts_ref` matching the `uses:` pin
+  into every call. Without the token, nested sparse checkout fails with REST
+  `Not Found`. Without `scripts_ref`, checkout tries the caller’s `github.sha`.
+  Never use `github.workflow_sha` for this — it is the caller’s workflow object.
 - Signing / provenance (`sign: true`) needs a public repo or Enterprise Cloud;
   consumers record `DOCKER-SEC-003` / `DOCKER-SEC-004` deviations while private.
 - Product Dockerfiles that `FROM dhi.io/…` need Hub credentials passed into

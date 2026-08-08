@@ -15,13 +15,16 @@ All workflows: `workflow_call` + `workflow_dispatch`, `blocking` default `false`
 |--------|----------|---------|
 | `checkout_token` | When caller ≠ this repo and this repo is private | PAT or fine-grained token with `contents:read` on `pirlruc/containerdevops` |
 
+## Shared inputs (cross-repo callers)
+
+| Input | Required | Meaning |
+|-------|----------|---------|
+| `scripts_ref` | Cross-repo callers | Commit/tag/branch matching the `uses: …@pin` — scripts checkout uses this. Same-repo `workflow_dispatch` falls back to `github.sha`. Do **not** use `github.workflow_sha` (that is the caller’s workflow). |
+
 Reusable jobs sparse-checkout this repository into `_containerdevops` for scripts
 and docker guardrail thresholds. The caller’s `GITHUB_TOKEN` cannot read a
 different private repository, so private consumers must pass `checkout_token`.
 Same-repo `workflow_dispatch` falls back to `github.token`.
-
-Checkout uses `ref: ${{ github.workflow_sha }}` so scripts match the pinned
-workflow SHA the caller referenced in `uses:`.
 
 ## container-lint.yml
 

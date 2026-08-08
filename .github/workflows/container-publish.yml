@@ -43,6 +43,11 @@ on:
         required: false
         type: boolean
         default: false
+      scripts_ref:
+        description: Commit/tag/branch of this repo to checkout for scripts (must match uses: pin)
+        required: false
+        type: string
+        default: ""
     secrets:
       DOCKERHUB_USERNAME:
         required: false
@@ -77,6 +82,9 @@ on:
       dhi_login:
         type: boolean
         default: false
+      scripts_ref:
+        type: string
+        default: ""
 
 env:
   ADVISORY: ${{ inputs.blocking == false }}
@@ -97,7 +105,8 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: pirlruc/containerdevops
-          ref: ${{ github.workflow_sha }}
+          # github.workflow_sha is the *caller* workflow; pass scripts_ref matching uses: @pin.
+          ref: ${{ inputs.scripts_ref || github.sha }}
           token: ${{ secrets.checkout_token || github.token }}
           path: _containerdevops
           sparse-checkout: |
