@@ -50,6 +50,9 @@ python3 .github/scaffold/scripts/issues-sync.py \
   auth is still required to pull).
 - Sparse checkout of this repo into `_containerdevops` must include
   `scripts` and `docs/guardrails/docker` for threshold reads.
+- Lint/build/scan install only the tools they need via `INSTALL_ONLY`
+  (`hadolint,actionlint` / `container-structure-test` / `trivy`). Trivy uses a
+  direct release tarball (aqua `install.sh` was flaky under Actions rate limits).
 - This repo has no self-caller CI; PR checks are empty until a consumer exercises
   the reusable workflows.
 

@@ -92,6 +92,7 @@ jobs:
           # github.workflow_sha is the *caller* workflow; pass scripts_ref matching uses: @pin.
           ref: ${{ inputs.scripts_ref || github.sha }}
           token: ${{ secrets.checkout_token || github.token }}
+          persist-credentials: false
           path: _containerdevops
           sparse-checkout: |
             scripts
@@ -110,6 +111,8 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Install tooling
+        env:
+          INSTALL_ONLY: container-structure-test
         run: bash _containerdevops/scripts/install-container-tools.sh
 
       - name: Build (load)
