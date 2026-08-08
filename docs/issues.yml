@@ -183,3 +183,45 @@ milestones:
               - actionlint .github/workflows/container-devcontainer.yml
             guardrail_refs:
               - DOCKER-LINT-001
+
+  - name: Continuous improvement
+    epics:
+      - id: CDO-007
+        status: open
+        title: Least-privilege permissions on reusable container workflows
+        overview:
+          problem: >-
+            container-lint.yml and container-build.yml declare no permissions:
+            block, so they inherit the caller's default token while building
+            PR-supplied Dockerfiles. Publish/scan set some scopes; lint/build do not.
+          goal: >-
+            Explicit least-privilege permissions: on all five reusable workflows
+            (contents: read minimum; add security-events / packages / id-token
+            only where required).
+        architecture:
+          target: .github/workflows/
+          modules:
+            - .github/workflows/container-lint.yml
+            - .github/workflows/container-build.yml
+            - .github/workflows/container-scan.yml
+            - .github/workflows/container-publish.yml
+            - .github/workflows/container-iac.yml
+        acceptance_criteria:
+          - Every reusable workflow has a top-level or job-level permissions block
+          - Lint and build use contents: read (and no write scopes)
+          - actionlint passes
+        guardrail_refs:
+          - CI-001
+          - DOCKER-DELIV-002
+        tasks:
+          - id: CDO-007-T1
+            status: open
+            title: Add explicit permissions to lint and build workflows
+            instructions:
+              files:
+                - .github/workflows/container-lint.yml
+                - .github/workflows/container-build.yml
+            verification:
+              - actionlint .github/workflows/container-lint.yml .github/workflows/container-build.yml
+            guardrail_refs:
+              - CI-001

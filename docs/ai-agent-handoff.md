@@ -22,6 +22,7 @@ Guardrails pack: [docker/](https://github.com/pirlruc/guardrails/tree/main/docke
 |--------------|--------|
 | Phase 1 — CDO-001…CDO-005 | Done; GitHub issues #2–#11 closed |
 | Phase 2 — CDO-006 | Open (#12 epic, #13 task) |
+| CDO-007 — workflow permissions | Open — authored in docs/issues.yml (not yet synced) |
 
 ## Commands
 
@@ -49,15 +50,15 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Suggested next work
 
-1. Re-pin consumers (`gitlab-mcp`, etc.) to `main` SHA after
-   [PR #1](https://github.com/pirlruc/containerdevops/pull/1) (`e707707`).
+1. CDO-007: least-privilege `permissions:` on reusable workflows (authored; sync with approval).
 2. CDO-006: devcontainer lint/build verification (#12 / #13).
 3. Home-assistant migration onto `container-iac` / image-scan jobs.
 
 ## Recent history
 
+- Authored CDO-007 on `feature-dependency-update-policy` (2026-08-08).
 - Merged [PR #1](https://github.com/pirlruc/containerdevops/pull/1): Dependabot
   GitHub Actions group majors + CodeQL comment fix; synced issues (10 closed,
   CDO-006 left open).
 
-*Last updated: 2026-07-30*
+*Last updated: 2026-08-08*
