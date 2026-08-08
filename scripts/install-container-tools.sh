@@ -75,7 +75,7 @@ install_if_missing dive bash -c "
 
 install_if_missing container-structure-test bash -c "
   curl -sSfL -o '${DEST}/container-structure-test' \
-    'https://storage.googleapis.com/container-structure-test/v${CST_VERSION}/container-structure-test-linux-amd64'
+    'https://github.com/GoogleContainerTools/container-structure-test/releases/download/v${CST_VERSION}/container-structure-test-linux-amd64'
   chmod +x '${DEST}/container-structure-test'
 "
 
