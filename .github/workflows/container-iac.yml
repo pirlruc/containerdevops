@@ -82,13 +82,12 @@ jobs:
           path: _containerdevops
           sparse-checkout: |
             scripts
-            docs/guardrails/docker
           sparse-checkout-cone-mode: false
 
       - name: Resolve iac_fail_on
         id: thr
         run: |
-          FILE="_containerdevops/docs/guardrails/docker/profile.thresholds.yml"
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
           echo "fail_on=$(bash _containerdevops/scripts/read-thresholds.sh iac_fail_on "$FILE")" >> "$GITHUB_OUTPUT"
 

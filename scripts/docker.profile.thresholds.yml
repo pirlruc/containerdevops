@@ -1,0 +1,15 @@
+# Vendored from pirlruc/guardrails docker/profile.thresholds.yml for reusable CI.
+# Keep in sync when org docker thresholds change; do not edit casually.
+
+# Org-default numeric gates for Docker / OCI image repositories.
+# CI should read this file as the single source of truth for thresholds.
+# Repos may override values with a recorded justification (ADR required when lowering a gate).
+
+image_max_size_mb: 300                 # DOCKER-PERF-001
+min_image_efficiency_percent: 95       # DOCKER-PERF-001
+base_image_max_age_days: 30            # DOCKER-BUILD-006
+hadolint_failure_threshold: warning    # DOCKER-LINT-001
+iac_fail_on: high,medium               # DOCKER-LINT-002
+vuln_fail_on_severity: high            # DOCKER-SEC-001
+max_critical_vulnerabilities: 0        # DOCKER-SEC-001
+vuln_ignore_max_days: 30               # DOCKER-SEC-001

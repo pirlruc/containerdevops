@@ -48,8 +48,9 @@ python3 .github/scaffold/scripts/issues-sync.py \
   `container-build` / `container-publish` as `DOCKERHUB_USERNAME` /
   `DOCKERHUB_TOKEN` so the job can `docker login dhi.io` (Community DHI is free;
   auth is still required to pull).
-- Sparse checkout of this repo into `_containerdevops` must include
-  `scripts` and `docs/guardrails/docker` for threshold reads.
+- Sparse checkout of this repo into `_containerdevops` needs `scripts`
+  only. Thresholds are vendored at `scripts/docker.profile.thresholds.yml`
+  (guardrails submodule is private and not available via nested checkout).
 - Lint/build/scan install only the tools they need via `INSTALL_ONLY`
   (`hadolint,actionlint` / `container-structure-test` / `trivy`). Trivy uses a
   direct release tarball (aqua `install.sh` was flaky under Actions rate limits).

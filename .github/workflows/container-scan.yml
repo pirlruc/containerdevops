@@ -64,7 +64,6 @@ jobs:
           path: _containerdevops
           sparse-checkout: |
             scripts
-            docs/guardrails/docker
           sparse-checkout-cone-mode: false
 
       - name: Download image artifact
@@ -86,7 +85,7 @@ jobs:
       - name: Trivy image scan
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         run: |
-          FILE="_containerdevops/docs/guardrails/docker/profile.thresholds.yml"
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
           SEV="$(bash _containerdevops/scripts/read-thresholds.sh vuln_fail_on_severity "$FILE" | tr '[:lower:]' '[:upper:]')"
           mkdir -p scan-results

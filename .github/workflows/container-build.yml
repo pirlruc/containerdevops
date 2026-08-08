@@ -96,7 +96,6 @@ jobs:
           path: _containerdevops
           sparse-checkout: |
             scripts
-            docs/guardrails/docker
           sparse-checkout-cone-mode: false
 
       - name: Set up Docker Buildx
@@ -138,7 +137,7 @@ jobs:
       - name: Image size gate
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         run: |
-          FILE="_containerdevops/docs/guardrails/docker/profile.thresholds.yml"
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
           MAX="$(bash _containerdevops/scripts/read-thresholds.sh image_max_size_mb "$FILE")"
           bash _containerdevops/scripts/check-image-size.sh "${{ inputs.image_name }}" "${MAX}"
@@ -146,7 +145,7 @@ jobs:
       - name: Dive efficiency
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         run: |
-          FILE="_containerdevops/docs/guardrails/docker/profile.thresholds.yml"
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
           MIN="$(bash _containerdevops/scripts/read-thresholds.sh min_image_efficiency_percent "$FILE")"
           dive --ci --json dive-report.json "${{ inputs.image_name }}" || true

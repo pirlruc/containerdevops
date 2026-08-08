@@ -75,7 +75,6 @@ jobs:
           path: _containerdevops
           sparse-checkout: |
             scripts
-            docs/guardrails/docker
           sparse-checkout-cone-mode: false
 
       - name: Install tooling
@@ -88,11 +87,16 @@ jobs:
         id: thr
         working-directory: ${{ github.workspace }}
         run: |
-          FILE="_containerdevops/docs/guardrails/docker/profile.thresholds.yml"
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           if [[ ! -f "$FILE" ]]; then
             FILE="docs/guardrails/docker/profile.thresholds.yml"
           fi
-          echo "hadolint=$(bash _containerdevops/scripts/read-thresholds.sh hadolint_failure_threshold "$FILE")" >> "$GITHUB_OUTPUT"
+          VALUE="$(bash _containerdevops/scripts/read-thresholds.sh hadolint_failure_threshold "$FILE")"
+          if [[ -z "$VALUE" ]]; then
+            echo "empty hadolint_failure_threshold from $FILE" >&2
+            exit 1
+          fi
+          echo "hadolint=${VALUE}" >> "$GITHUB_OUTPUT"
 
       - name: hadolint
         continue-on-error: ${{ env.ADVISORY == 'true' }}

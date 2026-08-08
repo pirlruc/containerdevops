@@ -21,10 +21,15 @@ All workflows: `workflow_call` + `workflow_dispatch`, `blocking` default `false`
 |-------|----------|---------|
 | `scripts_ref` | Cross-repo callers | Commit/tag/branch matching the `uses: …@pin` — scripts checkout uses this. Same-repo `workflow_dispatch` falls back to `github.sha`. Do **not** use `github.workflow_sha` (that is the caller’s workflow). |
 
-Reusable jobs sparse-checkout this repository into `_containerdevops` for scripts
-and docker guardrail thresholds. The caller’s `GITHUB_TOKEN` cannot read a
-different private repository, so private consumers must pass `checkout_token`.
-Same-repo `workflow_dispatch` falls back to `github.token`.
+Reusable jobs sparse-checkout this repository into `_containerdevops` for
+`scripts/` (install helpers + vendored `docker.profile.thresholds.yml`).
+The caller’s `GITHUB_TOKEN` cannot read a different private repository, so
+private consumers must pass `checkout_token`. Same-repo `workflow_dispatch`
+falls back to `github.token`.
+
+Thresholds are vendored under `scripts/` because `docs/guardrails` is a private
+submodule and is not available from nested checkout. Keep the vendored file in
+sync with the guardrails docker pack.
 
 ## container-lint.yml
 
