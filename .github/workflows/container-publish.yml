@@ -44,7 +44,7 @@ on:
         type: boolean
         default: false
       scripts_ref:
-        description: Commit/tag/branch of this repo to checkout for scripts (must match uses: pin)
+        description: "Commit/tag/branch of this repo to checkout for scripts (must match uses: pin)"
         required: false
         type: string
         default: ""
