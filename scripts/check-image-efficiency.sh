@@ -30,6 +30,12 @@ if isinstance(data, dict):
             if key in result:
                 eff = float(result[key])
                 break
+    # dive >= 0.12 --json: {"image": {"efficiencyScore": 0.0-1.0, ...}}
+    if eff is None and isinstance(data.get("image"), dict):
+        score = data["image"].get("efficiencyScore")
+        if score is not None:
+            score = float(score)
+            eff = score * 100.0 if score <= 1.0 else score
 
 if eff is None or eff < 0:
     print("could not parse dive efficiency from JSON", file=sys.stderr)
