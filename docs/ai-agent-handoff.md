@@ -37,6 +37,9 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 - Private reusable workflows need Actions access_level `user` on this repo
   (and callers) under a User account.
+- Private consumers must pass secret `checkout_token` (PAT / fine-grained with
+  `contents:read` on this repo) into every `uses:` call. Without it, the nested
+  sparse checkout of `pirlruc/containerdevops` fails with REST `Not Found`.
 - Signing / provenance (`sign: true`) needs a public repo or Enterprise Cloud;
   consumers record `DOCKER-SEC-003` / `DOCKER-SEC-004` deviations while private.
 - Product Dockerfiles that `FROM dhi.io/…` need Hub credentials passed into
@@ -50,15 +53,18 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Suggested next work
 
-1. CDO-007: least-privilege `permissions:` on reusable workflows (authored; sync with approval).
-2. CDO-006: devcontainer lint/build verification (#12 / #13).
-3. Home-assistant migration onto `container-iac` / image-scan jobs.
+1. Land `checkout_token` fix; pin consumers (gitlab-mcp first) to the new SHA.
+2. CDO-007: least-privilege `permissions:` on reusable workflows (authored; sync with approval).
+3. CDO-006: devcontainer lint/build verification (#12 / #13).
+4. Home-assistant migration onto `container-iac` / image-scan jobs.
 
 ## Recent history
 
+- Added optional `checkout_token` + `github.workflow_sha` on nested script
+  checkouts so private callers can read this repo (2026-08-09).
 - Authored CDO-007 on `feature-dependency-update-policy` (2026-08-08).
 - Merged [PR #1](https://github.com/pirlruc/containerdevops/pull/1): Dependabot
   GitHub Actions group majors + CodeQL comment fix; synced issues (10 closed,
   CDO-006 left open).
 
-*Last updated: 2026-08-08*
+*Last updated: 2026-08-09*

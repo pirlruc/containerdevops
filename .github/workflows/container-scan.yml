@@ -16,6 +16,10 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      # Required when the caller is a different private repo (see container-lint.yml).
+      checkout_token:
+        required: false
   workflow_dispatch:
     inputs:
       image:
@@ -45,6 +49,8 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: pirlruc/containerdevops
+          ref: ${{ github.workflow_sha }}
+          token: ${{ secrets.checkout_token || github.token }}
           path: _containerdevops
           sparse-checkout: |
             scripts

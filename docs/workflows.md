@@ -9,6 +9,20 @@ All workflows: `workflow_call` + `workflow_dispatch`, `blocking` default `false`
 |-------|---------|---------|
 | `blocking` | `false` | When true, gate failures fail the job |
 
+## Shared secrets (private callers)
+
+| Secret | Required | Meaning |
+|--------|----------|---------|
+| `checkout_token` | When caller ≠ this repo and this repo is private | PAT or fine-grained token with `contents:read` on `pirlruc/containerdevops` |
+
+Reusable jobs sparse-checkout this repository into `_containerdevops` for scripts
+and docker guardrail thresholds. The caller’s `GITHUB_TOKEN` cannot read a
+different private repository, so private consumers must pass `checkout_token`.
+Same-repo `workflow_dispatch` falls back to `github.token`.
+
+Checkout uses `ref: ${{ github.workflow_sha }}` so scripts match the pinned
+workflow SHA the caller referenced in `uses:`.
+
 ## container-lint.yml
 
 | Input | Default |
@@ -28,9 +42,11 @@ All workflows: `workflow_call` + `workflow_dispatch`, `blocking` default `false`
 | `platforms` | `linux/amd64` |
 
 Optional secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` — when set, the job
-Optional input: `dhi_login` (default false) — when true, log in to dhi.io using those secrets. Do not use `secrets` in `if:` on reusable workflows.
 logs in to **`dhi.io`** before Buildx so Community Docker Hardened Image `FROM`
 lines can pull. Pass the same Hub credentials used for Docker Hub publish.
+
+Optional input: `dhi_login` (default false) — when true, log in to dhi.io using
+those secrets. Do not use `secrets` in `if:` on reusable workflows.
 
 Uploads `container-image` artifact (`image.tar`).
 
