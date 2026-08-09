@@ -59,7 +59,8 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Suggested next work
 
-1. Land `checkout_token` fix on `main` (currently on `feature-dependency-update-policy` @ `fbf364d`); pin consumers to that SHA.
+1. Open/merge containerdevops PR for `feature-dependency-update-policy`; then
+   re-pin consumers to the merged SHA on `main`.
 2. CDO-007: least-privilege `permissions:` on reusable workflows (authored; sync with approval).
 3. CDO-006: devcontainer lint/build verification (#12 / #13).
 4. Home-assistant migration onto `container-iac` / image-scan jobs.
