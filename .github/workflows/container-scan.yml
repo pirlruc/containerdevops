@@ -111,7 +111,13 @@ jobs:
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         run: |
           mkdir -p scan-results
-          syft "${{ inputs.image }}" -o cyclonedx-json=scan-results/sbom.cdx.json \
+          SELECT=()
+          # Align SBOM with Trivy pkg_types=library (skip OS catalogers for DHI noise).
+          if [[ "${{ inputs.pkg_types }}" == "library" ]]; then
+            SELECT=(--select-catalogers python)
+          fi
+          syft "${{ inputs.image }}" "${SELECT[@]}" \
+            -o cyclonedx-json=scan-results/sbom.cdx.json \
             -o spdx-json=scan-results/sbom.spdx.json
 
       - name: Grype (SBOM)
