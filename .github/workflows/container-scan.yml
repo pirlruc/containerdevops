@@ -21,6 +21,11 @@ on:
         required: false
         type: string
         default: ""
+      pkg_types:
+        description: Trivy --pkg-types (os,library or library for app-only / DHI OS noise)
+        required: false
+        type: string
+        default: "os,library"
     secrets:
       # Required when the caller is a different private repo (see container-lint.yml).
       checkout_token:
@@ -39,6 +44,9 @@ on:
       scripts_ref:
         type: string
         default: ""
+      pkg_types:
+        type: string
+        default: "os,library"
 
 env:
   ADVISORY: ${{ inputs.blocking == false }}
@@ -91,10 +99,12 @@ jobs:
           mkdir -p scan-results
           CFG=()
           [[ -f trivy.yaml ]] && CFG=(--config trivy.yaml)
-          trivy image --scanners vuln --severity "CRITICAL,${SEV}" \
+          trivy image --scanners vuln --pkg-types "${{ inputs.pkg_types }}" \
+            --severity "CRITICAL,${SEV}" \
             --format sarif --output scan-results/trivy.sarif \
             "${CFG[@]}" "${{ inputs.image }}"
-          trivy image --scanners vuln --severity "CRITICAL,${SEV}" \
+          trivy image --scanners vuln --pkg-types "${{ inputs.pkg_types }}" \
+            --severity "CRITICAL,${SEV}" \
             --exit-code 1 "${CFG[@]}" "${{ inputs.image }}"
 
       - name: Syft SBOM
