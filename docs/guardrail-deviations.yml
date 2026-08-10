@@ -5,4 +5,24 @@
 #
 # Being stricter than the org default is always allowed and needs no entry here.
 
-deviations: []
+deviations:
+  - id: DOCKER-BUILD-006
+    key: base_image_max_age_days
+    org_default: 30
+    repo_value: null
+    why: >-
+      No automated base-image age gate in reusable workflows yet; consumers rebuild
+      on their own cadence. Tracking a cheap CI check under CDO-009 follow-up.
+    epic: CDO-009
+    owner: pirlruc
+    approved_by: Engineering Lead
+    review: 2026-12-31
+  - id: DOCKER-TEST-002
+    why: >-
+      Multi-arch publish pushes amd64+arm64 but CI does not yet verify each
+      published platform with a per-arch pull/run (Actions minutes). structure-test
+      and scan run on the CI runner arch only.
+    epic: CDO-009
+    owner: pirlruc
+    approved_by: Engineering Lead
+    review: 2026-12-31

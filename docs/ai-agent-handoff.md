@@ -6,72 +6,77 @@
 |-------|-------|
 | **Folder** | `common/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
+| **Branch** | `feature-dependency-update-policy` |
 | **Role** | Reusable GitHub Actions for production container images + IaC |
 | **Type** | CI infrastructure (not an application image) |
 
 ## Scope
 
-Owns `.github/workflows/container-{lint,build,scan,publish,iac}.yml`, `scripts/`,
-and `templates/`. Consumers pin `pirlruc/containerdevops@<sha>`.
+Owns `.github/workflows/container-{lint,build,scan,publish,iac,devcontainer}.yml`,
+`scripts/`, `templates/`, and `docker/ci-container/`. Consumers pin
+`pirlruc/containerdevops@<sha>`.
+
+Shared infra/secrets/supply-chain categories forward to
+[pirlruc/commondevops](https://github.com/pirlruc/commondevops) once that repo has a
+published SHA.
 
 Guardrails pack: [docker/](https://github.com/pirlruc/guardrails/tree/main/docker).
+
+## Pins (2026-08-10)
+
+| Submodule / artifact | Pin |
+|----------------------|-----|
+| `docs/guardrails` | tag `1.0.0` → `925b9f32659936382c67850ec125a182261710bf` |
+| `.github/scaffold` | `0db5890f808e4a9b9d11eabfc9a95b2b90898fad` |
+| `ghcr.io/pirlruc/ci-container` | local tag `:local`; workflows use `:latest` until publish |
+| commondevops `uses:` | **`74695e83a7b79784ee81fd970d9051d8efd711e8`** — replace after first commondevops push |
 
 ## Delivery status
 
 | Phase / epic | Status |
 |--------------|--------|
-| Phase 1 — CDO-001…CDO-005 | Done; GitHub issues #2–#11 closed |
-| Phase 2 — CDO-006 | Open (#12 epic, #13 task) |
-| CDO-007 — workflow permissions | Open — authored in docs/issues.yml (not yet synced) |
+| Phase 1 — CDO-001…CDO-005 | Done |
+| CDO-006 — `container-devcontainer.yml` | Done (authored; hadolint + structure-test stub) |
+| CDO-007 — CI-025 permissions | Done (authored) |
+| CDO-008 — multi-ecosystem Dependabot | Open (config rewritten; Insights after default-branch land) |
+| CDO-009 — ai-reviewer pass | Open |
+| DOCKER-BUILD-006 / DOCKER-TEST-002 | Deviations in `docs/guardrail-deviations.yml` |
 
 ## Commands
 
 ```bash
 bash scripts/check-container-local.sh --dockerfile Dockerfile --context /path/to/app
 ./scripts/sync-container-tooling.sh /path/to/consuming-repo
+# Local CI image (already built on this host as :local):
+docker build -t ghcr.io/pirlruc/ci-container:local docker/ci-container
 python3 .github/scaffold/scripts/issues-sync.py \
   --repo pirlruc/containerdevops --yaml docs/issues.yml --dry-run
 ```
 
 ## Known pitfalls
 
-- Private reusable workflows need Actions access_level `user` on this repo
-  (and callers) under a User account.
-- Private consumers must pass secret `checkout_token` (PAT / fine-grained with
-  `contents:read` on this repo) and input `scripts_ref` matching the `uses:` pin
-  into every call. Without the token, nested sparse checkout fails with REST
-  `Not Found`. Without `scripts_ref`, checkout tries the caller’s `github.sha`.
-  Never use `github.workflow_sha` for this — it is the caller’s workflow object.
-- Signing / provenance (`sign: true`) needs a public repo or Enterprise Cloud;
-  consumers record `DOCKER-SEC-003` / `DOCKER-SEC-004` deviations while private.
-- Product Dockerfiles that `FROM dhi.io/…` need Hub credentials passed into
-  `container-build` / `container-publish` as `DOCKERHUB_USERNAME` /
-  `DOCKERHUB_TOKEN` so the job can `docker login dhi.io` (Community DHI is free;
-  auth is still required to pull).
-- Sparse checkout of this repo into `_containerdevops` needs `scripts`
-  only. Thresholds are vendored at `scripts/docker.profile.thresholds.yml`
-  (guardrails submodule is private and not available via nested checkout).
-- Lint/build/scan install only the tools they need via `INSTALL_ONLY`
-  (`hadolint,actionlint` / `container-structure-test` / `trivy`). Trivy uses a
-  direct release tarball (aqua `install.sh` was flaky under Actions rate limits).
-- This repo has no self-caller CI; PR checks are empty until a consumer exercises
-  the reusable workflows.
+- **`74695e83a7b79784ee81fd970d9051d8efd711e8`** in `container-lint.yml` (infra + secrets jobs) must be
+  replaced with the first published commondevops commit; keep `scripts_ref` in lockstep.
+- Private reusable workflows need Actions access_level `user` on this repo (and callers).
+- Private consumers must pass `checkout_token` + matching `scripts_ref`.
+- **Scan stays on the host runner** (needs `docker load` for `image_artifact`); lint /
+  devcontainer use `container: ghcr.io/pirlruc/ci-container:latest`.
+- Build/publish must **not** use job `container:` (buildx/docker daemon).
+- Signing / provenance (`sign: true`) needs a public repo or Enterprise Cloud.
+- DHI pulls need `DOCKERHUB_*` + CI-024 Dependabot skip on login steps.
 
 ## Suggested next work
 
-1. Open/merge containerdevops PR for `feature-dependency-update-policy`; then
-   re-pin consumers to the merged SHA on `main`.
-2. CDO-007: least-privilege `permissions:` on reusable workflows (authored; sync with approval).
-3. CDO-006: devcontainer lint/build verification (#12 / #13).
-4. Home-assistant migration onto `container-iac` / image-scan jobs.
+1. Land first commit on [commondevops](https://github.com/pirlruc/commondevops); replace
+   `74695e83a7b79784ee81fd970d9051d8efd711e8` here and re-pin consumers.
+2. Publish `ghcr.io/pirlruc/ci-container:latest` from `docker/ci-container`.
+3. Merge this branch; confirm Dependabot Insights one-PR grouping (CDO-008-T2).
+4. Cheap follow-ups for DOCKER-BUILD-006 / DOCKER-TEST-002 (or keep deviations).
 
 ## Recent history
 
-- Added optional `checkout_token` + `github.workflow_sha` on nested script
-  checkouts so private callers can read this repo (2026-08-09).
-- Authored CDO-007 on `feature-dependency-update-policy` (2026-08-08).
-- Merged [PR #1](https://github.com/pirlruc/containerdevops/pull/1): Dependabot
-  GitHub Actions group majors + CodeQL comment fix; synced issues (10 closed,
-  CDO-006 left open).
+- Phase 3–4 ops alignment on `feature-dependency-update-policy` (2026-08-10): submodule
+  bumps, CI-025, commondevops placeholders, ci-container image path, Dependabot rewrite,
+  CDO-006 workflow, deviations for multi-arch / base-image age.
 
-*Last updated: 2026-08-09*
+*Last updated: 2026-08-10*

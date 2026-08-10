@@ -157,7 +157,7 @@ milestones:
   - name: Phase 2 — Devcontainer
     epics:
       - id: CDO-006
-        status: open
+        status: done
         title: Devcontainer lint and build verification
         overview:
           problem: cpp-infra hadolints Dockerfiles but there is no shared devcontainer gate.
@@ -174,7 +174,7 @@ milestones:
           - DOCKER-BUILD-003
         tasks:
           - id: CDO-006-T1
-            status: open
+            status: done
             title: Design and implement container-devcontainer workflow
             instructions:
               files:
@@ -187,41 +187,119 @@ milestones:
   - name: Continuous improvement
     epics:
       - id: CDO-007
-        status: open
+        status: done
         title: Least-privilege permissions on reusable container workflows
         overview:
-          problem: >-
-            container-lint.yml and container-build.yml declare no permissions:
-            block, so they inherit the caller's default token while building
-            PR-supplied Dockerfiles. Publish/scan set some scopes; lint/build do not.
-          goal: >-
-            Explicit least-privilege permissions: on all five reusable workflows
-            (contents: read minimum; add security-events / packages / id-token
-            only where required).
+          problem: 'container-lint.yml and container-build.yml declare no permissions: block, so
+            they inherit the caller''s default token while building PR-supplied Dockerfiles. Publish/scan
+            set some scopes; lint/build do not.'
+          goal: 'Explicit least-privilege permissions: on all five reusable workflows (contents:
+            read minimum; add security-events / packages / id-token only where required).'
         architecture:
           target: .github/workflows/
           modules:
+          - .github/workflows/container-lint.yml
+          - .github/workflows/container-build.yml
+          - .github/workflows/container-scan.yml
+          - .github/workflows/container-publish.yml
+          - .github/workflows/container-iac.yml
+        acceptance_criteria:
+        - Every reusable workflow has a top-level or job-level permissions block
+        - Lint and build use contents: read (and no write scopes)
+        - actionlint passes
+        guardrail_refs:
+        - CI-001
+        - DOCKER-DELIV-002
+        tasks:
+        - id: CDO-007-T1
+          status: open
+          title: Add explicit permissions to lint and build workflows
+          instructions:
+            files:
             - .github/workflows/container-lint.yml
             - .github/workflows/container-build.yml
-            - .github/workflows/container-scan.yml
-            - .github/workflows/container-publish.yml
-            - .github/workflows/container-iac.yml
-        acceptance_criteria:
-          - Every reusable workflow has a top-level or job-level permissions block
-          - Lint and build use contents: read (and no write scopes)
-          - actionlint passes
-        guardrail_refs:
+          verification:
+          - actionlint .github/workflows/container-lint.yml .github/workflows/container-build.yml
+          guardrail_refs:
           - CI-001
-          - DOCKER-DELIV-002
+      - id: CDO-008
+        status: open
+        title: Adopt and verify multi-ecosystem Dependabot (SC-DEP-*)
+        overview:
+          problem: >-
+            Dependency updates may still use per-ecosystem schedules, missing
+            ecosystems, or shapes that do not produce one monthly multi-ecosystem
+            PR. SC-DEP-001/002/003 require covering every package ecosystem, a
+            single grouped PR, and the org cadence/semver policy.
+          goal: >-
+            Align .github/dependabot.yml with the org multi-ecosystem monthly
+            shape (seed from github-scaffold templates/dependabot.example.yml when
+            needed); confirm Insights grouping after the config is on the default
+            branch; document any justified deviations.
+        architecture:
+          target: .github/dependabot.yml
+          modules:
+            - .github/dependabot.yml
+            - docs/ai-agent-handoff.md
+        acceptance_criteria:
+          - dependabot.yml uses a monthly multi-ecosystem group covering this repo's ecosystems
+          - open-pull-requests-limit and semver policy match SC-DEP-003 / supply-chain thresholds
+          - Insights confirmation recorded in handoff after merge to default branch (or GitHub limitation noted)
+        guardrail_refs:
+          - SC-DEP-001
+          - SC-DEP-002
+          - SC-DEP-003
         tasks:
-          - id: CDO-007-T1
+          - id: CDO-008-T1
             status: open
-            title: Add explicit permissions to lint and build workflows
+            title: Rewrite or confirm Dependabot multi-ecosystem config
             instructions:
               files:
-                - .github/workflows/container-lint.yml
-                - .github/workflows/container-build.yml
+                - .github/dependabot.yml
             verification:
-              - actionlint .github/workflows/container-lint.yml .github/workflows/container-build.yml
+              - rg -n "multi-ecosystem|schedule|package-ecosystem" .github/dependabot.yml
             guardrail_refs:
-              - CI-001
+              - SC-DEP-001
+              - SC-DEP-002
+          - id: CDO-008-T2
+            status: open
+            title: Record Insights confirmation in handoff after default-branch land
+            instructions:
+              files:
+                - docs/ai-agent-handoff.md
+            verification:
+              - Handoff notes Insights one-PR grouping outcome or documents blocker
+            guardrail_refs:
+              - SC-DEP-003
+      - id: CDO-009
+        status: open
+        title: Review for improvements, bugs, and design flaws
+        overview:
+          problem: >-
+            Backlog and automation can drift toward process or docs hygiene only.
+            The repo needs a deliberate review of the current implementation that
+            surfaces improvements, bugs, and design flaws — not only polish — and
+            records material follow-ups in docs/issues.yml.
+          goal: >-
+            Run an ai-reviewer (or equivalent) pass against this repository's
+            current code, workflows, scripts, and docs; append only material new
+            epics/tasks under Continuous improvement (or record a justified no-op).
+        architecture:
+          target: Repository review into docs/issues.yml
+          modules:
+            - docs/issues.yml
+            - docs/ai-agent-handoff.md
+        acceptance_criteria:
+          - Review explicitly covers improvements, bugs, and design flaws in shipped implementation
+          - Material findings appended to docs/issues.yml via PR (budget at most 2 epics / 6 tasks) or handoff records justified no-op
+          - Does not re-file work already covered by existing epic/task ids
+        tasks:
+          - id: CDO-009-T1
+            status: open
+            title: Run review pass and append material issues.yml findings
+            instructions:
+              files:
+                - docs/issues.yml
+                - docs/ai-agent-handoff.md
+            verification:
+              - PR appends material findings within budget, or handoff records justified no-op

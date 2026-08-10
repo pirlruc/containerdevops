@@ -56,6 +56,9 @@ on:
         type: string
         default: ""
 
+# CI-025
+permissions: {}
+
 env:
   ADVISORY: ${{ inputs.blocking == false }}
   # checkmarx/kics:v2.1.20-debian linux/amd64 (see home-assistant job-kics.sh)
@@ -63,16 +66,20 @@ env:
 
 jobs:
   iac:
+    # CI-024: SARIF upload
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Checkout containerdevops scripts
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: pirlruc/containerdevops
           # github.workflow_sha is the *caller* workflow; pass scripts_ref matching uses: @pin.
@@ -151,7 +158,7 @@ jobs:
       - name: Upload KICS SARIF
         if: always() && hashFiles('kics-results/results.sarif') != ''
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        uses: github/codeql-action/upload-sarif@ea14db8afdef5d462e69d78c4ca45002d4522418 # v4.37.4
         with:
           sarif_file: kics-results/results.sarif
           category: kics

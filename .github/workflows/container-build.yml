@@ -75,18 +75,26 @@ on:
         type: string
         default: ""
 
+# CI-025
+permissions: {}
+
 env:
   ADVISORY: ${{ inputs.blocking == false }}
 
 jobs:
   build:
+    # Build/publish stay on plain runner (no container:) — needs buildx/docker.
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Checkout containerdevops scripts
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: pirlruc/containerdevops
           # github.workflow_sha is the *caller* workflow; pass scripts_ref matching uses: @pin.
@@ -102,7 +110,8 @@ jobs:
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
       - name: Log in to dhi.io
-        if: inputs.dhi_login
+        # CI-024: Dependabot cannot use Actions secrets
+        if: inputs.dhi_login && github.actor != 'dependabot[bot]'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: dhi.io
@@ -126,6 +135,11 @@ jobs:
           platforms: ${{ inputs.platforms }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.title=${{ inputs.image_name }}
+            org.opencontainers.image.description=CI build from containerdevops
 
       - name: container-structure-test
         if: hashFiles(inputs.structure_test_config) != ''

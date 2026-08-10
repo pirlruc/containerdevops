@@ -1,0 +1,31 @@
+# syntax=docker/dockerfile:1
+# Container CI tooling image — extends commondevops ci-base with dive + structure-test.
+# Build with: docker build --build-arg CI_BASE=ghcr.io/pirlruc/ci-base:local ...
+# Publish target: ghcr.io/pirlruc/ci-container
+# KICS stays a separate digest-pinned image (container-iac.yml).
+
+ARG CI_BASE=ghcr.io/pirlruc/ci-base:local
+ARG CST_VERSION=1.19.3
+
+# DHI python-dev has no curl; fetch CST from a short-lived Ubuntu stage.
+FROM docker.io/library/ubuntu:24.04@sha256:561618e2c15bf2397621dd04f96926663a3b5616c189cf7e38db7e82f5c538ea AS cst
+ARG CST_VERSION
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl ca-certificates \
+ && curl -sSfL -o /container-structure-test \
+      "https://github.com/GoogleContainerTools/container-structure-test/releases/download/v${CST_VERSION}/container-structure-test-linux-amd64" \
+ && chmod +x /container-structure-test
+
+FROM ${CI_BASE}
+
+LABEL org.opencontainers.image.title="ci-container" \
+      org.opencontainers.image.description="Container CI tooling for pirlruc/containerdevops" \
+      org.opencontainers.image.source="https://github.com/pirlruc/containerdevops" \
+      org.opencontainers.image.licenses="MIT"
+
+COPY --from=wagoodman/dive:v0.12.0 /usr/local/bin/dive /usr/local/bin/dive
+COPY --from=cst /container-structure-test /usr/local/bin/container-structure-test
+
+WORKDIR /workspace
+ENTRYPOINT []
+CMD ["bash"]
