@@ -124,7 +124,9 @@ private repos — keep `sign: false` there).
 
 When `dockerhub_image` and `dockerhub_readme` are both set, the job pushes the
 readme as the Docker Hub Overview after the image push. The Hub token needs
-read/write/delete (admin-level) scope for the description API.
+read/write/delete (admin-level) scope for the description API. A push-only
+token yields Forbidden; that step is always advisory so image publish still
+succeeds.
 
 ## container-iac.yml
 

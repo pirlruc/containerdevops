@@ -73,7 +73,9 @@ python3 .github/scaffold/scripts/issues-sync.py \
   `image_title` / `image_description` on publish or the package page leaks the repo
   description. Hub Overview needs `dockerhub_readme` + a Hub token with
   read/write/delete (admin) scope.
-- **ci-container** extends **ci-lint**; publish needs `ci-lint:2.0.1` first.
+- **Hub Overview:** needs a Hub PAT with read/write/delete (admin). Push-only
+  tokens return Forbidden; the sync step is advisory and does not fail publish.
+- **ci-container** extends **ci-lint**; publish needs `ci-lint:2.0.2` first.
 - Private consumers pass `scripts_token` + matching `scripts_ref`; `checkout_token` only
   for nested commondevops calls (lint secrets/infra).
 - Scan stays on the host runner (`docker load`). Build/publish must not use job `container:`.

@@ -28,7 +28,7 @@ on:
       ci_base:
         description: Digest-pinned or tagged ci-lint ref for FROM (CI-026)
         type: string
-        default: "ghcr.io/pirlruc/ci-lint:2.0.1"
+        default: "ghcr.io/pirlruc/ci-lint:2.0.2"
 
 concurrency:
   group: ci-container-image-${{ github.ref }}
@@ -79,7 +79,7 @@ jobs:
       platforms: linux/amd64
       image_max_size_mb: "700"
       build_args: |
-        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint:2.0.1' }}
+        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint:2.0.2' }}
       image_title: ci-container
       image_description: >-
         Short-lived CI toolchain image for container jobs: ci-lint plus dive and
@@ -130,7 +130,7 @@ jobs:
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
       build_args: |
-        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint:2.0.1' }}
+        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint:2.0.2' }}
       image_title: ci-container
       image_description: >-
         Short-lived CI toolchain image for container jobs: ci-lint plus dive and
