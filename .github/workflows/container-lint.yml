@@ -54,6 +54,10 @@ on:
         default: true
     secrets:
       checkout_token:
+        description: Token to read pirlruc/commondevops (nested reusables)
+        required: false
+      scripts_token:
+        description: Token to read this repo scripts when called cross-repo; defaults to github.token
         required: false
   workflow_dispatch:
     inputs:
@@ -102,7 +106,7 @@ jobs:
         with:
           repository: pirlruc/containerdevops
           ref: ${{ inputs.scripts_ref || github.sha }}
-          token: ${{ github.token }}  # same-repo; checkout_token is for commondevops only
+          token: ${{ secrets.scripts_token || github.token }}  # cross-repo: scripts_token; same-repo: github.token
           persist-credentials: false
           path: _containerdevops
           sparse-checkout: |

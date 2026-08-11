@@ -63,6 +63,9 @@ git submodule update --init && git -C docs/guardrails checkout 1.1.0
 - Private consumers must pass `checkout_token` + matching `scripts_ref`.
 - **Scan stays on the host runner** (needs `docker load`); lint may use job container after publish.
 - Build/publish must **not** use job `container:` (buildx/docker daemon) — CI-028.
+- **Cross-repo callers** must pass `scripts_token` (contents:read on containerdevops) so
+  reusable workflows can sparse-checkout `scripts/`. `checkout_token` remains for nested
+  commondevops calls. Same-repo callers omit `scripts_token` (defaults to `github.token`).
 - Signing / provenance (`sign: true`) needs a public repo or Enterprise Cloud.
 - Submodules are **deinitialized** (bor-cpp style); hydrate before `sync-templates.sh`.
 - **KICS exclusions:** IDs + why-not-fixed live in [`docs/kics-exclusions.md`](kics-exclusions.md)
