@@ -87,3 +87,6 @@ those secrets are present (in addition to GHCR / Hub push logins). Permissions:
 | `exclude_paths` | `""` |
 | `compose_files` | `""` |
 | `kics_config` | `.github/kics.config` |
+
+KICS `exclude-queries` IDs and why each is suppressed (not fixed) are recorded in
+[`docs/kics-exclusions.md`](kics-exclusions.md) (DOCKER-LINT-002).

@@ -6,6 +6,10 @@
 #
 # CI_BASE default is :local for bootstrap; publish callers must pass a digest-pinned
 # ghcr.io/pirlruc/ci-base ref (CI-026).
+#
+# No HEALTHCHECK: short-lived CI toolchain (CLI job container), not a supervised
+# service. KICS query b03a748a-542d-44f4-bb86-9199ab4fd2d5 is excluded with rationale
+# in docs/kics-exclusions.md (DOCKER-LINT-002 / DOCKER-RUN-002).
 
 ARG CI_BASE=ghcr.io/pirlruc/ci-base:local
 

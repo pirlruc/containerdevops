@@ -65,6 +65,8 @@ git submodule update --init && git -C docs/guardrails checkout 1.1.0
 - Build/publish must **not** use job `container:` (buildx/docker daemon) — CI-028.
 - Signing / provenance (`sign: true`) needs a public repo or Enterprise Cloud.
 - Submodules are **deinitialized** (bor-cpp style); hydrate before `sync-templates.sh`.
+- **KICS exclusions:** IDs + why-not-fixed live in [`docs/kics-exclusions.md`](kics-exclusions.md)
+  (DOCKER-LINT-002); keep in sync with `.github/kics.config` `exclude-queries`.
 
 ## Suggested next work
 
@@ -75,6 +77,8 @@ git submodule update --init && git -C docs/guardrails checkout 1.1.0
 
 ## Recent history
 
+- 2026-08-11: documented KICS `exclude-queries` in `docs/kics-exclusions.md`
+  (`b03a748a-542d-44f4-bb86-9199ab4fd2d5` HEALTHCHECK — tooling image, not a service).
 - 2026-08-11: moved `${{ }}` out of `run:` bodies into step `env:` in
   `container-{lint,build,scan,publish,iac,devcontainer}.yml` (semgrep run-shell-injection).
 - 2026-08-11: runner_image dual jobs, age/multi-arch gates, ci-container publish caller,
