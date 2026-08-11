@@ -32,10 +32,16 @@ COPY --from=ghcr.io/googlecontainertools/container-structure-test:1.19.3@sha256:
   /ko-app/container-structure-test /usr/local/bin/container-structure-test
 
 WORKDIR /workspace
-# Ensure non-root user exists when CI_BASE predates the ci user, then drop privileges.
-RUN id -u ci >/dev/null 2>&1 || useradd --create-home --uid 1000 --shell /bin/bash ci \
- && chown -R ci:ci /workspace
-USER ci
+# Ensure non-root uid 1000 exists when CI_BASE predates it, then drop privileges.
+# DHI / minimal bases often lack useradd — write passwd/group entries directly.
+RUN if ! id -u 1000 >/dev/null 2>&1; then \
+      printf 'ci:x:1000:1000::/home/ci:/bin/bash\n' >> /etc/passwd; \
+      printf 'ci:x:1000:\n' >> /etc/group; \
+      mkdir -p /home/ci; \
+    fi; \
+    chown -R 1000:1000 /workspace; \
+    if [ -d /home/ci ]; then chown -R 1000:1000 /home/ci; fi
+USER 1000:1000
 
 ENTRYPOINT []
 CMD ["bash"]

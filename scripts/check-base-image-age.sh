@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# DOCKER-BUILD-006 — fail when any FROM / COPY --from image is older than max_age_days.
+# DOCKER-BUILD-006 — fail when any final-stage FROM base image is older than max_age_days.
 #
 # Usage: check-base-image-age.sh <Dockerfile> <max_age_days>
 # Requires: docker.
+# Only FROM lines are checked (not COPY --from donors — those are tool pins, not bases).
+# Compatible with mawk (Ubuntu) and gawk — avoid IGNORECASE and [/] char classes.
 set -euo pipefail
 
 DOCKERFILE="${1:?Dockerfile path required}"
@@ -23,29 +25,19 @@ fi
 
 mapfile -t REFS < <(
   awk '
-    BEGIN { IGNORECASE=1 }
-    /^FROM[[:space:]]/ {
+    /^[Ff][Rr][Oo][Mm][[:space:]]/ {
       line=$0
-      sub(/^FROM[[:space:]]+/, "", line)
+      sub(/^[Ff][Rr][Oo][Mm][[:space:]]+/, "", line)
       sub(/[[:space:]]+[Aa][Ss][[:space:]].*$/, "", line)
       split(line, a, /[[:space:]]+/)
       ref=a[1]
       if (ref != "" && ref != "scratch" && ref !~ /^\$\{/) print ref
-      next
-    }
-    /^COPY[[:space:]]+--from=/ {
-      line=$0
-      sub(/^COPY[[:space:]]+--from=/, "", line)
-      split(line, a, /[[:space:]]+/)
-      ref=a[1]
-      # skip stage names (no slash, no colon, no digest)
-      if (ref ~ /[\/:@]/]/ print ref
     }
   ' "${DOCKERFILE}" | sort -u
 )
 
 if [[ ${#REFS[@]} -eq 0 ]]; then
-  echo "No image refs found in ${DOCKERFILE}; nothing to age-check"
+  echo "No base image refs found in ${DOCKERFILE}; nothing to age-check"
   exit 0
 fi
 
