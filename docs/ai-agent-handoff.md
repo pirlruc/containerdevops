@@ -26,7 +26,9 @@ Shared infra/secrets/supply-chain forward to
 | `docs/guardrails` | tag `1.1.0` → `6fe580c7767f992af597782559c3a3be9cc95bf8` (deinit'd; empty dir) |
 | `.github/scaffold` | `f8a6ba1842eba353ddd631f2311dd754bf0f44da` (deinit'd; empty dir) |
 | `ghcr.io/pirlruc/ci-container` | publish via `ci-container-image.yml` after ci-base exists |
-| commondevops `uses:` | **`74695e83…`** — replace with `1.0.0` after commondevops release |
+| commondevops `uses:` | tag `1.0.0` → `a504555c4731ee886d2a48c4ec20d110ad9434f8` |
+| `ghcr.io/pirlruc/ci-base` | `:1.0.0` (private until UI public) |
+| Release | [`1.0.0`](https://github.com/pirlruc/containerdevops/releases/tag/1.0.0) — publish blocked on private ci-base pull |
 
 ## Delivery status
 
@@ -70,6 +72,15 @@ git submodule update --init && git -C docs/guardrails checkout 1.1.0
 - Submodules are **deinitialized** (bor-cpp style); hydrate before `sync-templates.sh`.
 - **KICS exclusions:** IDs + why-not-fixed live in [`docs/kics-exclusions.md`](kics-exclusions.md)
   (DOCKER-LINT-002); keep in sync with `.github/kics.config` `exclude-queries`.
+
+## Known pitfalls (GHCR)
+
+- **Package visibility has no API.** Make public in UI:
+  https://github.com/users/pirlruc/packages/container/package/ci-base
+  → Package settings → Change visibility → Public.
+  Same for `ci-container` after first publish.
+- Or: package settings → Manage Actions access → add `pirlruc/containerdevops` (Read).
+- Or: repo secret `GHCR_READ_TOKEN` (classic PAT, `read:packages`) for `ci-container-image.yml`.
 
 ## Suggested next work
 
