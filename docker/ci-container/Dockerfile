@@ -8,21 +8,7 @@
 # ghcr.io/pirlruc/ci-base ref (CI-026).
 
 ARG CI_BASE=ghcr.io/pirlruc/ci-base:local
-ARG CST_VERSION=1.19.3
 
-# DHI python-dev has no curl; fetch CST from a short-lived Ubuntu stage.
-# ubuntu:24.04 — digest pinned (DOCKER-BUILD-003 / CI-026)
-FROM docker.io/library/ubuntu:24.04@sha256:561618e2c15bf2397621dd04f96926663a3b5616c189cf7e38db7e82f5c538ea AS cst
-ARG CST_VERSION
-# Transient fetch stage; curl/ca-certificates versions float with the digest-pinned base.
-# hadolint ignore=DL3008
-RUN apt-get update \
- && apt-get install -y --no-install-recommends curl ca-certificates \
- && curl -sSfL -o /container-structure-test \
-      "https://github.com/GoogleContainerTools/container-structure-test/releases/download/v${CST_VERSION}/container-structure-test-linux-amd64" \
- && chmod +x /container-structure-test
-
-# CI_BASE is digest-pinned by the publish caller (CI-026).
 # hadolint ignore=DL3006
 FROM ${CI_BASE}
 
@@ -37,7 +23,9 @@ USER root
 # wagoodman/dive:v0.12.0 — digest pinned (CI-026)
 COPY --from=wagoodman/dive:v0.12.0@sha256:b4bbb985609f32ddfeb8a31f2cb254998fce2b95c358ad588a91a1ed138d6033 \
   /usr/local/bin/dive /usr/local/bin/dive
-COPY --from=cst /container-structure-test /usr/local/bin/container-structure-test
+# ghcr.io/googlecontainertools/container-structure-test:1.19.3 — digest pinned (CI-026)
+COPY --from=ghcr.io/googlecontainertools/container-structure-test:1.19.3@sha256:b9e32886c354705a083ce3f1d0818ddeda81641feaeeb8aec38969bc4a10855c \
+  /ko-app/container-structure-test /usr/local/bin/container-structure-test
 
 WORKDIR /workspace
 # Ensure non-root user exists when CI_BASE predates the ci user, then drop privileges.
