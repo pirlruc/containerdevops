@@ -263,8 +263,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         env:
-          # Apply annotations to index + manifest so GHCR multi-arch pages see description.
-          DOCKER_METADATA_ANNOTATIONS_LEVELS: index,manifest
+          # Index annotations need a multi-platform index; single-platform export
+          # fails with "index annotations not supported for single platform export".
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: ${{ contains(inputs.platforms, ',') && 'index,manifest' || 'manifest' }}
         with:
           images: ${{ steps.owner.outputs.images }}
           tags: |
