@@ -74,6 +74,10 @@ GHCR base (otherwise `github.token` when Actions package access is granted).
 Optional input: `dhi_login` (default false) — when true, log in to dhi.io using
 those secrets. Do not use `secrets` in `if:` on reusable workflows.
 
+Optional OCI label inputs: `image_title` (defaults to `image_name`),
+`image_description` (defaults to `image_name`). Prefer image-specific text —
+do not pass the repository description.
+
 Uploads `container-image` artifact (`image.tar`).
 
 **Size gate:** `scripts/check-image-size.sh` measures the image via
@@ -102,6 +106,13 @@ present.
 | `dockerhub_image` | `""` (set to `namespace/name` to push Hub) |
 | `platforms` | `linux/amd64,linux/arm64` |
 | `sign` | `false` |
+| `image_title` | `""` (override OCI title; empty keeps metadata-action default) |
+| `image_description` | `""` (override OCI description; consumer-facing, max 512 chars) |
+| `image_documentation` | `""` (override OCI documentation URL) |
+| `image_url` | `""` (override OCI url) |
+| `image_vendor` | `""` (override OCI vendor) |
+| `dockerhub_readme` | `""` (path in caller checkout pushed as Hub Overview) |
+| `dockerhub_short_description` | `""` (Hub short description when readme is set) |
 
 Secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` when Hub enabled **or** when
 the Dockerfile pulls from `dhi.io`. Optional `ghcr_token` for private GHCR
@@ -110,6 +121,10 @@ pulls. The publish job logs in to `dhi.io` when those Hub secrets are present
 `id-token: write` (provenance via `actions/attest-build-provenance` when
 `sign: true`; no separate `attestations: write` grant is required on Free plan
 private repos — keep `sign: false` there).
+
+When `dockerhub_image` and `dockerhub_readme` are both set, the job pushes the
+readme as the Docker Hub Overview after the image push. The Hub token needs
+read/write/delete (admin-level) scope for the description API.
 
 ## container-iac.yml
 

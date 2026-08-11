@@ -1,4 +1,4 @@
-# ci-container
+# ci-container (GitHub Packages)
 
 Short-lived CI toolchain image for container jobs. Extends `ci-lint` with dive
 and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
@@ -7,10 +7,10 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 
 | Item | Value |
 |------|--------|
-| Docker Hub | `pirlruc/ci-container` |
+| GHCR | `ghcr.io/pirlruc/ci-container` |
 | Architectures | `linux/amd64` |
 | User | non-root `1000:1000` |
-| Base | `pirlruc/ci-lint` (digest-pinned at publish) |
+| Base | `ghcr.io/pirlruc/ci-lint` (digest-pinned at publish) |
 
 ### Tags
 
@@ -23,27 +23,51 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 
 Prefer a version tag or digest in production.
 
+## Authentication
+
+If the package is public, anonymous pulls work:
+
 ```bash
-docker pull pirlruc/ci-container:2.1.0
-# or
-docker pull pirlruc/ci-container@sha256:<digest>
+docker pull ghcr.io/pirlruc/ci-container:2.1.0
 ```
 
-## Quick start
+If the package is private, authenticate with a PAT that has `read:packages`:
+
+```bash
+echo "$CR_PAT" | docker login ghcr.io -u USERNAME --password-stdin
+docker pull ghcr.io/pirlruc/ci-container:2.1.0
+# or
+docker pull ghcr.io/pirlruc/ci-container@sha256:<digest>
+```
+
+## Use as a GitHub Actions job container
+
+```yaml
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/pirlruc/ci-container:2.1.0
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: hadolint Dockerfile
+```
+
+Grant the package **Actions** Read access for the calling repository when using
+`GITHUB_TOKEN`, or pass a PAT with `read:packages`.
+
+## Quick start (local)
 
 ```bash
 docker run --rm -v "$PWD:/workspace:ro" -w /workspace \
-  pirlruc/ci-container:2.1.0 \
+  ghcr.io/pirlruc/ci-container:2.1.0 \
   hadolint Dockerfile
 ```
 
-```bash
-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-  pirlruc/ci-container:2.1.0 \
-  dive --ci my-app:local
-```
-
-Hardened local run (read-only workspace mount):
+Hardened local run:
 
 ```bash
 docker run --rm \
@@ -52,7 +76,7 @@ docker run --rm \
   --security-opt no-new-privileges \
   --tmpfs /tmp:rw,noexec,nosuid,size=256m \
   -v "$PWD:/workspace:ro" -w /workspace \
-  pirlruc/ci-container:2.1.0 \
+  ghcr.io/pirlruc/ci-container:2.1.0 \
   hadolint Dockerfile
 ```
 
@@ -71,15 +95,15 @@ plain runner).
 ## Verify a publish
 
 ```bash
-# Prefer digest pins
-docker pull pirlruc/ci-container@sha256:<digest>
+docker pull ghcr.io/pirlruc/ci-container@sha256:<digest>
 
-# Cosign keyless verify (when the image was signed on a public repo)
 cosign verify \
   --certificate-identity-regexp 'https://github.com/pirlruc/containerdevops/.github/workflows/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  pirlruc/ci-container@sha256:<digest>
+  ghcr.io/pirlruc/ci-container@sha256:<digest>
 ```
+
+Signing runs only when the source repository is public (`sign: true`).
 
 ## Vulnerabilities
 

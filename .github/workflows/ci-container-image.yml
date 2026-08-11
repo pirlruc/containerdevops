@@ -28,7 +28,7 @@ on:
       ci_base:
         description: Digest-pinned or tagged ci-lint ref for FROM (CI-026)
         type: string
-        default: "ghcr.io/pirlruc/ci-lint:2.0.0"
+        default: "ghcr.io/pirlruc/ci-lint:2.0.1"
 
 concurrency:
   group: ci-container-image-${{ github.ref }}
@@ -79,7 +79,11 @@ jobs:
       platforms: linux/amd64
       image_max_size_mb: "700"
       build_args: |
-        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint:2.0.0' }}
+        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint:2.0.1' }}
+      image_title: ci-container
+      image_description: >-
+        Short-lived CI toolchain image for container jobs: ci-lint plus dive and
+        container-structure-test. Non-root 1000:1000, linux/amd64.
       blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || true }}
       dhi_login: false
     secrets:
@@ -126,7 +130,17 @@ jobs:
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
       build_args: |
-        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint:2.0.0' }}
+        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint:2.0.1' }}
+      image_title: ci-container
+      image_description: >-
+        Short-lived CI toolchain image for container jobs: ci-lint plus dive and
+        container-structure-test. Non-root 1000:1000, linux/amd64.
+      image_documentation: https://hub.docker.com/r/pirlruc/ci-container
+      image_url: https://hub.docker.com/r/pirlruc/ci-container
+      image_vendor: pirlruc
+      dockerhub_readme: docs/docker-hub.md
+      dockerhub_short_description: >-
+        CI toolchain: ci-lint plus dive and container-structure-test
       sign: ${{ github.event.repository.visibility == 'public' }}
       blocking: true
       dhi_login: false

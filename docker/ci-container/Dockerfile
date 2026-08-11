@@ -17,8 +17,11 @@ ARG CI_BASE=ghcr.io/pirlruc/ci-lint:local
 FROM ${CI_BASE}
 
 LABEL org.opencontainers.image.title="ci-container" \
-      org.opencontainers.image.description="Container CI tooling for pirlruc/containerdevops" \
+      org.opencontainers.image.description="Short-lived CI toolchain image for container jobs: ci-lint plus dive and container-structure-test. Non-root 1000:1000, linux/amd64." \
       org.opencontainers.image.source="https://github.com/pirlruc/containerdevops" \
+      org.opencontainers.image.url="https://hub.docker.com/r/pirlruc/ci-container" \
+      org.opencontainers.image.documentation="https://hub.docker.com/r/pirlruc/ci-container" \
+      org.opencontainers.image.vendor="pirlruc" \
       org.opencontainers.image.licenses="MIT"
 
 USER root
