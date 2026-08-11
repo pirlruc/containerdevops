@@ -1,13 +1,13 @@
 name: Container Lint (reusable)
 
-# Hadolint with docker profile thresholds stays here (ci-container image or host install).
+# Hadolint with docker profile thresholds (host install or docker run of runner_image).
 # actionlint / shellcheck / zizmor → commondevops common-infra-lint.
 # Secrets (DOCKER-SEC-005) → commondevops common-secrets-sast.
 # commondevops pin: keep uses: and scripts_ref in lockstep (update after commondevops release).
 #
-# runner_image: empty → bare runner + install-container-tools.sh (bootstrap / ci-base caller).
-# Non-empty → job container (ghcr.io/pirlruc/ci-container:latest after publish).
-# Dual jobs: empty-string `container:` fails on Actions; if-guarded jobs are the reliable path.
+# runner_image: empty → install tools on the bare runner (bootstrap / ci-base caller).
+# Non-empty → docker run that image for hadolint/shellcheck (avoids job-level container:
+# which fails workflow validation when the expression can be empty).
 
 on:
   workflow_call:
@@ -38,7 +38,7 @@ on:
         type: string
         default: ""
       runner_image:
-        description: "Job container image; empty runs on the bare runner (install tools). After publish use ghcr.io/pirlruc/ci-container:latest"
+        description: "Optional image for docker-run hadolint; empty installs on the host"
         required: false
         type: string
         default: ""
@@ -83,8 +83,7 @@ env:
   ADVISORY: ${{ inputs.blocking == false }}
 
 jobs:
-  lint-host:
-    if: inputs.runner_image == ''
+  lint:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -110,7 +109,8 @@ jobs:
             scripts
           sparse-checkout-cone-mode: false
 
-      - name: Install tooling
+      - name: Install tooling (host path)
+        if: inputs.runner_image == ''
         working-directory: ${{ github.workspace }}
         env:
           INSTALL_ONLY: hadolint,shellcheck
@@ -132,79 +132,43 @@ jobs:
           fi
           echo "hadolint=${VALUE}" >> "$GITHUB_OUTPUT"
 
-      - name: hadolint
+      - name: hadolint (host)
+        if: inputs.runner_image == ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         run: |
           hadolint --failure-threshold "${{ steps.thr.outputs.hadolint }}" \
             "${{ inputs.dockerfile }}"
 
-      - name: shellcheck entrypoints
-        if: inputs.shell_scripts != ''
+      - name: hadolint (runner_image)
+        if: inputs.runner_image != ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         run: |
-          # shellcheck disable=SC2086
-          shellcheck ${{ inputs.shell_scripts }}
-
-  lint-container:
-    if: inputs.runner_image != ''
-    runs-on: ubuntu-24.04
-    container: ${{ inputs.runner_image }}
-    timeout-minutes: 15
-    permissions:
-      contents: read
-    defaults:
-      run:
-        working-directory: ${{ inputs.working_directory }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Checkout containerdevops scripts
-        if: github.actor != 'dependabot[bot]'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: pirlruc/containerdevops
-          ref: ${{ inputs.scripts_ref || github.sha }}
-          token: ${{ secrets.checkout_token || github.token }}
-          persist-credentials: false
-          path: _containerdevops
-          sparse-checkout: |
-            scripts
-          sparse-checkout-cone-mode: false
-
-      - name: Resolve hadolint threshold
-        id: thr
-        working-directory: ${{ github.workspace }}
-        run: |
-          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
-          if [[ ! -f "$FILE" ]]; then
-            echo "missing vendored thresholds at $FILE" >&2
-            exit 1
-          fi
-          VALUE="$(bash _containerdevops/scripts/read-thresholds.sh hadolint_failure_threshold "$FILE")"
-          if [[ -z "$VALUE" ]]; then
-            echo "empty hadolint_failure_threshold from $FILE" >&2
-            exit 1
-          fi
-          echo "hadolint=${VALUE}" >> "$GITHUB_OUTPUT"
-
-      - name: hadolint
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
-        run: |
-          hadolint --failure-threshold "${{ steps.thr.outputs.hadolint }}" \
+          docker run --rm -v "${{ github.workspace }}:/work:ro" -w "/work/${{ inputs.working_directory }}" \
+            "${{ inputs.runner_image }}" \
+            hadolint --failure-threshold "${{ steps.thr.outputs.hadolint }}" \
             "${{ inputs.dockerfile }}"
 
-      - name: shellcheck entrypoints
-        if: inputs.shell_scripts != ''
+      - name: shellcheck entrypoints (host)
+        if: inputs.shell_scripts != '' && inputs.runner_image == ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         run: |
           # shellcheck disable=SC2086
           shellcheck ${{ inputs.shell_scripts }}
+
+      - name: shellcheck entrypoints (runner_image)
+        if: inputs.shell_scripts != '' && inputs.runner_image != ''
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        run: |
+          # shellcheck disable=SC2086
+          docker run --rm -v "${{ github.workspace }}:/work:ro" -w "/work/${{ inputs.working_directory }}" \
+            "${{ inputs.runner_image }}" \
+            shellcheck ${{ inputs.shell_scripts }}
 
   infra:
     # CI-024 — pin updated after commondevops 1.0.0 lands (placeholder until then).
     if: github.actor != 'dependabot[bot]' && inputs.run_infra_lint != false
+    permissions:
+      contents: read
     uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@74695e83a7b79784ee81fd970d9051d8efd711e8
     with:
       blocking: ${{ inputs.blocking }}
@@ -218,6 +182,9 @@ jobs:
   secrets:
     # CI-024 / DOCKER-SEC-005
     if: github.actor != 'dependabot[bot]' && inputs.run_secrets_scan != false
+    permissions:
+      contents: read
+      security-events: write
     uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@74695e83a7b79784ee81fd970d9051d8efd711e8
     with:
       blocking: ${{ inputs.blocking }}
