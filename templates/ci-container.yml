@@ -1,4 +1,5 @@
 # Create-once thin caller — seeded by sync-container-tooling.sh
+# Replace PLACEHOLDER_SHA with the same commit SHA you pin in uses: and scripts_ref.
 name: Container
 
 on:
@@ -14,24 +15,43 @@ permissions:
 
 jobs:
   lint:
+    permissions:
+      contents: read
+      security-events: write
     uses: pirlruc/containerdevops/.github/workflows/container-lint.yml@PLACEHOLDER_SHA
     with:
       dockerfile: Dockerfile
+      scripts_ref: PLACEHOLDER_SHA
       blocking: ${{ inputs.blocking }}
+    secrets:
+      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
+      scripts_token: ${{ secrets.CONTAINERDEVOPS_READ_TOKEN }}
 
   build:
     needs: lint
+    permissions:
+      contents: read
+      packages: read
     uses: pirlruc/containerdevops/.github/workflows/container-build.yml@PLACEHOLDER_SHA
     with:
       context: .
       dockerfile: Dockerfile
       structure_test_config: container-structure-test.yml
+      scripts_ref: PLACEHOLDER_SHA
       blocking: ${{ inputs.blocking }}
+    secrets:
+      scripts_token: ${{ secrets.CONTAINERDEVOPS_READ_TOKEN }}
 
   scan:
     needs: build
+    permissions:
+      contents: read
+      security-events: write
     uses: pirlruc/containerdevops/.github/workflows/container-scan.yml@PLACEHOLDER_SHA
     with:
       image: containerdevops-ci:local
       image_artifact: container-image
+      scripts_ref: PLACEHOLDER_SHA
       blocking: ${{ inputs.blocking }}
+    secrets:
+      scripts_token: ${{ secrets.CONTAINERDEVOPS_READ_TOKEN }}

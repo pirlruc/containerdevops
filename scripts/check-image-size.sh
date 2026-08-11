@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
-# Fail if docker image size (MB) exceeds the org floor.
+# Fail if image rootfs size (MB) exceeds the org floor (DOCKER-PERF-001).
+#
+# Measurement: `du -sxm /` inside a disposable container. This is store-
+# independent (unlike `docker image inspect .Size`, which reports uncompressed
+# size on classic Docker Engine / GHA runners but a compressed value under
+# containerd image-store hosts — a ~3.5x gap for the same image).
 set -euo pipefail
 IMAGE="${1:?image ref required}"
 MAX_MB="${2:?max size MB required}"
-bytes="$(docker image inspect "${IMAGE}" --format '{{.Size}}')"
-mb=$((bytes / 1024 / 1024))
-echo "Image ${IMAGE} size: ${mb} MB (limit ${MAX_MB} MB)"
+
+mb="$(docker run --rm --entrypoint sh "${IMAGE}" -c 'du -sxm / 2>/dev/null | cut -f1')"
+if [[ -z "${mb}" || ! "${mb}" =~ ^[0-9]+$ ]]; then
+  echo "error: could not measure rootfs size for ${IMAGE}" >&2
+  exit 2
+fi
+
+echo "Image ${IMAGE} rootfs: ${mb} MB (limit ${MAX_MB} MB; measured via du -sxm /)"
 if (( mb > MAX_MB )); then
   echo "DOCKER-PERF-001: image exceeds image_max_size_mb=${MAX_MB}" >&2
   exit 1

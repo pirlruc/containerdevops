@@ -29,10 +29,12 @@ on:
         required: false
         type: string
         default: "os,library"
-    secrets:
-      checkout_token:
-        description: Token to read pirlruc/commondevops (nested reusables)
+      ignorefile:
+        description: "Optional path to a Trivy ignorefile (default .trivyignore.yaml or .trivyignore)"
         required: false
+        type: string
+        default: ""
+    secrets:
       scripts_token:
         description: Token to read this repo scripts when called cross-repo; defaults to github.token
         required: false
@@ -53,6 +55,9 @@ on:
       pkg_types:
         type: string
         default: "os,library"
+      ignorefile:
+        type: string
+        default: ""
 
 # CI-025
 permissions: {}
@@ -107,6 +112,7 @@ jobs:
         env:
           PKG_TYPES: ${{ inputs.pkg_types }}
           IMAGE: ${{ inputs.image }}
+          IGNOREFILE: ${{ inputs.ignorefile }}
         run: |
           FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
@@ -115,7 +121,9 @@ jobs:
           CFG=()
           [[ -f trivy.yaml ]] && CFG=(--config trivy.yaml)
           IGNORE=()
-          if [[ -f .trivyignore.yaml ]]; then
+          if [[ -n "${IGNOREFILE}" && -f "${IGNOREFILE}" ]]; then
+            IGNORE=(--ignorefile "${IGNOREFILE}")
+          elif [[ -f .trivyignore.yaml ]]; then
             IGNORE=(--ignorefile .trivyignore.yaml)
           elif [[ -f .trivyignore ]]; then
             IGNORE=(--ignorefile .trivyignore)
@@ -171,7 +179,7 @@ jobs:
       - name: Upload Trivy SARIF
         if: always() && hashFiles('scan-results/trivy.sarif') != ''
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@ea14db8afdef5d462e69d78c4ca45002d4522418 # v4.37.4
+        uses: github/codeql-action/upload-sarif@5595ccaf912efad79be6eef63a5619ff05969be3 # v4.37.6
         with:
           sarif_file: scan-results/trivy.sarif
           category: trivy-image

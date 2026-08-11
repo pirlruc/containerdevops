@@ -32,10 +32,6 @@ on:
         type: string
         default: ""
     secrets:
-      # Required when the caller is a different private repo (see container-lint.yml).
-      checkout_token:
-        description: Token to read pirlruc/commondevops (nested reusables)
-        required: false
       scripts_token:
         description: Token to read this repo scripts when called cross-repo; defaults to github.token
         required: false
@@ -169,7 +165,7 @@ jobs:
       - name: Upload KICS SARIF
         if: always() && hashFiles('kics-results/results.sarif') != ''
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@ea14db8afdef5d462e69d78c4ca45002d4522418 # v4.37.4
+        uses: github/codeql-action/upload-sarif@5595ccaf912efad79be6eef63a5619ff05969be3 # v4.37.6
         with:
           sarif_file: kics-results/results.sarif
           category: kics

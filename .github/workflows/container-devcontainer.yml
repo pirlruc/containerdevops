@@ -34,9 +34,6 @@ on:
         type: string
         default: ""
     secrets:
-      checkout_token:
-        description: Token to read pirlruc/commondevops (nested reusables)
-        required: false
       scripts_token:
         description: Token to read this repo scripts when called cross-repo; defaults to github.token
         required: false

@@ -1,17 +1,17 @@
 # syntax=docker/dockerfile:1
-# Container CI tooling image — extends commondevops ci-base with dive + structure-test.
-# Build with: docker build --build-arg CI_BASE=ghcr.io/pirlruc/ci-base@sha256:<digest> ...
-# Publish target: ghcr.io/pirlruc/ci-container
+# Container CI tooling image — extends commondevops ci-lint with dive + structure-test.
+# Build with: docker build --build-arg CI_BASE=ci-lint:local ...
+# Publish target: ghcr.io/pirlruc/ci-container (and Docker Hub pirlruc/ci-container).
 # KICS stays a separate digest-pinned image (container-iac.yml).
 #
 # CI_BASE default is :local for bootstrap; publish callers must pass a digest-pinned
-# ghcr.io/pirlruc/ci-base ref (CI-026).
+# ghcr.io/pirlruc/ci-lint ref (CI-026).
 #
 # No HEALTHCHECK: short-lived CI toolchain (CLI job container), not a supervised
 # service. KICS query b03a748a-542d-44f4-bb86-9199ab4fd2d5 is excluded with rationale
 # in docs/kics-exclusions.md (DOCKER-LINT-002 / DOCKER-RUN-002).
 
-ARG CI_BASE=ghcr.io/pirlruc/ci-base:local
+ARG CI_BASE=ghcr.io/pirlruc/ci-lint:local
 
 # hadolint ignore=DL3006
 FROM ${CI_BASE}
@@ -21,7 +21,6 @@ LABEL org.opencontainers.image.title="ci-container" \
       org.opencontainers.image.source="https://github.com/pirlruc/containerdevops" \
       org.opencontainers.image.licenses="MIT"
 
-# Base may already be USER ci; switch to root for system installs.
 USER root
 
 # wagoodman/dive:v0.13.1 — digest pinned (CI-026)
@@ -32,8 +31,6 @@ COPY --from=ghcr.io/googlecontainertools/container-structure-test:1.22.1@sha256:
   /ko-app/container-structure-test /usr/local/bin/container-structure-test
 
 WORKDIR /workspace
-# Ensure non-root uid 1000 exists when CI_BASE predates it, then drop privileges.
-# DHI / minimal bases often lack useradd — write passwd/group entries directly.
 RUN if ! id -u 1000 >/dev/null 2>&1; then \
       printf 'ci:x:1000:1000::/home/ci:/bin/bash\n' >> /etc/passwd; \
       printf 'ci:x:1000:\n' >> /etc/group; \

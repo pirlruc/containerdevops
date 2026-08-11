@@ -55,10 +55,6 @@ on:
         required: false
       DOCKERHUB_TOKEN:
         required: false
-      # Required when the caller is a different private repo (see container-lint.yml).
-      checkout_token:
-        description: Token to read pirlruc/commondevops (nested reusables)
-        required: false
       scripts_token:
         description: Token to read this repo scripts when called cross-repo; defaults to github.token
         required: false
@@ -190,12 +186,19 @@ jobs:
             org.opencontainers.image.description=CI build from containerdevops
 
       - name: container-structure-test
-        if: hashFiles(inputs.structure_test_config) != ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
           STRUCTURE_TEST_CONFIG: ${{ inputs.structure_test_config }}
         run: |
+          if [[ -z "${STRUCTURE_TEST_CONFIG}" ]]; then
+            echo "structure_test_config empty — skipping"
+            exit 0
+          fi
+          if [[ ! -f "${STRUCTURE_TEST_CONFIG}" ]]; then
+            echo "structure_test_config not found: ${STRUCTURE_TEST_CONFIG} — skipping"
+            exit 0
+          fi
           container-structure-test test \
             --image "${IMAGE_NAME}" \
             --config "${STRUCTURE_TEST_CONFIG}"

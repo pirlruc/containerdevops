@@ -46,5 +46,3 @@ jobs:
       paths: .
       scripts_ref: ${{ github.sha }}
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
-    secrets:
-      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
