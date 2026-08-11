@@ -45,6 +45,7 @@ jobs:
        github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
       contents: read
+      security-events: write
     uses: ./.github/workflows/container-lint.yml
     with:
       dockerfile: docker/ci-container/Dockerfile
@@ -126,7 +127,7 @@ jobs:
       dhi_login: false
       tag_latest: ${{ github.event_name != 'release' || github.event.release.prerelease == false }}
       verify_platforms: true
-      verify_command: "true"
+      verify_command: /bin/true
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

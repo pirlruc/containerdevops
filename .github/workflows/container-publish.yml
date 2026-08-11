@@ -62,7 +62,7 @@ on:
         description: Command run inside each platform image during multi-arch verify
         required: false
         type: string
-        default: "true"
+        default: "/bin/true"
       structure_test_config:
         description: Optional CST config for per-platform verify (empty skips CST)
         required: false
@@ -81,6 +81,7 @@ on:
       # Required when the caller is a different private repo (see container-lint.yml).
       checkout_token:
         required: false
+  # workflow_dispatch capped at 10 inputs (GitHub limit); full surface is workflow_call.
   workflow_dispatch:
     inputs:
       context:
@@ -107,24 +108,12 @@ on:
       dhi_login:
         type: boolean
         default: false
-      scripts_ref:
-        type: string
-        default: ""
       tag_latest:
         type: boolean
         default: false
       verify_platforms:
         type: boolean
         default: true
-      verify_command:
-        type: string
-        default: "true"
-      structure_test_config:
-        type: string
-        default: ""
-      build_args:
-        type: string
-        default: ""
 
 # CI-025
 permissions: {}

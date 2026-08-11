@@ -16,12 +16,15 @@ concurrency:
   group: containerdevops-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# CI-025
+# CI-025 — caller grants the max scopes callees may request.
 permissions: {}
 
 jobs:
   lint:
     if: github.actor != 'dependabot[bot]'
+    permissions:
+      contents: read
+      security-events: write
     uses: ./.github/workflows/container-lint.yml
     with:
       dockerfile: docker/ci-container/Dockerfile
@@ -29,16 +32,19 @@ jobs:
       shell_scripts: scripts/*.sh
       scripts_ref: ${{ github.sha }}
       runner_image: ""
-      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
+      blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
   iac:
     if: github.actor != 'dependabot[bot]'
+    permissions:
+      contents: read
+      security-events: write
     uses: ./.github/workflows/container-iac.yml
     with:
       paths: .
       scripts_ref: ${{ github.sha }}
-      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
+      blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
