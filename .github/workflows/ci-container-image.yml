@@ -84,9 +84,10 @@ jobs:
       dhi_login: false
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
-      # Omit ghcr_token first — reusable defaults to github.token.
-      # If pull DENIED: pass secrets.COMMONDEVOPS_READ_TOKEN (needs packages:read)
-      # or grant Actions access on ci-base package (Read for pirlruc/containerdevops).
+      # Private ci-base: GITHUB_TOKEN cannot pull another repo's package. Prefer
+      # package UI → Manage Actions access → add pirlruc/containerdevops (Read),
+      # or make the package public. Until then use a packages:read PAT.
+      ghcr_token: ${{ secrets.GHCR_READ_TOKEN || secrets.COMMONDEVOPS_READ_TOKEN }}
 
   scan:
     needs: build
@@ -138,4 +139,4 @@ jobs:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
-      # Same as build: github.token first; wire ghcr_token only if private pull DENIED.
+      ghcr_token: ${{ secrets.GHCR_READ_TOKEN || secrets.COMMONDEVOPS_READ_TOKEN }}
