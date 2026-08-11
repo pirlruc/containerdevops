@@ -25,10 +25,10 @@ Shared infra/secrets/supply-chain forward to
 |----------------------|-----|
 | `docs/guardrails` | tag `1.1.0` → `6fe580c7767f992af597782559c3a3be9cc95bf8` (deinit'd; empty dir) |
 | `.github/scaffold` | `f8a6ba1842eba353ddd631f2311dd754bf0f44da` (deinit'd; empty dir) |
-| `ghcr.io/pirlruc/ci-container` | publish via `ci-container-image.yml` (dispatch `publish=true`) |
+| `ghcr.io/pirlruc/ci-container` | `:1.0.1` / `:1.0` / `:latest` → `sha256:4ef9ec3921576c9dbf1677b53dac93aec918596fe6fcff2f25de51eeed2dceb5` (private) |
 | commondevops `uses:` | tag `1.0.0` → `a504555c4731ee886d2a48c4ec20d110ad9434f8` |
 | `ghcr.io/pirlruc/ci-base` | `:1.0.0` (private; Actions Read for this repo) |
-| Release | cut `1.0.1` at tip after Trivy ignore lands (tag `1.0.0` peels to older SHA) |
+| Release | [`1.0.1`](https://github.com/pirlruc/containerdevops/releases/tag/1.0.1) @ `e673165f…` |
 
 ## Delivery status
 
@@ -44,7 +44,7 @@ Shared infra/secrets/supply-chain forward to
 | CDO-012 — DOCKER-TEST-002 multi-arch | Done; deviation removed |
 | CDO-013 — ci-container publish caller | Done |
 | CDO-014 — self-CI + scheduled security | Done |
-| CDO-015 — Trivy ignores + dive/CST bump | Done (publish pending) |
+| CDO-015 — Trivy ignores + dive/CST bump | Done; `ci-container:1.0.1` published |
 
 ## Commands
 
@@ -90,14 +90,14 @@ git submodule update --init && git -C docs/guardrails checkout 1.1.0
 
 ## Suggested next work
 
-1. Dispatch `CI Container Image` with `publish=true` after CDO-015 merges; confirm
-   `ghcr.io/pirlruc/ci-container:1.0.0` (or `1.0.1`).
-2. Cut release tag at tip SHA for zizmor SHA pins (prefer `1.0.1` over moving `1.0.0`).
-3. Re-pin commondevops `ci-base-image.yml` `uses:` / `scripts_ref` to that release.
-4. Confirm Dependabot Insights (CDO-008-T2).
+1. Grant Actions Read on `ci-container` to consumer repos (or UI-public), same as ci-base.
+2. Finish commondevops re-pin PR to `e673165f…` / `1.0.1`.
+3. Confirm Dependabot Insights (CDO-008-T2).
 
 ## Recent history
 
+- 2026-08-11: release `1.0.1`; published `ci-container:1.0.1` / `:1.0` / `:latest`
+  ([run 31521149719](https://github.com/pirlruc/containerdevops/actions/runs/31521149719)).
 - 2026-08-11: CDO-015 — dive `v0.13.1` + structure-test `1.22.1`; path-scoped
   `.trivyignore.yaml` for donor binaries (review 2026-11-11).
 - 2026-08-11: `ghcr_token` defaults to `github.token` after Actions package access;
