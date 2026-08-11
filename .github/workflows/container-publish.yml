@@ -85,6 +85,11 @@ on:
       scripts_token:
         description: Token to read this repo scripts when called cross-repo; defaults to github.token
         required: false
+      ghcr_token:
+        description: >-
+          Optional packages:read token to prefetch private GHCR bases before push login.
+          Prefer package Actions access so github.token can pull; otherwise pass a PAT.
+        required: false
   # workflow_dispatch capped at 10 inputs (GitHub limit); full surface is workflow_call.
   workflow_dispatch:
     inputs:
@@ -168,12 +173,34 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Log in to GHCR
+      # Pull private bases with optional packages:read PAT, then re-login with
+      # github.token for packages:write push (read-only PAT cannot push).
+      - name: Log in to GHCR (private base pull)
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.ghcr_token || github.token }}
+
+      - name: Prefetch CI_BASE from build_args
+        env:
+          BUILD_ARGS: ${{ inputs.build_args }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r line || [[ -n "${line}" ]]; do
+            [[ -z "${line}" || "${line}" =~ ^[[:space:]]*# ]] && continue
+            [[ "${line}" == CI_BASE=* ]] || continue
+            base="${line#CI_BASE=}"
+            echo "Prefetching ${base}"
+            docker pull "${base}"
+          done <<< "${BUILD_ARGS}"
+
+      - name: Log in to GHCR (push)
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
       - name: Log in to Docker Hub
         if: inputs.dockerhub_image != ''
