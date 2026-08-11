@@ -44,6 +44,11 @@ on:
         required: false
         type: string
         default: ""
+      image_max_size_mb:
+        description: Override DOCKER-PERF-001 image_max_size_mb (empty = vendored threshold)
+        required: false
+        type: string
+        default: ""
     secrets:
       # Optional — required when Dockerfile FROM lines pull from dhi.io (Community DHI).
       DOCKERHUB_USERNAME:
@@ -84,6 +89,9 @@ on:
         type: string
         default: ""
       build_args:
+        type: string
+        default: ""
+      image_max_size_mb:
         type: string
         default: ""
 
@@ -183,10 +191,16 @@ jobs:
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
+          IMAGE_MAX_SIZE_MB_OVERRIDE: ${{ inputs.image_max_size_mb }}
         run: |
           FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
-          MAX="$(bash _containerdevops/scripts/read-thresholds.sh image_max_size_mb "$FILE")"
+          if [[ -n "${IMAGE_MAX_SIZE_MB_OVERRIDE}" ]]; then
+            MAX="${IMAGE_MAX_SIZE_MB_OVERRIDE}"
+            echo "Using caller image_max_size_mb override=${MAX}"
+          else
+            MAX="$(bash _containerdevops/scripts/read-thresholds.sh image_max_size_mb "$FILE")"
+          fi
           bash _containerdevops/scripts/check-image-size.sh "${IMAGE_NAME}" "${MAX}"
 
       - name: Dive efficiency
