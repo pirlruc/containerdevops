@@ -13,70 +13,69 @@
 ## Scope
 
 Owns `.github/workflows/container-{lint,build,scan,publish,iac,devcontainer}.yml`,
-`scripts/`, `templates/`, and `docker/ci-container/`. Consumers pin
-`pirlruc/containerdevops@<sha>`.
+`ci-container-image.yml`, self-CI / security callers, `scripts/`, `templates/`, and
+`docker/ci-container/`. Consumers pin `pirlruc/containerdevops@<sha|tag>`.
 
-Shared infra/secrets/supply-chain categories forward to
-[pirlruc/commondevops](https://github.com/pirlruc/commondevops) once that repo has a
-published SHA.
+Shared infra/secrets/supply-chain forward to
+[pirlruc/commondevops](https://github.com/pirlruc/commondevops).
 
-Guardrails pack: [docker/](https://github.com/pirlruc/guardrails/tree/main/docker).
-
-## Pins (2026-08-10)
+## Pins (2026-08-11)
 
 | Submodule / artifact | Pin |
 |----------------------|-----|
-| `docs/guardrails` | tag `1.0.0` → `925b9f32659936382c67850ec125a182261710bf` |
-| `.github/scaffold` | `0db5890f808e4a9b9d11eabfc9a95b2b90898fad` |
-| `ghcr.io/pirlruc/ci-container` | local tag `:local`; workflows use `:latest` until publish |
-| commondevops `uses:` | **`74695e83a7b79784ee81fd970d9051d8efd711e8`** — replace after first commondevops push |
+| `docs/guardrails` | tag `1.1.0` → `6fe580c7767f992af597782559c3a3be9cc95bf8` (deinit'd; empty dir) |
+| `.github/scaffold` | `f8a6ba1842eba353ddd631f2311dd754bf0f44da` (deinit'd; empty dir) |
+| `ghcr.io/pirlruc/ci-container` | publish via `ci-container-image.yml` after ci-base exists |
+| commondevops `uses:` | **`74695e83…`** — replace with `1.0.0` after commondevops release |
 
 ## Delivery status
 
 | Phase / epic | Status |
 |--------------|--------|
 | Phase 1 — CDO-001…CDO-005 | Done |
-| CDO-006 — `container-devcontainer.yml` | Done (authored; hadolint + structure-test stub) |
-| CDO-007 — CI-025 permissions | Done (authored) |
-| CDO-008 — multi-ecosystem Dependabot | Open (config rewritten; Insights after default-branch land) |
-| CDO-009 — ai-reviewer pass | Open |
-| DOCKER-BUILD-006 / DOCKER-TEST-002 | Deviations in `docs/guardrail-deviations.yml` |
+| CDO-006 — `container-devcontainer.yml` | Done |
+| CDO-007 — CI-025 permissions | Done (T1 closed) |
+| CDO-008 — multi-ecosystem Dependabot | T1 done; T2 Insights after merge |
+| CDO-009 — review pass | Done → spawned CDO-010…014 |
+| CDO-010 — `runner_image` bootstrap | Done |
+| CDO-011 — DOCKER-BUILD-006 age gate | Done; deviation removed |
+| CDO-012 — DOCKER-TEST-002 multi-arch | Done; deviation removed |
+| CDO-013 — ci-container publish caller | Done |
+| CDO-014 — self-CI + scheduled security | Done |
 
 ## Commands
 
 ```bash
 bash scripts/check-container-local.sh --dockerfile Dockerfile --context /path/to/app
 ./scripts/sync-container-tooling.sh /path/to/consuming-repo
-# Local CI image (already built on this host as :local):
-docker build -t ghcr.io/pirlruc/ci-container:local docker/ci-container
+docker build --build-arg CI_BASE=ghcr.io/pirlruc/ci-base:latest \
+  -t ghcr.io/pirlruc/ci-container:local docker/ci-container
 python3 .github/scaffold/scripts/issues-sync.py \
   --repo pirlruc/containerdevops --yaml docs/issues.yml --dry-run
+# Hydrate submodules when needed:
+git submodule update --init && git -C docs/guardrails checkout 1.1.0
 ```
 
 ## Known pitfalls
 
-- **`74695e83a7b79784ee81fd970d9051d8efd711e8`** in `container-lint.yml` (infra + secrets jobs) must be
-  replaced with the first published commondevops commit; keep `scripts_ref` in lockstep.
-- Private reusable workflows need Actions access_level `user` on this repo (and callers).
+- **Bootstrap:** pass `runner_image: ""` until `ghcr.io/pirlruc/ci-container` is public.
+- **ci-container build** needs resolvable `CI_BASE` (after commondevops publishes ci-base).
 - Private consumers must pass `checkout_token` + matching `scripts_ref`.
-- **Scan stays on the host runner** (needs `docker load` for `image_artifact`); lint /
-  devcontainer use `container: ghcr.io/pirlruc/ci-container:latest`.
-- Build/publish must **not** use job `container:` (buildx/docker daemon).
+- **Scan stays on the host runner** (needs `docker load`); lint may use job container after publish.
+- Build/publish must **not** use job `container:` (buildx/docker daemon) — CI-028.
 - Signing / provenance (`sign: true`) needs a public repo or Enterprise Cloud.
-- DHI pulls need `DOCKERHUB_*` + CI-024 Dependabot skip on login steps.
+- Submodules are **deinitialized** (bor-cpp style); hydrate before `sync-templates.sh`.
 
 ## Suggested next work
 
-1. Land first commit on [commondevops](https://github.com/pirlruc/commondevops); replace
-   `74695e83a7b79784ee81fd970d9051d8efd711e8` here and re-pin consumers.
-2. Publish `ghcr.io/pirlruc/ci-container:latest` from `docker/ci-container`.
-3. Merge this branch; confirm Dependabot Insights one-PR grouping (CDO-008-T2).
-4. Cheap follow-ups for DOCKER-BUILD-006 / DOCKER-TEST-002 (or keep deviations).
+1. Merge this branch; confirm Dependabot Insights (CDO-008-T2).
+2. After commondevops `1.0.0` + public `ci-base`, cut containerdevops `1.0.0` release to publish ci-container.
+3. Re-pin commondevops `uses:` from `74695e83…` to `1.0.0`.
+4. Make `ghcr.io/pirlruc/ci-container` package public; default `runner_image` to `:latest` if desired.
 
 ## Recent history
 
-- Phase 3–4 ops alignment on `feature-dependency-update-policy` (2026-08-10): submodule
-  bumps, CI-025, commondevops placeholders, ci-container image path, Dependabot rewrite,
-  CDO-006 workflow, deviations for multi-arch / base-image age.
+- 2026-08-11: runner_image dual jobs, age/multi-arch gates, ci-container publish caller,
+  self-CI/security schedules, guardrails 1.1.0 + scaffold bump, deviations cleared.
 
-*Last updated: 2026-08-10*
+*Last updated: 2026-08-11*

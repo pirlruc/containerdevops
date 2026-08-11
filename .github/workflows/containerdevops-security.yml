@@ -1,0 +1,66 @@
+name: Containerdevops Security (scheduled)
+
+# Time-varying gates: secrets/SAST, image rescan, KICS, Scorecard-adjacent supply chain.
+# Deterministic lint stays on push/PR (containerdevops-ci.yml).
+
+on:
+  schedule:
+    # Weekly Tuesday 06:17 UTC
+    - cron: "17 6 * * 2"
+  workflow_dispatch:
+    inputs:
+      blocking:
+        description: Fail jobs on gate errors
+        type: boolean
+        default: false
+
+concurrency:
+  group: containerdevops-security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  secrets-sast:
+    if: github.actor != 'dependabot[bot]'
+    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@74695e83a7b79784ee81fd970d9051d8efd711e8
+    with:
+      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || false }}
+      working_directory: .
+      scripts_ref: 74695e83a7b79784ee81fd970d9051d8efd711e8
+    secrets:
+      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
+
+  supply-chain:
+    if: github.actor != 'dependabot[bot]'
+    uses: pirlruc/commondevops/.github/workflows/common-supply-chain.yml@74695e83a7b79784ee81fd970d9051d8efd711e8
+    with:
+      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || false }}
+      working_directory: .
+      scripts_ref: 74695e83a7b79784ee81fd970d9051d8efd711e8
+    secrets:
+      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
+
+  iac:
+    if: github.actor != 'dependabot[bot]'
+    uses: ./.github/workflows/container-iac.yml
+    with:
+      paths: .
+      scripts_ref: ${{ github.sha }}
+      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || false }}
+    secrets:
+      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
+
+  published-image-rescan:
+    if: github.actor != 'dependabot[bot]'
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/container-scan.yml
+    with:
+      image: ghcr.io/pirlruc/ci-container:latest
+      scripts_ref: ${{ github.sha }}
+      pkg_types: library
+      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || false }}
+    secrets:
+      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}

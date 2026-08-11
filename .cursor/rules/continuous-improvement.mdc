@@ -15,7 +15,7 @@ Refresh the prompt in the same session if any of the following change:
 
 | Trigger | Example |
 |---------|---------|
-| Surface the prompt reviews | Scripts, templates, Cursor rules, language packs, process docs |
+| Surface the prompt reviews | Scripts, templates, Cursor rules, language packs, process docs, reusable workflows, CI toolchain Dockerfiles |
 | Pin or schema drift | Methodology/guardrails pin bump; `docs/issues-schema.md`; label vocabulary |
 | Automation contract | Output shape, tool allowlist, or trigger assumptions |
 
@@ -55,6 +55,6 @@ Keep these sections, in order, across every repo that carries the file:
 
 ## Related
 
-- Issue methodology: [github-issue-adr.mdc](github-issue-adr.mdc)
-- Approval gates: [agent-workflow.mdc](agent-workflow.mdc)
-- Handoff hygiene: [ai-agent-handoff.mdc](ai-agent-handoff.mdc)
+- Issue methodology: [github-issue-adr](https://github.com/pirlruc/github-scaffold/blob/main/.cursor/rules/github-issue-adr.mdc)
+- Approval gates: [agent-workflow](https://github.com/pirlruc/github-scaffold/blob/main/.cursor/rules/agent-workflow.mdc)
+- Handoff hygiene: [ai-agent-handoff](https://github.com/pirlruc/github-scaffold/blob/main/.cursor/rules/ai-agent-handoff.mdc)

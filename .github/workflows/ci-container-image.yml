@@ -1,0 +1,133 @@
+---
+# Thin caller — publishes ghcr.io/pirlruc/ci-container (CI-026).
+# Pins to this repo's reusable workflows at the same commit (scripts_ref in lockstep).
+# Publish on release:published or monthly rebuild; PRs lint only until ci-base exists.
+name: CI Container Image
+
+on:
+  release:
+    types: [published]
+  schedule:
+    # Monthly rebuild for CI-027 / DOCKER-BUILD-006 cadence (1st 05:17 UTC).
+    - cron: "17 5 1 * *"
+  pull_request:
+    branches: [main]
+    paths:
+      - "docker/ci-container/**"
+      - ".github/workflows/ci-container-image.yml"
+  workflow_dispatch:
+    inputs:
+      blocking:
+        description: Fail the job on gate errors
+        type: boolean
+        default: true
+      publish:
+        description: Publish to GHCR (also on release / schedule)
+        type: boolean
+        default: false
+      ci_base:
+        description: Digest-pinned or tagged ci-base ref for FROM
+        type: string
+        default: "ghcr.io/pirlruc/ci-base:latest"
+
+concurrency:
+  group: ci-container-image-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
+    permissions:
+      contents: read
+    uses: ./.github/workflows/container-lint.yml
+    with:
+      dockerfile: docker/ci-container/Dockerfile
+      working_directory: .
+      scripts_ref: ${{ github.sha }}
+      runner_image: ""
+      run_infra_lint: true
+      run_secrets_scan: true
+      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
+    secrets:
+      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
+
+  # Build/scan/publish need a resolvable CI_BASE (after commondevops publishes ci-base).
+  build:
+    needs: lint
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name == 'release' ||
+       github.event_name == 'schedule' ||
+       github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: read
+    uses: ./.github/workflows/container-build.yml
+    with:
+      context: docker/ci-container
+      dockerfile: docker/ci-container/Dockerfile
+      image_name: ci-container:ci
+      scripts_ref: ${{ github.sha }}
+      platforms: linux/amd64
+      build_args: |
+        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-base:latest' }}
+      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || true }}
+      dhi_login: false
+    secrets:
+      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
+
+  scan:
+    needs: build
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name == 'release' ||
+       github.event_name == 'schedule' ||
+       github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/container-scan.yml
+    with:
+      image: ci-container:ci
+      image_artifact: container-image
+      scripts_ref: ${{ github.sha }}
+      pkg_types: library
+      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || true }}
+    secrets:
+      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
+
+  publish:
+    needs: [build, scan]
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name == 'release' ||
+       github.event_name == 'schedule' ||
+       (github.event_name == 'workflow_dispatch' && inputs.publish))
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/container-publish.yml
+    with:
+      context: docker/ci-container
+      dockerfile: docker/ci-container/Dockerfile
+      image_name: ci-container
+      scripts_ref: ${{ github.sha }}
+      platforms: linux/amd64
+      build_args: |
+        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-base:latest' }}
+      sign: ${{ github.event.repository.visibility == 'public' }}
+      blocking: true
+      dhi_login: false
+      tag_latest: ${{ github.event_name != 'release' || github.event.release.prerelease == false }}
+      verify_platforms: true
+      verify_command: "true"
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}

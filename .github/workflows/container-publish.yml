@@ -48,6 +48,31 @@ on:
         required: false
         type: string
         default: ""
+      tag_latest:
+        description: Also push the raw latest tag (needed on release refs where is_default_branch is false)
+        required: false
+        type: boolean
+        default: false
+      verify_platforms:
+        description: Run DOCKER-TEST-002 multi-arch verification after push
+        required: false
+        type: boolean
+        default: true
+      verify_command:
+        description: Command run inside each platform image during multi-arch verify
+        required: false
+        type: string
+        default: "true"
+      structure_test_config:
+        description: Optional CST config for per-platform verify (empty skips CST)
+        required: false
+        type: string
+        default: ""
+      build_args:
+        description: Newline-separated Docker build-args (KEY=value)
+        required: false
+        type: string
+        default: ""
     secrets:
       DOCKERHUB_USERNAME:
         required: false
@@ -85,6 +110,21 @@ on:
       scripts_ref:
         type: string
         default: ""
+      tag_latest:
+        type: boolean
+        default: false
+      verify_platforms:
+        type: boolean
+        default: true
+      verify_command:
+        type: string
+        default: "true"
+      structure_test_config:
+        type: string
+        default: ""
+      build_args:
+        type: string
+        default: ""
 
 # CI-025
 permissions: {}
@@ -108,7 +148,7 @@ jobs:
           persist-credentials: false
 
       - name: Checkout containerdevops scripts
-        if: inputs.sign
+        if: inputs.sign || inputs.verify_platforms
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: pirlruc/containerdevops
@@ -173,7 +213,8 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ inputs.tag_latest || (github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
+            type=raw,value={{date 'YYYYMMDD'}},enable=${{ inputs.tag_latest }}
 
       - name: Build and push
         id: build
@@ -192,14 +233,27 @@ jobs:
           platforms: ${{ inputs.platforms }}
           provenance: false
           sbom: false
+          build-args: ${{ inputs.build_args }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Install cosign
-        if: inputs.sign
+      - name: Install verify tooling
+        if: inputs.verify_platforms || inputs.sign
         env:
-          INSTALL_ONLY: cosign
+          INSTALL_ONLY: cosign,container-structure-test
         run: bash _containerdevops/scripts/install-container-tools.sh
+
+      - name: Verify multi-arch (DOCKER-TEST-002)
+        if: inputs.verify_platforms
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        run: |
+          digest="${{ steps.build.outputs.digest }}"
+          subject="ghcr.io/${{ steps.owner.outputs.owner }}/${{ inputs.image_name }}@${digest}"
+          bash _containerdevops/scripts/verify-multiarch.sh \
+            "${subject}" \
+            "${{ inputs.platforms }}" \
+            "${{ inputs.verify_command }}" \
+            "${{ inputs.structure_test_config }}"
 
       - name: Cosign sign (keyless)
         if: inputs.sign && github.actor != 'dependabot[bot]'

@@ -1,0 +1,44 @@
+name: Containerdevops CI (self)
+
+on:
+  workflow_dispatch:
+    inputs:
+      blocking:
+        description: Fail jobs on gate errors
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: containerdevops-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# CI-025
+permissions: {}
+
+jobs:
+  lint:
+    if: github.actor != 'dependabot[bot]'
+    uses: ./.github/workflows/container-lint.yml
+    with:
+      dockerfile: docker/ci-container/Dockerfile
+      working_directory: .
+      shell_scripts: scripts/*.sh
+      scripts_ref: ${{ github.sha }}
+      runner_image: ""
+      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
+    secrets:
+      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
+
+  iac:
+    if: github.actor != 'dependabot[bot]'
+    uses: ./.github/workflows/container-iac.yml
+    with:
+      paths: .
+      scripts_ref: ${{ github.sha }}
+      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
+    secrets:
+      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}

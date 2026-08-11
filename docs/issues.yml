@@ -212,7 +212,7 @@ milestones:
         - DOCKER-DELIV-002
         tasks:
         - id: CDO-007-T1
-          status: open
+          status: done
           title: Add explicit permissions to lint and build workflows
           instructions:
             files:
@@ -251,7 +251,7 @@ milestones:
           - SC-DEP-003
         tasks:
           - id: CDO-008-T1
-            status: open
+            status: done
             title: Rewrite or confirm Dependabot multi-ecosystem config
             instructions:
               files:
@@ -272,7 +272,7 @@ milestones:
             guardrail_refs:
               - SC-DEP-003
       - id: CDO-009
-        status: open
+        status: done
         title: Review for improvements, bugs, and design flaws
         overview:
           problem: >-
@@ -295,7 +295,7 @@ milestones:
           - Does not re-file work already covered by existing epic/task ids
         tasks:
           - id: CDO-009-T1
-            status: open
+            status: done
             title: Run review pass and append material issues.yml findings
             instructions:
               files:
@@ -303,3 +303,155 @@ milestones:
                 - docs/ai-agent-handoff.md
             verification:
               - PR appends material findings within budget, or handoff records justified no-op
+
+      - id: CDO-010
+        status: done
+        title: runner_image bootstrap for container-lint and devcontainer
+        overview:
+          problem: Job container on ci-container creates a publish bootstrap cycle with ci-base.
+          goal: Dual-job runner_image input; empty string runs on bare runner with tool install.
+        architecture:
+          target: container-lint.yml + container-devcontainer.yml
+          modules:
+            - .github/workflows/container-lint.yml
+            - .github/workflows/container-devcontainer.yml
+        acceptance_criteria:
+          - Empty runner_image uses host install path; non-empty uses job container
+          - ci-base caller can pass runner_image empty permanently
+        guardrail_refs:
+          - CI-028
+        tasks:
+          - id: CDO-010-T1
+            status: done
+            title: Add runner_image dual jobs and host install path
+            instructions:
+              files:
+                - .github/workflows/container-lint.yml
+                - .github/workflows/container-devcontainer.yml
+                - scripts/install-container-tools.sh
+            verification:
+              - actionlint .github/workflows/container-lint.yml
+            guardrail_refs:
+              - CI-028
+
+      - id: CDO-011
+        status: done
+        title: Base-image age gate (DOCKER-BUILD-006)
+        overview:
+          problem: No automated base-image age check; deviation recorded under CDO-009.
+          goal: check-base-image-age.sh in container-build; remove deviation.
+        architecture:
+          target: scripts/check-base-image-age.sh + container-build.yml
+          modules:
+            - scripts/check-base-image-age.sh
+            - .github/workflows/container-build.yml
+            - docs/guardrail-deviations.yml
+        acceptance_criteria:
+          - Gate reads base_image_max_age_days from vendored thresholds
+          - deviations.yml empty for DOCKER-BUILD-006
+        guardrail_refs:
+          - DOCKER-BUILD-006
+        tasks:
+          - id: CDO-011-T1
+            status: done
+            title: Implement age gate and clear deviation
+            instructions:
+              files:
+                - scripts/check-base-image-age.sh
+                - .github/workflows/container-build.yml
+                - docs/guardrail-deviations.yml
+            verification:
+              - test -x scripts/check-base-image-age.sh
+            guardrail_refs:
+              - DOCKER-BUILD-006
+
+      - id: CDO-012
+        status: done
+        title: Per-platform publish verification (DOCKER-TEST-002)
+        overview:
+          problem: Multi-arch publish did not verify each platform.
+          goal: verify-multiarch.sh after push; remove deviation.
+        architecture:
+          target: scripts/verify-multiarch.sh + container-publish.yml
+          modules:
+            - scripts/verify-multiarch.sh
+            - .github/workflows/container-publish.yml
+            - docs/guardrail-deviations.yml
+        acceptance_criteria:
+          - Manifest list asserts every requested platform
+          - Per-platform smoke run; optional CST
+          - deviations.yml empty for DOCKER-TEST-002
+        guardrail_refs:
+          - DOCKER-TEST-002
+        tasks:
+          - id: CDO-012-T1
+            status: done
+            title: Implement verify-multiarch and wire tag_latest
+            instructions:
+              files:
+                - scripts/verify-multiarch.sh
+                - .github/workflows/container-publish.yml
+            verification:
+              - test -x scripts/verify-multiarch.sh
+            guardrail_refs:
+              - DOCKER-TEST-002
+
+      - id: CDO-013
+        status: done
+        title: ci-container publish caller and CI-026 digest pins
+        overview:
+          problem: ci-container unpublished; dive COPY --from was tag-only.
+          goal: ci-container-image.yml on release/schedule; digest-pin dive.
+        architecture:
+          target: docker/ci-container + ci-container-image.yml
+          modules:
+            - docker/ci-container/Dockerfile
+            - .github/workflows/ci-container-image.yml
+        acceptance_criteria:
+          - Publish on release published + monthly schedule + dispatch
+          - dive COPY --from digest-pinned
+        guardrail_refs:
+          - CI-026
+          - CI-027
+        tasks:
+          - id: CDO-013-T1
+            status: done
+            title: Author ci-container-image.yml and pin dive digest
+            instructions:
+              files:
+                - .github/workflows/ci-container-image.yml
+                - docker/ci-container/Dockerfile
+            verification:
+              - actionlint .github/workflows/ci-container-image.yml
+            guardrail_refs:
+              - CI-026
+
+      - id: CDO-014
+        status: done
+        title: Self-CI and scheduled security callers
+        overview:
+          problem: No dogfood self-CI; reusable workflows only fired via workflow_dispatch noise.
+          goal: containerdevops-ci on push/PR/dispatch; weekly security schedule.
+        architecture:
+          target: containerdevops-ci.yml + containerdevops-security.yml
+          modules:
+            - .github/workflows/containerdevops-ci.yml
+            - .github/workflows/containerdevops-security.yml
+        acceptance_criteria:
+          - Push/PR main + concurrency on self-CI
+          - Weekly secrets/SAST, supply-chain, KICS, published-image rescan
+        guardrail_refs:
+          - CI-002
+          - CI-024
+        tasks:
+          - id: CDO-014-T1
+            status: done
+            title: Add containerdevops-ci and containerdevops-security workflows
+            instructions:
+              files:
+                - .github/workflows/containerdevops-ci.yml
+                - .github/workflows/containerdevops-security.yml
+            verification:
+              - actionlint .github/workflows/containerdevops-ci.yml
+            guardrail_refs:
+              - CI-002

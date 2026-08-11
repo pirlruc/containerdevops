@@ -14,6 +14,7 @@ DIVE_VERSION="${DIVE_VERSION:-0.12.0}"
 CST_VERSION="${CST_VERSION:-1.19.3}"
 COSIGN_VERSION="${COSIGN_VERSION:-2.4.3}"
 ACTIONLINT_VERSION="${ACTIONLINT_VERSION:-1.7.7}"
+SHELLCHECK_VERSION="${SHELLCHECK_VERSION:-0.10.0}"
 
 should_install() {
   local name="$1"
@@ -46,6 +47,15 @@ install_if_missing hadolint bash -c "
   curl -sSfL -o '${DEST}/hadolint' \
     'https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-Linux-x86_64'
   chmod +x '${DEST}/hadolint'
+"
+
+install_if_missing shellcheck bash -c "
+  curl -sSfL -o /tmp/shellcheck.txz \
+    'https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz'
+  tar -xJf /tmp/shellcheck.txz -C /tmp
+  cp \"/tmp/shellcheck-v${SHELLCHECK_VERSION}/shellcheck\" '${DEST}/shellcheck'
+  chmod +x '${DEST}/shellcheck'
+  rm -rf /tmp/shellcheck.txz \"/tmp/shellcheck-v${SHELLCHECK_VERSION}\"
 "
 
 # Direct release tarball — aqua install.sh is flaky under Actions rate limits.

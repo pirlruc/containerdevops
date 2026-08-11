@@ -39,6 +39,11 @@ on:
         required: false
         type: string
         default: ""
+      build_args:
+        description: Newline-separated Docker build-args (KEY=value)
+        required: false
+        type: string
+        default: ""
     secrets:
       # Optional — required when Dockerfile FROM lines pull from dhi.io (Community DHI).
       DOCKERHUB_USERNAME:
@@ -72,6 +77,9 @@ on:
         type: boolean
         default: false
       scripts_ref:
+        type: string
+        default: ""
+      build_args:
         type: string
         default: ""
 
@@ -123,6 +131,18 @@ jobs:
           INSTALL_ONLY: container-structure-test,dive
         run: bash _containerdevops/scripts/install-container-tools.sh
 
+      - name: Base image age gate (DOCKER-BUILD-006)
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        run: |
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
+          if [[ ! -f "$FILE" ]]; then
+            echo "missing vendored thresholds at $FILE" >&2
+            exit 1
+          fi
+          MAX="$(bash _containerdevops/scripts/read-thresholds.sh base_image_max_age_days "$FILE")"
+          bash _containerdevops/scripts/check-base-image-age.sh \
+            "${{ inputs.dockerfile }}" "${MAX}"
+
       - name: Build (load)
         id: build
         continue-on-error: ${{ env.ADVISORY == 'true' }}
@@ -133,6 +153,7 @@ jobs:
           load: true
           tags: ${{ inputs.image_name }}
           platforms: ${{ inputs.platforms }}
+          build-args: ${{ inputs.build_args }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           labels: |

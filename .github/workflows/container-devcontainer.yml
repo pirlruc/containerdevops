@@ -2,6 +2,7 @@ name: Container Devcontainer (reusable)
 
 # CDO-006: lint + light structure verification for .devcontainer/Dockerfile.
 # Full image build remains optional (Actions minutes); structure-test stub when config present.
+# runner_image: empty → bare runner; non-empty → job container (same contract as container-lint).
 
 on:
   workflow_call:
@@ -28,6 +29,11 @@ on:
         required: false
         type: string
         default: ""
+      runner_image:
+        description: "Job container image; empty runs on the bare runner (install tools)"
+        required: false
+        type: string
+        default: ""
     secrets:
       checkout_token:
         required: false
@@ -42,6 +48,9 @@ on:
       blocking:
         type: boolean
         default: false
+      runner_image:
+        type: string
+        default: ""
 
 # CI-025
 permissions: {}
@@ -50,10 +59,82 @@ env:
   ADVISORY: ${{ inputs.blocking == false }}
 
 jobs:
-  devcontainer:
+  devcontainer-host:
+    if: inputs.runner_image == ''
     runs-on: ubuntu-24.04
-    # Prefer :local until ghcr.io/pirlruc/ci-container is published.
-    container: ghcr.io/pirlruc/ci-container:latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout containerdevops scripts
+        if: github.actor != 'dependabot[bot]'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: pirlruc/containerdevops
+          ref: ${{ inputs.scripts_ref || github.sha }}
+          token: ${{ secrets.checkout_token || github.token }}
+          persist-credentials: false
+          path: _containerdevops
+          sparse-checkout: |
+            scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Install tooling
+        working-directory: ${{ github.workspace }}
+        env:
+          INSTALL_ONLY: hadolint
+        run: bash _containerdevops/scripts/install-container-tools.sh
+
+      - name: Require Dockerfile
+        run: |
+          if [[ ! -f "${{ inputs.dockerfile }}" ]]; then
+            echo "No ${{ inputs.dockerfile }} — nothing to verify"
+            exit 0
+          fi
+
+      - name: Resolve hadolint threshold
+        id: thr
+        working-directory: ${{ github.workspace }}
+        run: |
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
+          if [[ ! -f "$FILE" ]]; then
+            echo "missing vendored thresholds at $FILE" >&2
+            exit 1
+          fi
+          echo "hadolint=$(bash _containerdevops/scripts/read-thresholds.sh hadolint_failure_threshold "$FILE")" >> "$GITHUB_OUTPUT"
+
+      - name: hadolint
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        run: |
+          if [[ ! -f "${{ inputs.dockerfile }}" ]]; then
+            echo "Skip hadolint — Dockerfile absent"
+            exit 0
+          fi
+          hadolint --failure-threshold "${{ steps.thr.outputs.hadolint }}" \
+            "${{ inputs.dockerfile }}"
+
+      - name: structure-test stub
+        if: inputs.structure_test_config != ''
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        run: |
+          if [[ ! -f "${{ inputs.structure_test_config }}" ]]; then
+            echo "structure_test_config missing: ${{ inputs.structure_test_config }}" >&2
+            exit 1
+          fi
+          echo "structure-test config present: ${{ inputs.structure_test_config }}"
+          echo "::notice::CDO-006 stub — run container-build for a real image + CST"
+
+  devcontainer-container:
+    if: inputs.runner_image != ''
+    runs-on: ubuntu-24.04
+    container: ${{ inputs.runner_image }}
     timeout-minutes: 20
     permissions:
       contents: read
@@ -90,7 +171,10 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
-          [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
+          if [[ ! -f "$FILE" ]]; then
+            echo "missing vendored thresholds at $FILE" >&2
+            exit 1
+          fi
           echo "hadolint=$(bash _containerdevops/scripts/read-thresholds.sh hadolint_failure_threshold "$FILE")" >> "$GITHUB_OUTPUT"
 
       - name: hadolint
@@ -107,7 +191,6 @@ jobs:
         if: inputs.structure_test_config != ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         run: |
-          # Stub: validate config YAML parses; full image build is opt-in elsewhere.
           if [[ ! -f "${{ inputs.structure_test_config }}" ]]; then
             echo "structure_test_config missing: ${{ inputs.structure_test_config }}" >&2
             exit 1
