@@ -80,8 +80,8 @@ for p in "${PLATFORMS[@]}"; do
   p="$(echo "${p}" | xargs)"
   [[ -z "${p}" ]] && continue
   echo "Smoke run --platform ${p}: ${VERIFY_CMD}"
-  # shellcheck disable=SC2086
-  if ! docker run --rm --platform "${p}" "${IMAGE}" ${VERIFY_CMD}; then
+  # Run the full command string via bash -c so multi-word verify commands work.
+  if ! docker run --rm --platform "${p}" --entrypoint bash "${IMAGE}" -lc "${VERIFY_CMD}"; then
     echo "error: smoke run failed on ${p}" >&2
     FAILED=1
     continue

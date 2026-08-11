@@ -57,8 +57,6 @@ jobs:
       paths: .
       scripts_ref: ${{ github.sha }}
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
-    secrets:
-      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
   published-image-probe:
     if: github.actor != 'dependabot[bot]'
@@ -95,6 +93,5 @@ jobs:
       image: ghcr.io/pirlruc/ci-container:latest
       scripts_ref: ${{ github.sha }}
       pkg_types: library
+      ignorefile: .trivyignore.yaml
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
-    secrets:
-      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}

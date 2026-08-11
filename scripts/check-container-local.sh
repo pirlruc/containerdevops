@@ -7,15 +7,16 @@
 # |---------------------------|--------------------|-----------------------------------------|
 # | hadolint                  | hadolint           | hadolint/hadolint:2.12.0-alpine         |
 # | shellcheck                | shellcheck         | koalaman/shellcheck:v0.10.0             |
-# | trivy                     | trivy              | aquasec/trivy:0.65.0                    |
-# | syft                      | syft               | anchore/syft:v1.27.1                    |
-# | grype                     | grype              | anchore/grype:v0.92.2                   |
-# | dive                      | dive               | wagoodman/dive:v0.12.0                  |
-# | container-structure-test  | container-structure-test | gcr.io/gcp-container-tools/... |
+# | trivy                     | trivy              | aquasec/trivy:0.73.0                    |
+# | syft                      | syft               | anchore/syft:v1.50.0                    |
+# | grype                     | grype              | anchore/grype:v0.116.1                  |
+# | dive                      | dive               | wagoodman/dive:v0.13.1                  |
+# | container-structure-test  | container-structure-test | ghcr.io/googlecontainertools/...:1.22.1 |
 #
 # Usage:
 #   bash scripts/check-container-local.sh --dockerfile Dockerfile --context .
-# Optional: --image NAME (skip build), --structure-test path, --skip-scan
+# Optional: --image NAME (skip build), --structure-test path, --skip-scan,
+#           --advisory (do not fail on trivy findings; default is blocking)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -26,6 +27,7 @@ CONTEXT="."
 IMAGE=""
 STRUCTURE_TEST=""
 SKIP_SCAN=0
+ADVISORY=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -34,6 +36,7 @@ while [[ $# -gt 0 ]]; do
     --image) IMAGE="$2"; shift 2 ;;
     --structure-test) STRUCTURE_TEST="$2"; shift 2 ;;
     --skip-scan) SKIP_SCAN=1; shift ;;
+    --advisory) ADVISORY=1; shift ;;
     *) echo "Unknown arg: $1" >&2; exit 2 ;;
   esac
 done
@@ -68,21 +71,21 @@ run_tool() {
       docker run --rm -v "${PWD}:/src:ro" -w /src koalaman/shellcheck:v0.10.0 "$@"
       ;;
     trivy)
-      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.65.0 "$@"
+      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.73.0 "$@"
       ;;
     syft)
-      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/syft:v1.27.1 "$@"
+      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/syft:v1.50.0 "$@"
       ;;
     grype)
-      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "${PWD}:/work" -w /work anchore/grype:v0.92.2 "$@"
+      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "${PWD}:/work" -w /work anchore/grype:v0.116.1 "$@"
       ;;
     dive)
-      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock wagoodman/dive:v0.12.0 "$@"
+      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock wagoodman/dive:v0.13.1 "$@"
       ;;
     container-structure-test)
       docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
         -v "${PWD}:/work:ro" -w /work \
-        gcr.io/gcp-container-tools/container-structure-test:v1.19.3 \
+        ghcr.io/googlecontainertools/container-structure-test:1.22.1 \
         "$@"
       ;;
     *)
@@ -118,7 +121,7 @@ if [[ -n "${STRUCTURE_TEST}" && -f "${STRUCTURE_TEST}" ]]; then
   else
     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
       -v "${PWD}:/work:ro" -w /work \
-      gcr.io/gcp-container-tools/container-structure-test:v1.19.3 \
+      ghcr.io/googlecontainertools/container-structure-test:1.22.1 \
       test --image "${IMAGE}" --config "${STRUCTURE_TEST}"
   fi
 fi
@@ -128,11 +131,30 @@ bash "${ROOT}/scripts/check-image-size.sh" "${IMAGE}" "${MAX_MB}"
 
 if (( SKIP_SCAN == 0 )); then
   echo "==> trivy image"
+  IGNORE=()
+  if [[ -f .trivyignore.yaml ]]; then
+    IGNORE=(--ignorefile .trivyignore.yaml)
+  elif [[ -f .trivyignore ]]; then
+    IGNORE=(--ignorefile .trivyignore)
+  fi
+  set +e
   if command -v trivy >/dev/null 2>&1; then
-    trivy image --severity HIGH,CRITICAL --exit-code 1 "${IMAGE}" || true
+    trivy image --severity HIGH,CRITICAL --pkg-types library --exit-code 1 "${IGNORE[@]}" "${IMAGE}"
   else
     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-      aquasec/trivy:0.65.0 image --severity HIGH,CRITICAL --exit-code 1 "${IMAGE}" || true
+      -v "${PWD}:/work:ro" -w /work \
+      aquasec/trivy:0.73.0 image --severity HIGH,CRITICAL --pkg-types library --exit-code 1 \
+      "${IGNORE[@]}" "${IMAGE}"
+  fi
+  trc=$?
+  set -e
+  if (( trc != 0 )); then
+    if (( ADVISORY == 1 )); then
+      echo "trivy findings (advisory — continuing)"
+    else
+      echo "trivy findings (blocking). Pass --advisory to continue." >&2
+      exit "${trc}"
+    fi
   fi
 fi
 

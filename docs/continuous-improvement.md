@@ -60,11 +60,13 @@ workflow correctly in ~10 minutes.
 | Class | Examples |
 |-------|----------|
 | Improvement | Missing `scripts_ref` docs; ci-container unused where justified; thin self-CI gaps |
-| Bug | Broken sparse-checkout path; wrong default for `blocking`; hadolint threshold ignored |
-| Design flaw | Baking threshold numbers into workflows; dual install paths that drift |
+| Bug | Broken sparse-checkout path; wrong default for `blocking`; hadolint threshold ignored; **caller permissions missing a scope the reusable declares (startup_failure)** |
+| Design flaw | Baking threshold numbers into workflows; dual install paths that drift; `docker inspect .Size` as a portable size gate |
 
 Identify **improvements, bugs, and design flaws** in workflows, scripts, Dockerfiles, and
-docs — not only process/docs hygiene.
+docs — not only process/docs hygiene. Prefer **local-first validation** (`docker build`,
+structure-test, Trivy library+ignorefile and raw os,library, `du -sxm /` size) before
+recommending Actions-only verification.
 
 ### 4. Optional: alternatives (lightweight)
 
@@ -95,10 +97,11 @@ Use milestone `Continuous improvement` (or whatever already exists on the repo).
 
 | Prefix | Theme |
 |--------|-------|
-| `CDO-WF-…` | Reusable workflow contracts / CI-024/025 |
-| `CDO-IMG-…` | ci-container image / DHI pins / structure-test |
+| `CDO-…` (numeric) | Authored backlog already in `docs/issues.yml` — do not re-file |
+| `CDO-WF-…` | Reusable workflow contracts / CI-024/025 / caller permissions |
+| `CDO-IMG-…` | ci-container image / donor pins / structure-test |
 | `CDO-SC-…` | Image scan, SBOM, secrets (DOCKER-SEC-*) |
-| `CDO-DOC-…` | README / handoff clarity |
+| `CDO-DOC-…` | README / handoff / docker-hub clarity |
 | `CDO-DEP-…` | Dependabot / SC-DEP |
 | `CDO-ECO-…` | Ecosystem work owned by another repo (name it) |
 
@@ -123,10 +126,11 @@ Provenance after human merge+sync uses these prefixes and the PR description; do
 
 | Area | Intent |
 |------|--------|
-| `.github/workflows/` | Reusable `container-*` workflows |
-| `scripts/` | Install, local parity, threshold readers |
-| `docker/ci-container/` | Container CI tooling image |
-| `docs/` | Handoff, this prompt, authored `issues.yml`, deviations |
+| `.github/workflows/` | Reusable `container-*` workflows + self CI + ci-container caller |
+| `scripts/` | Install, local parity, threshold readers, size gate (`du -sxm /`) |
+| `docker/ci-container/` | Container CI tooling image (extends ci-lint) |
+| `docs/` | Handoff, this prompt, authored `issues.yml`, deviations, docker-hub |
+| `.trivyignore.yaml` | Path-scoped donor CVE ignores |
 | `.github/dependabot.yml` | Multi-ecosystem dependency updates |
 
 Ecosystem (URL only): [commondevops](https://github.com/pirlruc/commondevops),
@@ -144,12 +148,14 @@ Do not recommend removing these without **requires user decision**:
 4. `docs/issues.yml` is the authored backlog — sync creates issues; no hand-created owned issues
 5. Guardrails stay canonical in `pirlruc/guardrails` — cite IDs; record deviations here only
 6. Build/publish jobs stay on the plain runner (no job `container:`)
+7. Caller jobs must grant every permission the reusable job declares (no escalation)
+8. Size gates measure uncompressed rootfs via `du -sxm /` (not store-dependent inspect size)
 
 ## Automation configuration
 
 | Setting | Suggestion |
 |---------|------------|
-| Trigger | Weekly schedule (or manual) |
+| Trigger | Manual until GitHub Agents Automations is configured; then weekly |
 | Tools | Push changes; create pull request |
 | Secrets | None in the prompt |
 

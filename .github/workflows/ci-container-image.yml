@@ -26,9 +26,9 @@ on:
         type: boolean
         default: false
       ci_base:
-        description: Digest-pinned or tagged ci-base ref for FROM
+        description: Digest-pinned or tagged ci-lint ref for FROM (CI-026)
         type: string
-        default: "ghcr.io/pirlruc/ci-base:1.0.0"
+        default: "ghcr.io/pirlruc/ci-lint:2.0.0"
 
 concurrency:
   group: ci-container-image-${{ github.ref }}
@@ -58,8 +58,8 @@ jobs:
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
-  # Build/scan/publish need a resolvable CI_BASE (after commondevops publishes ci-base).
-  # Pin :1.0.0 (not :latest) for release/schedule; ci-base is ~1152 MB so size override matches.
+  # Build/scan/publish need a resolvable CI_BASE (after commondevops publishes ci-lint).
+  # Prefer digest pins for release/schedule; size override matches ~ci-lint + dive/CST.
   build:
     needs: lint
     if: >-
@@ -77,16 +77,14 @@ jobs:
       image_name: ci-container:ci
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
-      image_max_size_mb: "1500"
+      image_max_size_mb: "700"
       build_args: |
-        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-base:1.0.0' }}
+        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint:2.0.0' }}
       blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || true }}
       dhi_login: false
     secrets:
-      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
       # Prefer github.token after package Actions access is granted (Read for this repo).
-      # Only override with GHCR_READ_TOKEN (classic PAT, read:packages). Do NOT pass
-      # COMMONDEVOPS_READ_TOKEN here — contents:read alone yields 403 on GHCR pulls.
+      # Only override with GHCR_READ_TOKEN (classic PAT, read:packages).
       ghcr_token: ${{ secrets.GHCR_READ_TOKEN }}
 
   scan:
@@ -105,9 +103,8 @@ jobs:
       image_artifact: container-image
       scripts_ref: ${{ github.sha }}
       pkg_types: library
+      ignorefile: .trivyignore.yaml
       blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || true }}
-    secrets:
-      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
   publish:
     needs: [build, scan]
@@ -125,10 +122,11 @@ jobs:
       context: docker/ci-container
       dockerfile: docker/ci-container/Dockerfile
       image_name: ci-container
+      dockerhub_image: pirlruc/ci-container
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
       build_args: |
-        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-base:1.0.0' }}
+        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint:2.0.0' }}
       sign: ${{ github.event.repository.visibility == 'public' }}
       blocking: true
       dhi_login: false
@@ -138,5 +136,4 @@ jobs:
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
       ghcr_token: ${{ secrets.GHCR_READ_TOKEN }}

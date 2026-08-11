@@ -2,7 +2,8 @@
 
 Reusable GitHub Actions workflows and templates for production-grade container
 images — hadolint, buildx, container-structure-test, Trivy/Syft/Grype, SBOM,
-signing, GHCR and Docker Hub publishing, plus KICS and Compose Spec validation.
+signing, GHCR and Docker Hub publishing, plus KICS, Compose Spec validation,
+and the `ci-container` toolchain image.
 
 Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails/tree/main/docker)
 (`DOCKER-*`). Pin this repo by commit SHA (`CI-018`).
@@ -11,14 +12,19 @@ Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails
 
 | Workflow | Purpose |
 |----------|---------|
-| `container-lint.yml` | hadolint, shellcheck on entrypoint scripts, actionlint |
-| `container-build.yml` | buildx (no push), structure-test, dive, size gate |
+| `container-lint.yml` | hadolint, shellcheck; optional nested commondevops infra/secrets |
+| `container-build.yml` | buildx (no push), structure-test, dive, size gate (`du -sxm /`) |
 | `container-scan.yml` | Trivy + Syft SBOM + Grype on the **built image** |
 | `container-publish.yml` | Multi-arch push to GHCR and Docker Hub; optional cosign + provenance |
-| `container-iac.yml` | KICS + `docker compose config` + Compose Spec schema |
+| `container-iac.yml` | KICS + `docker compose config` |
+| `container-devcontainer.yml` | Devcontainer Dockerfile lint (structure-test stub) |
+| `ci-container-image.yml` | Publish `ghcr.io/pirlruc/ci-container` |
 
-All workflows accept `blocking` (default `false`) using the cppdevops advisory
-pattern, and are callable via `workflow_call` or manual `workflow_dispatch`.
+All workflows accept `blocking` (default `false`) using the advisory pattern, and
+are callable via `workflow_call` or manual `workflow_dispatch`.
+
+See [docs/workflows.md](docs/workflows.md) for **required caller permissions**
+(a reusable workflow cannot escalate beyond the caller's grant).
 
 ## Caller example
 
@@ -32,16 +38,29 @@ on:
         default: false
 jobs:
   lint:
+    permissions:
+      contents: read
+      security-events: write
     uses: pirlruc/containerdevops/.github/workflows/container-lint.yml@<sha>
     with:
       dockerfile: Dockerfile
+      scripts_ref: <sha>
       blocking: ${{ inputs.blocking }}
+    secrets:
+      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
+      scripts_token: ${{ secrets.CONTAINERDEVOPS_READ_TOKEN }}
   build:
+    permissions:
+      contents: read
+      packages: read
     uses: pirlruc/containerdevops/.github/workflows/container-build.yml@<sha>
     with:
       context: .
       dockerfile: Dockerfile
+      scripts_ref: <sha>
       blocking: ${{ inputs.blocking }}
+    secrets:
+      scripts_token: ${{ secrets.CONTAINERDEVOPS_READ_TOKEN }}
 ```
 
 Publish workflows need `packages: write`, `id-token: write`, and Docker Hub
@@ -67,6 +86,12 @@ resolution table). No system install required.
 
 Creates create-once `.github/workflows/ci-container.yml` and seeds scan configs
 from `templates/` when missing.
+
+## Toolchain image
+
+`ghcr.io/pirlruc/ci-container` extends [commondevops `ci-lint`](https://github.com/pirlruc/commondevops)
+with dive and container-structure-test. Public overview:
+[docs/docker-hub.md](docs/docker-hub.md).
 
 ## Layout
 
