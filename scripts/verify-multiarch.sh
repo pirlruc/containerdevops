@@ -21,20 +21,30 @@ fi
 
 IFS=',' read -ra PLATFORMS <<< "${PLATFORMS_CSV}"
 
-echo "Asserting manifest list platforms for ${IMAGE}"
+echo "Asserting platforms for ${IMAGE}"
 RAW="$(docker buildx imagetools inspect "${IMAGE}" --raw)"
-MISSING=0
-for p in "${PLATFORMS[@]}"; do
-  p="$(echo "${p}" | xargs)"
-  [[ -z "${p}" ]] && continue
-  os="${p%%/*}"
-  arch="${p#*/}"
-  arch="${arch%%/*}"
-  variant=""
-  if [[ "${p}" == */*/* ]]; then
-    variant="${p##*/}"
-  fi
-  if ! printf '%s' "${RAW}" | python3 -c "
+# Single-platform buildx pushes are image manifests (config+layers), not OCI
+# indexes — there is no manifests[]. Platform correctness is asserted by the
+# per-platform smoke runs below.
+if ! printf '%s' "${RAW}" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+sys.exit(0 if (data.get('manifests') or []) else 1)
+"; then
+  echo "  single-platform image manifest (not an index); skipping list assert"
+else
+  MISSING=0
+  for p in "${PLATFORMS[@]}"; do
+    p="$(echo "${p}" | xargs)"
+    [[ -z "${p}" ]] && continue
+    os="${p%%/*}"
+    arch="${p#*/}"
+    arch="${arch%%/*}"
+    variant=""
+    if [[ "${p}" == */*/* ]]; then
+      variant="${p##*/}"
+    fi
+    if ! printf '%s' "${RAW}" | python3 -c "
 import json, sys
 want_os, want_arch, want_variant = sys.argv[1:4]
 data = json.load(sys.stdin)
@@ -53,15 +63,16 @@ for m in manifests:
     sys.exit(0)
 sys.exit(1)
 " "${os}" "${arch}" "${variant}"; then
-    echo "error: platform ${p} missing from manifest list — DOCKER-TEST-002" >&2
-    MISSING=1
-  else
-    echo "  ok: ${p} present in manifest list"
-  fi
-done
+      echo "error: platform ${p} missing from manifest list — DOCKER-TEST-002" >&2
+      MISSING=1
+    else
+      echo "  ok: ${p} present in manifest list"
+    fi
+  done
 
-if [[ "${MISSING}" -ne 0 ]]; then
-  exit 1
+  if [[ "${MISSING}" -ne 0 ]]; then
+    exit 1
+  fi
 fi
 
 FAILED=0
