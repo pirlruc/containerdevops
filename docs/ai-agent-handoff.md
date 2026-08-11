@@ -25,10 +25,10 @@ Shared infra/secrets/supply-chain forward to
 |----------------------|-----|
 | `docs/guardrails` | tag `1.1.0` → `6fe580c7767f992af597782559c3a3be9cc95bf8` (deinit'd; empty dir) |
 | `.github/scaffold` | `f8a6ba1842eba353ddd631f2311dd754bf0f44da` (deinit'd; empty dir) |
-| `ghcr.io/pirlruc/ci-container` | publish via `ci-container-image.yml` after ci-base exists |
+| `ghcr.io/pirlruc/ci-container` | publish via `ci-container-image.yml` (dispatch `publish=true`) |
 | commondevops `uses:` | tag `1.0.0` → `a504555c4731ee886d2a48c4ec20d110ad9434f8` |
-| `ghcr.io/pirlruc/ci-base` | `:1.0.0` (private until UI public) |
-| Release | [`1.0.0`](https://github.com/pirlruc/containerdevops/releases/tag/1.0.0) — publish blocked on private ci-base pull |
+| `ghcr.io/pirlruc/ci-base` | `:1.0.0` (private; Actions Read for this repo) |
+| Release | cut `1.0.1` at tip after Trivy ignore lands (tag `1.0.0` peels to older SHA) |
 
 ## Delivery status
 
@@ -44,6 +44,7 @@ Shared infra/secrets/supply-chain forward to
 | CDO-012 — DOCKER-TEST-002 multi-arch | Done; deviation removed |
 | CDO-013 — ci-container publish caller | Done |
 | CDO-014 — self-CI + scheduled security | Done |
+| CDO-015 — Trivy ignores + dive/CST bump | Done (publish pending) |
 
 ## Commands
 
@@ -79,18 +80,28 @@ git submodule update --init && git -C docs/guardrails checkout 1.1.0
   https://github.com/users/pirlruc/packages/container/package/ci-base
   → Package settings → Change visibility → Public.
   Same for `ci-container` after first publish.
-- Or: package settings → Manage Actions access → add `pirlruc/containerdevops` (Read).
-- Or: repo secret `GHCR_READ_TOKEN` (classic PAT, `read:packages`) for `ci-container-image.yml`.
+- Preferred: keep packages private; Package settings → Manage Actions access →
+  grant Read to consumer repos (`pirlruc/containerdevops` for `ci-base`, then
+  consumers for `ci-container`).
+- Optional: repo secret `GHCR_READ_TOKEN` (classic PAT, `read:packages`) —
+  do **not** pass `COMMONDEVOPS_READ_TOKEN` as `ghcr_token` (contents:read → 403).
+- After `ci-container` publishes, grant Actions Read to commondevops / app repos
+  the same way (or make the package public in UI).
 
 ## Suggested next work
 
-1. Merge this branch; confirm Dependabot Insights (CDO-008-T2).
-2. After commondevops `1.0.0` + public `ci-base`, cut containerdevops `1.0.0` release to publish ci-container.
-3. Re-pin commondevops `uses:` from `74695e83…` to `1.0.0`.
-4. Make `ghcr.io/pirlruc/ci-container` package public; default `runner_image` to `:latest` if desired.
+1. Dispatch `CI Container Image` with `publish=true` after CDO-015 merges; confirm
+   `ghcr.io/pirlruc/ci-container:1.0.0` (or `1.0.1`).
+2. Cut release tag at tip SHA for zizmor SHA pins (prefer `1.0.1` over moving `1.0.0`).
+3. Re-pin commondevops `ci-base-image.yml` `uses:` / `scripts_ref` to that release.
+4. Confirm Dependabot Insights (CDO-008-T2).
 
 ## Recent history
 
+- 2026-08-11: CDO-015 — dive `v0.13.1` + structure-test `1.22.1`; path-scoped
+  `.trivyignore.yaml` for donor binaries (review 2026-11-11).
+- 2026-08-11: `ghcr_token` defaults to `github.token` after Actions package access;
+  do not override with contents-only PATs.
 - 2026-08-11: `container-scan.yml` honors `.trivyignore.yaml` / `.trivyignore`;
   scheduled security probes `ghcr.io/pirlruc/ci-container:latest` and skips
   rescan when the package is unpublished.

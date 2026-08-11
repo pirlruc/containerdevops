@@ -24,11 +24,11 @@ LABEL org.opencontainers.image.title="ci-container" \
 # Base may already be USER ci; switch to root for system installs.
 USER root
 
-# wagoodman/dive:v0.12.0 — digest pinned (CI-026)
-COPY --from=wagoodman/dive:v0.12.0@sha256:b4bbb985609f32ddfeb8a31f2cb254998fce2b95c358ad588a91a1ed138d6033 \
+# wagoodman/dive:v0.13.1 — digest pinned (CI-026)
+COPY --from=wagoodman/dive:v0.13.1@sha256:f1886e6c32c094fc41a623c1989f5cb3e48aa766da5f0be233f911fc1d85ce10 \
   /usr/local/bin/dive /usr/local/bin/dive
-# ghcr.io/googlecontainertools/container-structure-test:1.19.3 — digest pinned (CI-026)
-COPY --from=ghcr.io/googlecontainertools/container-structure-test:1.19.3@sha256:b9e32886c354705a083ce3f1d0818ddeda81641feaeeb8aec38969bc4a10855c \
+# ghcr.io/googlecontainertools/container-structure-test:1.22.1 — digest pinned (CI-026)
+COPY --from=ghcr.io/googlecontainertools/container-structure-test:1.22.1@sha256:710da3ca8ed29a42423315592f74f02df4e3d2ba19f1df7257bd481ea75ba5aa \
   /ko-app/container-structure-test /usr/local/bin/container-structure-test
 
 WORKDIR /workspace
