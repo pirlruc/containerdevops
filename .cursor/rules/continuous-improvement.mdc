@@ -15,7 +15,7 @@ Refresh the prompt in the same session if any of the following change:
 
 | Trigger | Example |
 |---------|---------|
-| Surface the prompt reviews | Scripts, templates, Cursor rules, language packs, process docs |
+| Surface the prompt reviews | Scripts, templates, Cursor rules, language packs, process docs, reusable workflows, CI toolchain Dockerfiles |
 | Pin or schema drift | Methodology/guardrails pin bump; `docs/issues-schema.md`; label vocabulary |
 | Automation contract | Output shape, tool allowlist, or trigger assumptions |
 
@@ -34,7 +34,11 @@ Keep these sections, in order, across every repo that carries the file:
 
 1. **Role** — reviewer identity and least-friction goal
 2. **Automation context** — single-repo scope; cite companions by URL only; no sibling checkouts
-3. **Task** — ordered steps; start with inventory + idempotency; end with PR or no-op
+3. **Task** — ordered steps; start with inventory + idempotency; end with PR or no-op.
+   The Task (or an early review step it calls) **must** instruct the agent to identify
+   **improvements, bugs, and design flaws** in this repository's current code, scripts,
+   templates, and docs — not only process/docs hygiene. That review scope belongs in the
+   **prompt**, not in this Cursor rule.
 4. **Output contract** — `docs/issues.yml` entries via PR; never create issues directly
 5. **Surfaces** — short role table, not a file tree
 6. **Non-negotiable constraints** — flag removals as **requires user decision**
@@ -51,6 +55,6 @@ Keep these sections, in order, across every repo that carries the file:
 
 ## Related
 
-- Issue methodology: [github-issue-adr.mdc](github-issue-adr.mdc)
-- Approval gates: [agent-workflow.mdc](agent-workflow.mdc)
-- Handoff hygiene: [ai-agent-handoff.mdc](ai-agent-handoff.mdc)
+- Issue methodology: [github-issue-adr](https://github.com/pirlruc/github-scaffold/blob/main/.cursor/rules/github-issue-adr.mdc)
+- Approval gates: [agent-workflow](https://github.com/pirlruc/github-scaffold/blob/main/.cursor/rules/agent-workflow.mdc)
+- Handoff hygiene: [ai-agent-handoff](https://github.com/pirlruc/github-scaffold/blob/main/.cursor/rules/ai-agent-handoff.mdc)

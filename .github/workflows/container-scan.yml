@@ -1,5 +1,8 @@
 name: Container Scan (reusable)
 
+# Stays on the host runner: image_artifact uses `docker load` (needs the daemon).
+# ci-container has scanners but not a Docker socket — see handoff.
+
 on:
   workflow_call:
     inputs:
@@ -16,6 +19,19 @@ on:
         required: false
         type: boolean
         default: false
+      scripts_ref:
+        description: "Commit/tag/branch of this repo to checkout for scripts (must match uses: pin)"
+        required: false
+        type: string
+        default: ""
+      pkg_types:
+        description: Trivy --pkg-types (os,library or library for app-only / DHI OS noise)
+        required: false
+        type: string
+        default: "os,library"
+    secrets:
+      checkout_token:
+        required: false
   workflow_dispatch:
     inputs:
       image:
@@ -27,28 +43,43 @@ on:
       blocking:
         type: boolean
         default: false
+      scripts_ref:
+        type: string
+        default: ""
+      pkg_types:
+        type: string
+        default: "os,library"
+
+# CI-025
+permissions: {}
 
 env:
   ADVISORY: ${{ inputs.blocking == false }}
 
 jobs:
   scan:
+    # CI-024: SARIF upload needs security-events
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Checkout containerdevops scripts
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: pirlruc/containerdevops
+          ref: ${{ inputs.scripts_ref || github.sha }}
+          token: ${{ github.token }}  # same-repo; checkout_token is for commondevops only
+          persist-credentials: false
           path: _containerdevops
           sparse-checkout: |
             scripts
-            docs/guardrails/docker
           sparse-checkout-cone-mode: false
 
       - name: Download image artifact
@@ -63,32 +94,50 @@ jobs:
         run: docker load -i image-artifact/image.tar
 
       - name: Install tooling
+        env:
+          INSTALL_ONLY: trivy,syft,grype
         run: bash _containerdevops/scripts/install-container-tools.sh
 
       - name: Trivy image scan
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          PKG_TYPES: ${{ inputs.pkg_types }}
+          IMAGE: ${{ inputs.image }}
         run: |
-          FILE="_containerdevops/docs/guardrails/docker/profile.thresholds.yml"
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
           SEV="$(bash _containerdevops/scripts/read-thresholds.sh vuln_fail_on_severity "$FILE" | tr '[:lower:]' '[:upper:]')"
           mkdir -p scan-results
           CFG=()
           [[ -f trivy.yaml ]] && CFG=(--config trivy.yaml)
-          trivy image --scanners vuln --severity "CRITICAL,${SEV}" \
+          trivy image --scanners vuln --pkg-types "${PKG_TYPES}" \
+            --severity "CRITICAL,${SEV}" \
             --format sarif --output scan-results/trivy.sarif \
-            "${CFG[@]}" "${{ inputs.image }}"
-          trivy image --scanners vuln --severity "CRITICAL,${SEV}" \
-            --exit-code 1 "${CFG[@]}" "${{ inputs.image }}"
+            "${CFG[@]}" "${IMAGE}"
+          trivy image --scanners vuln --pkg-types "${PKG_TYPES}" \
+            --severity "CRITICAL,${SEV}" \
+            --exit-code 1 "${CFG[@]}" "${IMAGE}"
 
       - name: Syft SBOM
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          PKG_TYPES: ${{ inputs.pkg_types }}
+          IMAGE: ${{ inputs.image }}
         run: |
           mkdir -p scan-results
-          syft "${{ inputs.image }}" -o cyclonedx-json=scan-results/sbom.cdx.json \
+          SELECT=()
+          # Align SBOM with Trivy pkg_types=library (skip OS catalogers for DHI noise).
+          if [[ "${PKG_TYPES}" == "library" ]]; then
+            SELECT=(--select-catalogers python)
+          fi
+          syft "${IMAGE}" "${SELECT[@]}" \
+            -o cyclonedx-json=scan-results/sbom.cdx.json \
             -o spdx-json=scan-results/sbom.spdx.json
 
       - name: Grype (SBOM)
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          IMAGE: ${{ inputs.image }}
         run: |
           CFG=()
           [[ -f .grype.yaml ]] && CFG=(--config .grype.yaml)
@@ -96,7 +145,7 @@ jobs:
             grype "sbom:scan-results/sbom.cdx.json" "${CFG[@]}" --fail-on high \
               -o json=scan-results/grype.json
           else
-            grype "${{ inputs.image }}" "${CFG[@]}" --fail-on high \
+            grype "${IMAGE}" "${CFG[@]}" --fail-on high \
               -o json=scan-results/grype.json
           fi
 
@@ -112,7 +161,7 @@ jobs:
       - name: Upload Trivy SARIF
         if: always() && hashFiles('scan-results/trivy.sarif') != ''
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        uses: github/codeql-action/upload-sarif@ea14db8afdef5d462e69d78c4ca45002d4522418 # v4.37.4
         with:
           sarif_file: scan-results/trivy.sarif
           category: trivy-image

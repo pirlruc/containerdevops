@@ -26,6 +26,15 @@ on:
         required: false
         type: boolean
         default: false
+      scripts_ref:
+        description: "Commit/tag/branch of this repo to checkout for scripts (must match uses: pin)"
+        required: false
+        type: string
+        default: ""
+    secrets:
+      # Required when the caller is a different private repo (see container-lint.yml).
+      checkout_token:
+        required: false
   workflow_dispatch:
     inputs:
       paths:
@@ -43,6 +52,12 @@ on:
       blocking:
         type: boolean
         default: false
+      scripts_ref:
+        type: string
+        default: ""
+
+# CI-025
+permissions: {}
 
 env:
   ADVISORY: ${{ inputs.blocking == false }}
@@ -51,28 +66,35 @@ env:
 
 jobs:
   iac:
+    # CI-024: SARIF upload
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Checkout containerdevops scripts
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: pirlruc/containerdevops
+          # github.workflow_sha is the *caller* workflow; pass scripts_ref matching uses: @pin.
+          ref: ${{ inputs.scripts_ref || github.sha }}
+          token: ${{ github.token }}  # same-repo; checkout_token is for commondevops only
+          persist-credentials: false
           path: _containerdevops
           sparse-checkout: |
             scripts
-            docs/guardrails/docker
           sparse-checkout-cone-mode: false
 
       - name: Resolve iac_fail_on
         id: thr
         run: |
-          FILE="_containerdevops/docs/guardrails/docker/profile.thresholds.yml"
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
           echo "fail_on=$(bash _containerdevops/scripts/read-thresholds.sh iac_fail_on "$FILE")" >> "$GITHUB_OUTPUT"
 
@@ -81,11 +103,16 @@ jobs:
 
       - name: KICS scan
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          KICS_PATHS: ${{ inputs.paths }}
+          KICS_EXCLUDE: ${{ inputs.exclude_paths }}
+          KICS_CONFIG: ${{ inputs.kics_config }}
+          FAIL_ON: ${{ steps.thr.outputs.fail_on }}
         run: |
           mkdir -p kics-results
-          PATHS="${{ inputs.paths }}"
-          EXCL="${{ inputs.exclude_paths }}"
-          CFG="${{ inputs.kics_config }}"
+          PATHS="${KICS_PATHS}"
+          EXCL="${KICS_EXCLUDE}"
+          CFG="${KICS_CONFIG}"
           ARGS=(-p)
           IFS=',' read -ra P <<< "${PATHS}"
           for p in "${P[@]}"; do
@@ -111,15 +138,17 @@ jobs:
               -o /reports \
               "${CONFIG_ARGS[@]}" \
               --report-formats sarif,json \
-              --fail-on "${{ steps.thr.outputs.fail_on }}" \
+              --fail-on "${FAIL_ON}" \
               --no-progress
 
       - name: Compose config
         if: inputs.compose_files != ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          COMPOSE_FILES: ${{ inputs.compose_files }}
         run: |
           # shellcheck disable=SC2086
-          for f in ${{ inputs.compose_files }}; do
+          for f in $COMPOSE_FILES; do
             echo "Validating ${f}"
             docker compose -f "${f}" config --quiet
           done
@@ -136,7 +165,7 @@ jobs:
       - name: Upload KICS SARIF
         if: always() && hashFiles('kics-results/results.sarif') != ''
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        uses: github/codeql-action/upload-sarif@ea14db8afdef5d462e69d78c4ca45002d4522418 # v4.37.4
         with:
           sarif_file: kics-results/results.sarif
           category: kics

@@ -1,5 +1,14 @@
 name: Container Lint (reusable)
 
+# Hadolint with docker profile thresholds (host install or docker run of runner_image).
+# actionlint / shellcheck / zizmor → commondevops common-infra-lint.
+# Secrets (DOCKER-SEC-005) → commondevops common-secrets-sast.
+# commondevops pin: keep uses: and scripts_ref in lockstep (update after commondevops release).
+#
+# runner_image: empty → install tools on the bare runner (bootstrap / ci-base caller).
+# Non-empty → docker run that image for hadolint/shellcheck (avoids job-level container:
+# which fails workflow validation when the expression can be empty).
+
 on:
   workflow_call:
     inputs:
@@ -23,6 +32,29 @@ on:
         required: false
         type: string
         default: ""
+      scripts_ref:
+        description: "Commit/tag/branch of this repo to checkout for scripts (must match uses: pin)"
+        required: false
+        type: string
+        default: ""
+      runner_image:
+        description: "Optional image for docker-run hadolint; empty installs on the host"
+        required: false
+        type: string
+        default: ""
+      run_infra_lint:
+        description: Call common-infra-lint (actionlint/shellcheck/zizmor/hadolint)
+        required: false
+        type: boolean
+        default: true
+      run_secrets_scan:
+        description: Call common-secrets-sast (DOCKER-SEC-005)
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      checkout_token:
+        required: false
   workflow_dispatch:
     inputs:
       dockerfile:
@@ -37,6 +69,15 @@ on:
       shell_scripts:
         type: string
         default: ""
+      scripts_ref:
+        type: string
+        default: ""
+      runner_image:
+        type: string
+        default: ""
+
+# CI-025
+permissions: {}
 
 env:
   ADVISORY: ${{ inputs.blocking == false }}
@@ -45,58 +86,125 @@ jobs:
   lint:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: ${{ inputs.working_directory }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Checkout containerdevops scripts
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        if: github.actor != 'dependabot[bot]'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: pirlruc/containerdevops
+          ref: ${{ inputs.scripts_ref || github.sha }}
+          token: ${{ github.token }}  # same-repo; checkout_token is for commondevops only
+          persist-credentials: false
           path: _containerdevops
           sparse-checkout: |
             scripts
-            docs/guardrails/docker
           sparse-checkout-cone-mode: false
 
-      - name: Install tooling
+      - name: Install tooling (host path)
+        if: inputs.runner_image == ''
         working-directory: ${{ github.workspace }}
+        env:
+          INSTALL_ONLY: hadolint,shellcheck
         run: bash _containerdevops/scripts/install-container-tools.sh
 
       - name: Resolve hadolint threshold
         id: thr
         working-directory: ${{ github.workspace }}
         run: |
-          FILE="_containerdevops/docs/guardrails/docker/profile.thresholds.yml"
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           if [[ ! -f "$FILE" ]]; then
-            FILE="docs/guardrails/docker/profile.thresholds.yml"
+            echo "missing vendored thresholds at $FILE" >&2
+            exit 1
           fi
-          echo "hadolint=$(bash _containerdevops/scripts/read-thresholds.sh hadolint_failure_threshold "$FILE")" >> "$GITHUB_OUTPUT"
+          VALUE="$(bash _containerdevops/scripts/read-thresholds.sh hadolint_failure_threshold "$FILE")"
+          if [[ -z "$VALUE" ]]; then
+            echo "empty hadolint_failure_threshold from $FILE" >&2
+            exit 1
+          fi
+          echo "hadolint=${VALUE}" >> "$GITHUB_OUTPUT"
 
-      - name: hadolint
+      - name: hadolint (host)
+        if: inputs.runner_image == ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
+          DOCKERFILE: ${{ inputs.dockerfile }}
         run: |
-          hadolint --failure-threshold "${{ steps.thr.outputs.hadolint }}" \
-            "${{ inputs.dockerfile }}"
+          hadolint --failure-threshold "${HADOLINT_THRESHOLD}" \
+            "${DOCKERFILE}"
 
-      - name: shellcheck entrypoints
-        if: inputs.shell_scripts != ''
+      - name: hadolint (runner_image)
+        if: inputs.runner_image != ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          WORKSPACE: ${{ github.workspace }}
+          WORKING_DIRECTORY: ${{ inputs.working_directory }}
+          RUNNER_IMAGE: ${{ inputs.runner_image }}
+          HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
+          DOCKERFILE: ${{ inputs.dockerfile }}
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq shellcheck
+          docker run --rm -v "${WORKSPACE}:/work:ro" -w "/work/${WORKING_DIRECTORY}" \
+            "${RUNNER_IMAGE}" \
+            hadolint --failure-threshold "${HADOLINT_THRESHOLD}" \
+            "${DOCKERFILE}"
+
+      - name: shellcheck entrypoints (host)
+        if: inputs.shell_scripts != '' && inputs.runner_image == ''
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          SHELL_SCRIPTS: ${{ inputs.shell_scripts }}
+        run: |
           # shellcheck disable=SC2086
-          shellcheck ${{ inputs.shell_scripts }}
+          shellcheck $SHELL_SCRIPTS
 
-      - name: actionlint
+      - name: shellcheck entrypoints (runner_image)
+        if: inputs.shell_scripts != '' && inputs.runner_image != ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
-        working-directory: ${{ github.workspace }}
+        env:
+          WORKSPACE: ${{ github.workspace }}
+          WORKING_DIRECTORY: ${{ inputs.working_directory }}
+          RUNNER_IMAGE: ${{ inputs.runner_image }}
+          SHELL_SCRIPTS: ${{ inputs.shell_scripts }}
         run: |
-          mapfile -t WFS < <(find .github/workflows -name '*.yml' -o -name '*.yaml' 2>/dev/null | head -40)
-          if [[ ${#WFS[@]} -eq 0 ]]; then
-            echo "No workflows to lint"
-            exit 0
-          fi
-          actionlint "${WFS[@]}"
+          # shellcheck disable=SC2086
+          docker run --rm -v "${WORKSPACE}:/work:ro" -w "/work/${WORKING_DIRECTORY}" \
+            "${RUNNER_IMAGE}" \
+            shellcheck $SHELL_SCRIPTS
+
+  infra:
+    # CI-024 — pin updated after commondevops 1.0.0 lands (placeholder until then).
+    if: github.actor != 'dependabot[bot]' && inputs.run_infra_lint != false
+    permissions:
+      contents: read
+    uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@74695e83a7b79784ee81fd970d9051d8efd711e8
+    with:
+      blocking: ${{ inputs.blocking }}
+      working_directory: ${{ inputs.working_directory }}
+      shell_scripts: ${{ inputs.shell_scripts }}
+      dockerfiles: ${{ inputs.dockerfile }}
+      scripts_ref: 74695e83a7b79784ee81fd970d9051d8efd711e8
+    secrets:
+      checkout_token: ${{ secrets.checkout_token }}
+
+  secrets:
+    # CI-024 / DOCKER-SEC-005
+    if: github.actor != 'dependabot[bot]' && inputs.run_secrets_scan != false
+    permissions:
+      contents: read
+      security-events: write
+    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@74695e83a7b79784ee81fd970d9051d8efd711e8
+    with:
+      blocking: ${{ inputs.blocking }}
+      working_directory: ${{ inputs.working_directory }}
+      scripts_ref: 74695e83a7b79784ee81fd970d9051d8efd711e8
+    secrets:
+      checkout_token: ${{ secrets.checkout_token }}

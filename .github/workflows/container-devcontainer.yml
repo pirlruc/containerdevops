@@ -1,0 +1,154 @@
+name: Container Devcontainer (reusable)
+
+# CDO-006: lint + light structure verification for .devcontainer/Dockerfile.
+# runner_image: empty → host install; non-empty → docker run (no job-level container:).
+
+on:
+  workflow_call:
+    inputs:
+      dockerfile:
+        description: Path to devcontainer Dockerfile
+        required: false
+        type: string
+        default: .devcontainer/Dockerfile
+      working_directory:
+        required: false
+        type: string
+        default: .
+      structure_test_config:
+        description: Optional container-structure-test config (empty skips)
+        required: false
+        type: string
+        default: ""
+      blocking:
+        required: false
+        type: boolean
+        default: false
+      scripts_ref:
+        required: false
+        type: string
+        default: ""
+      runner_image:
+        description: "Optional image for docker-run hadolint; empty installs on the host"
+        required: false
+        type: string
+        default: ""
+    secrets:
+      checkout_token:
+        required: false
+  workflow_dispatch:
+    inputs:
+      dockerfile:
+        type: string
+        default: .devcontainer/Dockerfile
+      working_directory:
+        type: string
+        default: .
+      blocking:
+        type: boolean
+        default: false
+      runner_image:
+        type: string
+        default: ""
+
+# CI-025
+permissions: {}
+
+env:
+  ADVISORY: ${{ inputs.blocking == false }}
+
+jobs:
+  devcontainer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout containerdevops scripts
+        if: github.actor != 'dependabot[bot]'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: pirlruc/containerdevops
+          ref: ${{ inputs.scripts_ref || github.sha }}
+          token: ${{ github.token }}  # same-repo; checkout_token is for commondevops only
+          persist-credentials: false
+          path: _containerdevops
+          sparse-checkout: |
+            scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Install tooling (host path)
+        if: inputs.runner_image == ''
+        working-directory: ${{ github.workspace }}
+        env:
+          INSTALL_ONLY: hadolint
+        run: bash _containerdevops/scripts/install-container-tools.sh
+
+      - name: Require Dockerfile
+        id: have_df
+        env:
+          DOCKERFILE: ${{ inputs.dockerfile }}
+        run: |
+          if [[ ! -f "${DOCKERFILE}" ]]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "No ${DOCKERFILE} — nothing to verify"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve hadolint threshold
+        id: thr
+        if: steps.have_df.outputs.present == 'true'
+        working-directory: ${{ github.workspace }}
+        run: |
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
+          if [[ ! -f "$FILE" ]]; then
+            echo "missing vendored thresholds at $FILE" >&2
+            exit 1
+          fi
+          echo "hadolint=$(bash _containerdevops/scripts/read-thresholds.sh hadolint_failure_threshold "$FILE")" >> "$GITHUB_OUTPUT"
+
+      - name: hadolint (host)
+        if: steps.have_df.outputs.present == 'true' && inputs.runner_image == ''
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
+          DOCKERFILE: ${{ inputs.dockerfile }}
+        run: |
+          hadolint --failure-threshold "${HADOLINT_THRESHOLD}" \
+            "${DOCKERFILE}"
+
+      - name: hadolint (runner_image)
+        if: steps.have_df.outputs.present == 'true' && inputs.runner_image != ''
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          WORKSPACE: ${{ github.workspace }}
+          WORKING_DIRECTORY: ${{ inputs.working_directory }}
+          RUNNER_IMAGE: ${{ inputs.runner_image }}
+          HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
+          DOCKERFILE: ${{ inputs.dockerfile }}
+        run: |
+          docker run --rm -v "${WORKSPACE}:/work:ro" -w "/work/${WORKING_DIRECTORY}" \
+            "${RUNNER_IMAGE}" \
+            hadolint --failure-threshold "${HADOLINT_THRESHOLD}" \
+            "${DOCKERFILE}"
+
+      - name: structure-test stub
+        if: inputs.structure_test_config != ''
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          STRUCTURE_TEST_CONFIG: ${{ inputs.structure_test_config }}
+        run: |
+          if [[ ! -f "${STRUCTURE_TEST_CONFIG}" ]]; then
+            echo "structure_test_config missing: ${STRUCTURE_TEST_CONFIG}" >&2
+            exit 1
+          fi
+          echo "structure-test config present: ${STRUCTURE_TEST_CONFIG}"
+          echo "::notice::CDO-006 stub — run container-build for a real image + CST"

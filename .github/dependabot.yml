@@ -1,14 +1,44 @@
+# Org-default Dependabot (SC-DEP-001/002/003).
+# Cadence: docs/guardrails/supply-chain/profile.thresholds.yml
+# Process: https://github.com/pirlruc/methodologies/blob/main/github-issue-adr/docs/process/dependency-updates.md
+#
+# Personal-account private git (uncomment and set Dependabot secrets — not Actions):
+# registries:
+#   github-private:
+#     type: git
+#     url: https://github.com
+#     username: x-access-token
+#     password: ${{secrets.DEPENDABOT_GITHUB_TOKEN}}
+#   dhi:
+#     type: docker-registry
+#     url: https://dhi.io
+#     username: ${{secrets.DOCKERHUB_USERNAME}}
+#     password: ${{secrets.DOCKERHUB_TOKEN}}
+# Then add `registries: [github-private]` (and/or dhi) under each updates entry that needs them.
+
 version: 2
+
+multi-ecosystem-groups:
+  all-dependencies:
+    schedule:
+      interval: monthly
+      time: "06:00"
+      timezone: Europe/Lisbon
+    commit-message:
+      prefix: build
+      include: scope
+
 updates:
   - package-ecosystem: github-actions
     directory: /
-    schedule:
-      interval: weekly
-      day: monday
-      time: "06:15"
-      timezone: Europe/Lisbon
-    open-pull-requests-limit: 5
-    groups:
-      github-actions:
-        patterns:
-          - "*"
+    patterns: ["*"]
+    multi-ecosystem-group: all-dependencies
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: docker
+    directory: /docker/ci-container
+    patterns: ["*"]
+    multi-ecosystem-group: all-dependencies
+    cooldown:
+      default-days: 7

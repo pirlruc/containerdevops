@@ -34,11 +34,24 @@ on:
         required: false
         type: boolean
         default: false
+      scripts_ref:
+        description: "Commit/tag/branch of this repo to checkout for scripts (must match uses: pin)"
+        required: false
+        type: string
+        default: ""
+      build_args:
+        description: Newline-separated Docker build-args (KEY=value)
+        required: false
+        type: string
+        default: ""
     secrets:
       # Optional — required when Dockerfile FROM lines pull from dhi.io (Community DHI).
       DOCKERHUB_USERNAME:
         required: false
       DOCKERHUB_TOKEN:
+        required: false
+      # Required when the caller is a different private repo (see container-lint.yml).
+      checkout_token:
         required: false
   workflow_dispatch:
     inputs:
@@ -63,32 +76,50 @@ on:
       dhi_login:
         type: boolean
         default: false
+      scripts_ref:
+        type: string
+        default: ""
+      build_args:
+        type: string
+        default: ""
+
+# CI-025
+permissions: {}
 
 env:
   ADVISORY: ${{ inputs.blocking == false }}
 
 jobs:
   build:
+    # Build/publish stay on plain runner (no container:) — needs buildx/docker.
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Checkout containerdevops scripts
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: pirlruc/containerdevops
+          # github.workflow_sha is the *caller* workflow; pass scripts_ref matching uses: @pin.
+          ref: ${{ inputs.scripts_ref || github.sha }}
+          token: ${{ github.token }}  # same-repo; checkout_token is for commondevops only
+          persist-credentials: false
           path: _containerdevops
           sparse-checkout: |
             scripts
-            docs/guardrails/docker
           sparse-checkout-cone-mode: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
       - name: Log in to dhi.io
-        if: inputs.dhi_login
+        # CI-024: Dependabot cannot use Actions secrets
+        if: inputs.dhi_login && github.actor != 'dependabot[bot]'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: dhi.io
@@ -96,9 +127,26 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Install tooling
+        env:
+          INSTALL_ONLY: container-structure-test,dive
         run: bash _containerdevops/scripts/install-container-tools.sh
 
+      - name: Base image age gate (DOCKER-BUILD-006)
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          DOCKERFILE: ${{ inputs.dockerfile }}
+        run: |
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
+          if [[ ! -f "$FILE" ]]; then
+            echo "missing vendored thresholds at $FILE" >&2
+            exit 1
+          fi
+          MAX="$(bash _containerdevops/scripts/read-thresholds.sh base_image_max_age_days "$FILE")"
+          bash _containerdevops/scripts/check-base-image-age.sh \
+            "${DOCKERFILE}" "${MAX}"
+
       - name: Build (load)
+        id: build
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
@@ -107,44 +155,63 @@ jobs:
           load: true
           tags: ${{ inputs.image_name }}
           platforms: ${{ inputs.platforms }}
+          build-args: ${{ inputs.build_args }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.title=${{ inputs.image_name }}
+            org.opencontainers.image.description=CI build from containerdevops
 
       - name: container-structure-test
         if: hashFiles(inputs.structure_test_config) != ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          IMAGE_NAME: ${{ inputs.image_name }}
+          STRUCTURE_TEST_CONFIG: ${{ inputs.structure_test_config }}
         run: |
           container-structure-test test \
-            --image "${{ inputs.image_name }}" \
-            --config "${{ inputs.structure_test_config }}"
+            --image "${IMAGE_NAME}" \
+            --config "${STRUCTURE_TEST_CONFIG}"
 
       - name: Image size gate
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          IMAGE_NAME: ${{ inputs.image_name }}
         run: |
-          FILE="_containerdevops/docs/guardrails/docker/profile.thresholds.yml"
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
           MAX="$(bash _containerdevops/scripts/read-thresholds.sh image_max_size_mb "$FILE")"
-          bash _containerdevops/scripts/check-image-size.sh "${{ inputs.image_name }}" "${MAX}"
+          bash _containerdevops/scripts/check-image-size.sh "${IMAGE_NAME}" "${MAX}"
 
       - name: Dive efficiency
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          IMAGE_NAME: ${{ inputs.image_name }}
         run: |
-          FILE="_containerdevops/docs/guardrails/docker/profile.thresholds.yml"
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
           MIN="$(bash _containerdevops/scripts/read-thresholds.sh min_image_efficiency_percent "$FILE")"
-          dive --ci --json dive-report.json "${{ inputs.image_name }}" || true
+          dive --ci --json dive-report.json "${IMAGE_NAME}" || true
           if [[ -f dive-report.json ]]; then
             bash _containerdevops/scripts/check-image-efficiency.sh "${MIN}" dive-report.json
           else
             echo "dive JSON missing — treat as advisory miss"
-            [[ "${{ env.ADVISORY }}" == "true" ]] || exit 1
+            [[ "${ADVISORY}" == "true" ]] || exit 1
           fi
 
       - name: Save image tarball
         if: always()
+        env:
+          IMAGE_NAME: ${{ inputs.image_name }}
         run: |
-          docker save "${{ inputs.image_name }}" -o image.tar
-          docker image inspect "${{ inputs.image_name }}" --format '{{.Id}}' > image-id.txt
+          if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
+            echo "No image ${IMAGE_NAME} to save"
+            exit 0
+          fi
+          docker save "${IMAGE_NAME}" -o image.tar
+          docker image inspect "${IMAGE_NAME}" --format '{{.Id}}' > image-id.txt
 
       - name: Upload image artifact
         if: always()

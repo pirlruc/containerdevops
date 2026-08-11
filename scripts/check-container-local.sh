@@ -38,7 +38,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-THRESHOLDS="${ROOT}/docs/guardrails/docker/profile.thresholds.yml"
+THRESHOLDS="${ROOT}/scripts/docker.profile.thresholds.yml"
+if [[ ! -f "${THRESHOLDS}" ]]; then
+  THRESHOLDS="${ROOT}/docs/guardrails/docker/profile.thresholds.yml"
+fi
 if [[ ! -f "${THRESHOLDS}" ]]; then
   echo "Missing ${THRESHOLDS}; init the guardrails submodule first." >&2
   exit 1

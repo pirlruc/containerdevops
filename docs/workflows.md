@@ -9,6 +9,28 @@ All workflows: `workflow_call` + `workflow_dispatch`, `blocking` default `false`
 |-------|---------|---------|
 | `blocking` | `false` | When true, gate failures fail the job |
 
+## Shared secrets (private callers)
+
+| Secret | Required | Meaning |
+|--------|----------|---------|
+| `checkout_token` | When caller ≠ this repo and this repo is private | PAT or fine-grained token with `contents:read` on `pirlruc/containerdevops` |
+
+## Shared inputs (cross-repo callers)
+
+| Input | Required | Meaning |
+|-------|----------|---------|
+| `scripts_ref` | Cross-repo callers | Commit/tag/branch matching the `uses: …@pin` — scripts checkout uses this. Same-repo `workflow_dispatch` falls back to `github.sha`. Do **not** use `github.workflow_sha` (that is the caller’s workflow). |
+
+Reusable jobs sparse-checkout this repository into `_containerdevops` for
+`scripts/` (install helpers + vendored `docker.profile.thresholds.yml`).
+The caller’s `GITHUB_TOKEN` cannot read a different private repository, so
+private consumers must pass `checkout_token`. Same-repo `workflow_dispatch`
+falls back to `github.token`.
+
+Thresholds are vendored under `scripts/` because `docs/guardrails` is a private
+submodule and is not available from nested checkout. Keep the vendored file in
+sync with the guardrails docker pack.
+
 ## container-lint.yml
 
 | Input | Default |
@@ -28,9 +50,11 @@ All workflows: `workflow_call` + `workflow_dispatch`, `blocking` default `false`
 | `platforms` | `linux/amd64` |
 
 Optional secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` — when set, the job
-Optional input: `dhi_login` (default false) — when true, log in to dhi.io using those secrets. Do not use `secrets` in `if:` on reusable workflows.
 logs in to **`dhi.io`** before Buildx so Community Docker Hardened Image `FROM`
 lines can pull. Pass the same Hub credentials used for Docker Hub publish.
+
+Optional input: `dhi_login` (default false) — when true, log in to dhi.io using
+those secrets. Do not use `secrets` in `if:` on reusable workflows.
 
 Uploads `container-image` artifact (`image.tar`).
 
@@ -63,3 +87,6 @@ those secrets are present (in addition to GHCR / Hub push logins). Permissions:
 | `exclude_paths` | `""` |
 | `compose_files` | `""` |
 | `kics_config` | `.github/kics.config` |
+
+KICS `exclude-queries` IDs and why each is suppressed (not fixed) are recorded in
+[`docs/kics-exclusions.md`](kics-exclusions.md) (DOCKER-LINT-002).

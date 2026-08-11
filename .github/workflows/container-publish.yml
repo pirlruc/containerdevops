@@ -43,11 +43,45 @@ on:
         required: false
         type: boolean
         default: false
+      scripts_ref:
+        description: "Commit/tag/branch of this repo to checkout for scripts (must match uses: pin)"
+        required: false
+        type: string
+        default: ""
+      tag_latest:
+        description: Also push the raw latest tag (needed on release refs where is_default_branch is false)
+        required: false
+        type: boolean
+        default: false
+      verify_platforms:
+        description: Run DOCKER-TEST-002 multi-arch verification after push
+        required: false
+        type: boolean
+        default: true
+      verify_command:
+        description: Command run inside each platform image during multi-arch verify
+        required: false
+        type: string
+        default: "/bin/true"
+      structure_test_config:
+        description: Optional CST config for per-platform verify (empty skips CST)
+        required: false
+        type: string
+        default: ""
+      build_args:
+        description: Newline-separated Docker build-args (KEY=value)
+        required: false
+        type: string
+        default: ""
     secrets:
       DOCKERHUB_USERNAME:
         required: false
       DOCKERHUB_TOKEN:
         required: false
+      # Required when the caller is a different private repo (see container-lint.yml).
+      checkout_token:
+        required: false
+  # workflow_dispatch capped at 10 inputs (GitHub limit); full surface is workflow_call.
   workflow_dispatch:
     inputs:
       context:
@@ -74,12 +108,23 @@ on:
       dhi_login:
         type: boolean
         default: false
+      tag_latest:
+        type: boolean
+        default: false
+      verify_platforms:
+        type: boolean
+        default: true
+
+# CI-025
+permissions: {}
 
 env:
   ADVISORY: ${{ inputs.blocking == false }}
 
 jobs:
   publish:
+    # CI-024: publish/sign need registry secrets and id-token
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -87,13 +132,19 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Checkout containerdevops scripts
-        if: inputs.sign
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        if: inputs.sign || inputs.verify_platforms
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: pirlruc/containerdevops
+          # github.workflow_sha is the *caller* workflow; pass scripts_ref matching uses: @pin.
+          ref: ${{ inputs.scripts_ref || github.sha }}
+          token: ${{ github.token }}  # same-repo; checkout_token is for commondevops only
+          persist-credentials: false
           path: _containerdevops
           sparse-checkout: |
             scripts
@@ -106,7 +157,7 @@ jobs:
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
       - name: Log in to dhi.io
-        if: inputs.dhi_login
+        if: inputs.dhi_login && github.actor != 'dependabot[bot]'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: dhi.io
@@ -129,15 +180,19 @@ jobs:
 
       - name: Owner
         id: owner
+        env:
+          GITHUB_OWNER: ${{ inputs.github_owner }}
+          OWNER: ${{ github.repository_owner }}
+          IMAGE_NAME: ${{ inputs.image_name }}
+          DOCKERHUB_IMAGE: ${{ inputs.dockerhub_image }}
         run: |
-          OWNER="${{ inputs.github_owner }}"
-          if [[ -z "${OWNER}" ]]; then OWNER="${{ github.repository_owner }}"; fi
+          if [[ -n "${GITHUB_OWNER}" ]]; then OWNER="${GITHUB_OWNER}"; fi
           echo "owner=${OWNER}" >> "$GITHUB_OUTPUT"
           {
             echo "images<<EOF"
-            echo "ghcr.io/${OWNER}/${{ inputs.image_name }}"
-            if [[ -n "${{ inputs.dockerhub_image }}" ]]; then
-              echo "${{ inputs.dockerhub_image }}"
+            echo "ghcr.io/${OWNER}/${IMAGE_NAME}"
+            if [[ -n "${DOCKERHUB_IMAGE}" ]]; then
+              echo "${DOCKERHUB_IMAGE}"
             fi
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
@@ -151,7 +206,8 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ inputs.tag_latest || (github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
+            type=raw,value={{date 'YYYYMMDD'}},enable=${{ inputs.tag_latest }}
 
       - name: Build and push
         id: build
@@ -163,30 +219,58 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # DOCKER-DOC-001 — metadata-action labels + explicit OCI annotations
+          annotations: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
           platforms: ${{ inputs.platforms }}
           provenance: false
           sbom: false
+          build-args: ${{ inputs.build_args }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Install cosign
-        if: inputs.sign
+      - name: Install verify tooling
+        if: inputs.verify_platforms || inputs.sign
+        env:
+          INSTALL_ONLY: cosign,container-structure-test
         run: bash _containerdevops/scripts/install-container-tools.sh
 
+      - name: Verify multi-arch (DOCKER-TEST-002)
+        if: inputs.verify_platforms
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          OWNER: ${{ steps.owner.outputs.owner }}
+          IMAGE_NAME: ${{ inputs.image_name }}
+          PLATFORMS: ${{ inputs.platforms }}
+          VERIFY_COMMAND: ${{ inputs.verify_command }}
+          STRUCTURE_TEST_CONFIG: ${{ inputs.structure_test_config }}
+        run: |
+          digest="${IMAGE_DIGEST}"
+          subject="ghcr.io/${OWNER}/${IMAGE_NAME}@${digest}"
+          bash _containerdevops/scripts/verify-multiarch.sh \
+            "${subject}" \
+            "${PLATFORMS}" \
+            "${VERIFY_COMMAND}" \
+            "${STRUCTURE_TEST_CONFIG}"
+
       - name: Cosign sign (keyless)
-        if: inputs.sign
+        if: inputs.sign && github.actor != 'dependabot[bot]'
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         env:
           COSIGN_YES: "true"
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          META_TAGS: ${{ steps.meta.outputs.tags }}
         run: |
-          digest="${{ steps.build.outputs.digest }}"
+          digest="${IMAGE_DIGEST}"
           while IFS= read -r tag; do
             [[ -z "${tag}" ]] && continue
             cosign sign --yes "${tag}@${digest}"
-          done <<< "${{ steps.meta.outputs.tags }}"
+          done <<< "${META_TAGS}"
 
       - name: Attest provenance
-        if: inputs.sign
+        if: inputs.sign && github.actor != 'dependabot[bot]'
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
