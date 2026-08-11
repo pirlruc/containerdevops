@@ -49,6 +49,16 @@ on:
         required: false
         type: string
         default: ""
+      image_title:
+        description: OCI title label (defaults to image_name)
+        required: false
+        type: string
+        default: ""
+      image_description:
+        description: OCI description label (consumer-facing; empty uses image_name)
+        required: false
+        type: string
+        default: ""
     secrets:
       # Optional — required when Dockerfile FROM lines pull from dhi.io (Community DHI).
       DOCKERHUB_USERNAME:
@@ -182,8 +192,8 @@ jobs:
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.title=${{ inputs.image_name }}
-            org.opencontainers.image.description=CI build from containerdevops
+            org.opencontainers.image.title=${{ inputs.image_title != '' && inputs.image_title || inputs.image_name }}
+            org.opencontainers.image.description=${{ inputs.image_description != '' && inputs.image_description || inputs.image_name }}
 
       - name: container-structure-test
         continue-on-error: ${{ env.ADVISORY == 'true' }}

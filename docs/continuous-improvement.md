@@ -101,7 +101,7 @@ Use milestone `Continuous improvement` (or whatever already exists on the repo).
 | `CDO-WF-…` | Reusable workflow contracts / CI-024/025 / caller permissions |
 | `CDO-IMG-…` | ci-container image / donor pins / structure-test |
 | `CDO-SC-…` | Image scan, SBOM, secrets (DOCKER-SEC-*) |
-| `CDO-DOC-…` | README / handoff / docker-hub clarity |
+| `CDO-DOC-…` | README / handoff / registry page clarity |
 | `CDO-DEP-…` | Dependabot / SC-DEP |
 | `CDO-ECO-…` | Ecosystem work owned by another repo (name it) |
 
@@ -129,7 +129,7 @@ Provenance after human merge+sync uses these prefixes and the PR description; do
 | `.github/workflows/` | Reusable `container-*` workflows + self CI + ci-container caller |
 | `scripts/` | Install, local parity, threshold readers, size gate (`du -sxm /`) |
 | `docker/ci-container/` | Container CI tooling image (extends ci-lint) |
-| `docs/` | Handoff, this prompt, authored `issues.yml`, deviations, docker-hub |
+| `docs/` | Handoff, this prompt, authored `issues.yml`, deviations, Docker Hub and GitHub Packages pages |
 | `.trivyignore.yaml` | Path-scoped donor CVE ignores |
 | `.github/dependabot.yml` | Multi-ecosystem dependency updates |
 

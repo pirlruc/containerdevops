@@ -90,8 +90,12 @@ from `templates/` when missing.
 ## Toolchain image
 
 `ghcr.io/pirlruc/ci-container` extends [commondevops `ci-lint`](https://github.com/pirlruc/commondevops)
-with dive and container-structure-test. Public overview:
-[docs/docker-hub.md](docs/docker-hub.md).
+with dive and container-structure-test.
+
+Consumer docs:
+
+- Docker Hub: [docs/docker-hub.md](docs/docker-hub.md)
+- GitHub Packages: [docs/github-packages.md](docs/github-packages.md)
 
 ## Layout
 

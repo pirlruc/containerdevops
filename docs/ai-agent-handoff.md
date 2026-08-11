@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `common/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `main` |
+| **Branch** | `feature-package-metadata-docs` (land on `main`) |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -19,16 +19,16 @@ Owns `.github/workflows/container-{lint,build,scan,publish,iac,devcontainer}.yml
 Shared infra/secrets/supply-chain forward to
 [pirlruc/commondevops](https://github.com/pirlruc/commondevops).
 
-## Pins (2026-08-11)
+## Pins (2026-08-12)
 
 | Submodule / artifact | Pin |
 |----------------------|-----|
-| `docs/guardrails` | tag `1.1.0` → `6fe580c…` (deinit'd) |
-| `.github/scaffold` | `f8a6ba1…` (deinit'd) |
-| `ghcr.io/pirlruc/ci-container` | `:1.0.1` (pre-2.0.0); rebase onto `ci-lint` for 2.0.0 |
-| commondevops `uses:` | tag `1.0.0` → `a504555c…` (bump after commondevops 2.0.0) |
-| `ghcr.io/pirlruc/ci-lint` | pending 2.0.0 publish (replaces ci-base as CI_BASE) |
-| Release | [`1.0.1`](https://github.com/pirlruc/containerdevops/releases/tag/1.0.1) @ `e673165f…` |
+| `docs/guardrails` | tag `1.1.0` → `6fe580c…` |
+| `.github/scaffold` | `f8a6ba1…` |
+| `ghcr.io/pirlruc/ci-container` | pending `2.1.0` (metadata + Hub Overview sync) |
+| `ghcr.io/pirlruc/ci-lint` | pending commondevops `2.0.1` (CI_BASE default) |
+| commondevops `uses:` | tag `2.0.0` → `26d7219…` |
+| Release | [`2.0.0`](https://github.com/pirlruc/containerdevops/releases/tag/2.0.0) @ `aac5d88…` |
 
 ## Delivery status
 
@@ -36,8 +36,21 @@ Shared infra/secrets/supply-chain forward to
 |--------------|--------|
 | Phase 1 — CDO-001…CDO-005 | Done |
 | CDO-006…CDO-007 | Done |
-| CDO-008 — multi-ecosystem Dependabot | T1 done; **T2 Insights still open** |
-| CDO-009…CDO-015 | Done (duplicate CDO-015 block removed from issues.yml) |
+| CDO-008 — multi-ecosystem Dependabot | **Done** (T2 Insights recorded below) |
+| CDO-009…CDO-015 | Done |
+| CDO-016 — package metadata + registry pages | **In progress** (this branch) |
+
+## Dependabot Insights (CDO-008-T2)
+
+`.github/dependabot.yml` on `main` since `aac5d88` uses `multi-ecosystem-groups`
+(`all-dependencies`) covering `github-actions` and `docker` (`/docker/ci-container`)
+with monthly Europe/Lisbon schedule (SC-DEP-001/002/003).
+
+Historical Dependabot PRs #19 and #20 were per-ecosystem `github-actions` groups
+created **before** the multi-ecosystem shape landed; both are closed. No
+`all-dependencies` PR has opened yet — next confirmation is the monthly run on the
+1st. Blocker if none appears: open-PR limit from leftover Dependabot PRs (none open
+today) or Insights delay after config land.
 
 ## Commands
 
@@ -54,26 +67,29 @@ python3 .github/scaffold/scripts/issues-sync.py \
 ## Known pitfalls
 
 - **Caller permissions:** document in `docs/workflows.md`. Missing `packages: read`
-  on a container-build caller → **startup_failure** (seen on commondevops CI Base Image).
+  on a container-build caller → **startup_failure**.
 - **Size gate** uses `du -sxm /` (store-independent). Do not use `docker inspect .Size`.
-- **ci-container** extends **ci-lint** (not ci-base) for 2.0.0; publish needs ci-lint first.
+- **OCI labels:** `docker/metadata-action` defaults to repo name/description. Pass
+  `image_title` / `image_description` on publish or the package page leaks the repo
+  description. Hub Overview needs `dockerhub_readme` + a Hub token with
+  read/write/delete (admin) scope.
+- **ci-container** extends **ci-lint**; publish needs `ci-lint:2.0.1` first.
 - Private consumers pass `scripts_token` + matching `scripts_ref`; `checkout_token` only
   for nested commondevops calls (lint secrets/infra).
 - Scan stays on the host runner (`docker load`). Build/publish must not use job `container:`.
-- Submodules deinitialized; hydrate before sync-templates.
 - Dependabot PRs skip CI (CI-024) — replace with a human branch so checks run.
 
 ## Suggested next work
 
-1. Land hygiene + action bumps; close Dependabot PR #20 with pointer.
-2. After commondevops publishes ci-lint 2.0.0, pin digest in ci-container-image.yml and cut 2.0.0.
-3. Confirm Dependabot Insights (CDO-008-T2).
-4. Grant Actions Read on new packages / Hub repos.
+1. Land CDO-016; cut containerdevops `2.1.0` after commondevops `2.0.1` publishes ci-lint.
+2. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
+3. Delete GHCR `2.0.0` versions that carried the repo description.
+4. Grant Actions Read on packages / keep Hub repos public.
 
 ## Recent history
 
-- 2026-08-11: workflow hygiene (permissions docs, size gate, ignorefile input,
-  unused checkout_token removed, templates completed, ci-container on ci-lint).
+- 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); CDO-008 closed.
+- 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 - 2026-08-11: release `1.0.1`; published `ci-container:1.0.1`.
 
-*Last updated: 2026-08-11*
+*Last updated: 2026-08-12*

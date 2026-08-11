@@ -73,6 +73,41 @@ on:
         required: false
         type: string
         default: ""
+      image_title:
+        description: Override org.opencontainers.image.title (empty keeps metadata-action default)
+        required: false
+        type: string
+        default: ""
+      image_description:
+        description: Override org.opencontainers.image.description (consumer-facing; max 512 chars)
+        required: false
+        type: string
+        default: ""
+      image_documentation:
+        description: Override org.opencontainers.image.documentation URL
+        required: false
+        type: string
+        default: ""
+      image_url:
+        description: Override org.opencontainers.image.url
+        required: false
+        type: string
+        default: ""
+      image_vendor:
+        description: Override org.opencontainers.image.vendor
+        required: false
+        type: string
+        default: ""
+      dockerhub_readme:
+        description: Path in the caller checkout to push as Docker Hub Overview (empty skips)
+        required: false
+        type: string
+        default: ""
+      dockerhub_short_description:
+        description: Docker Hub short description (max 100 chars); used when dockerhub_readme is set
+        required: false
+        type: string
+        default: ""
     secrets:
       DOCKERHUB_USERNAME:
         required: false
@@ -227,6 +262,9 @@ jobs:
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        env:
+          # Apply annotations to index + manifest so GHCR multi-arch pages see description.
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: index,manifest
         with:
           images: ${{ steps.owner.outputs.images }}
           tags: |
@@ -235,6 +273,21 @@ jobs:
             type=sha
             type=raw,value=latest,enable=${{ inputs.tag_latest || (github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
             type=raw,value={{date 'YYYYMMDD'}},enable=${{ inputs.tag_latest }}
+          # DOCKER-DOC-001 — override repo-default title/description with image-specific values
+          labels: |
+            ${{ inputs.image_title != '' && format('org.opencontainers.image.title={0}', inputs.image_title) || '' }}
+            ${{ inputs.image_description != '' && format('org.opencontainers.image.description={0}', inputs.image_description) || '' }}
+            ${{ inputs.image_documentation != '' && format('org.opencontainers.image.documentation={0}', inputs.image_documentation) || '' }}
+            ${{ inputs.image_url != '' && format('org.opencontainers.image.url={0}', inputs.image_url) || '' }}
+            ${{ inputs.image_vendor != '' && format('org.opencontainers.image.vendor={0}', inputs.image_vendor) || '' }}
+          annotations: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            ${{ inputs.image_title != '' && format('org.opencontainers.image.title={0}', inputs.image_title) || '' }}
+            ${{ inputs.image_description != '' && format('org.opencontainers.image.description={0}', inputs.image_description) || '' }}
+            ${{ inputs.image_documentation != '' && format('org.opencontainers.image.documentation={0}', inputs.image_documentation) || '' }}
+            ${{ inputs.image_url != '' && format('org.opencontainers.image.url={0}', inputs.image_url) || '' }}
+            ${{ inputs.image_vendor != '' && format('org.opencontainers.image.vendor={0}', inputs.image_vendor) || '' }}
 
       - name: Build and push
         id: build
@@ -246,16 +299,24 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # DOCKER-DOC-001 — metadata-action labels + explicit OCI annotations
-          annotations: |
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           platforms: ${{ inputs.platforms }}
           provenance: false
           sbom: false
           build-args: ${{ inputs.build_args }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Docker Hub Overview
+        if: inputs.dockerhub_image != '' && inputs.dockerhub_readme != ''
+        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ inputs.dockerhub_image }}
+          readme-filepath: ${{ inputs.dockerhub_readme }}
+          short-description: ${{ inputs.dockerhub_short_description }}
 
       - name: Install verify tooling
         if: inputs.verify_platforms || inputs.sign

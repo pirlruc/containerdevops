@@ -223,7 +223,7 @@ milestones:
           guardrail_refs:
           - CI-001
       - id: CDO-008
-        status: open
+        status: done
         title: Adopt and verify multi-ecosystem Dependabot (SC-DEP-*)
         overview:
           problem: >-
@@ -262,7 +262,7 @@ milestones:
               - SC-DEP-001
               - SC-DEP-002
           - id: CDO-008-T2
-            status: open
+            status: done
             title: Record Insights confirmation in handoff after default-branch land
             instructions:
               files:
@@ -491,3 +491,61 @@ milestones:
               - grep -q 'dive:v0.13.1' docker/ci-container/Dockerfile
             guardrail_refs:
               - DOCKER-SEC-001
+
+      - id: CDO-016
+        status: done
+        title: Consumer-facing package metadata and registry pages
+        overview:
+          problem: >-
+            docker/metadata-action defaults overwrote OCI title/description with the
+            repository description, so published ci-container images advertised the
+            wrong thing on GHCR and Hub. Hub Overview was empty; GHCR and Hub consumer
+            docs were mixed in one file.
+          goal: >-
+            Optional image_* and dockerhub_* inputs on container-publish/build that
+            override metadata-action defaults; automatic Hub Overview sync; separate
+            docker-hub.md and github-packages.md with consumer-only content.
+        architecture:
+          target: container-publish.yml + registry docs
+          modules:
+            - .github/workflows/container-publish.yml
+            - .github/workflows/container-build.yml
+            - .github/workflows/ci-container-image.yml
+            - docker/ci-container/Dockerfile
+            - docs/docker-hub.md
+            - docs/github-packages.md
+        acceptance_criteria:
+          - Publish labels carry image-specific title/description (not repo description)
+          - Hub Overview synced from docs/docker-hub.md on publish
+          - github-packages.md covers GHCR auth, pull, and Actions container use
+        guardrail_refs:
+          - DOCKER-DOC-001
+          - DOCKER-DOC-002
+        tasks:
+          - id: CDO-016-T1
+            status: done
+            title: Wire image metadata overrides and Hub Overview sync
+            instructions:
+              files:
+                - .github/workflows/container-publish.yml
+                - .github/workflows/container-build.yml
+                - .github/workflows/ci-container-image.yml
+                - docker/ci-container/Dockerfile
+            verification:
+              - rg -n "image_description|dockerhub_readme|DOCKER_METADATA_ANNOTATIONS_LEVELS" .github/workflows/container-publish.yml
+            guardrail_refs:
+              - DOCKER-DOC-001
+          - id: CDO-016-T2
+            status: done
+            title: Split Hub and GitHub Packages consumer docs
+            instructions:
+              files:
+                - docs/docker-hub.md
+                - docs/github-packages.md
+                - README.md
+                - docs/workflows.md
+            verification:
+              - test -f docs/docker-hub.md
+              - test -f docs/github-packages.md
+            guardrail_refs:
+              - DOCKER-DOC-002
