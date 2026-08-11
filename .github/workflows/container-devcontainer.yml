@@ -77,7 +77,7 @@ jobs:
         with:
           repository: pirlruc/containerdevops
           ref: ${{ inputs.scripts_ref || github.sha }}
-          token: ${{ secrets.checkout_token || github.token }}
+          token: ${{ github.token }}  # same-repo; checkout_token is for commondevops only
           persist-credentials: false
           path: _containerdevops
           sparse-checkout: |
@@ -93,10 +93,12 @@ jobs:
 
       - name: Require Dockerfile
         id: have_df
+        env:
+          DOCKERFILE: ${{ inputs.dockerfile }}
         run: |
-          if [[ ! -f "${{ inputs.dockerfile }}" ]]; then
+          if [[ ! -f "${DOCKERFILE}" ]]; then
             echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "No ${{ inputs.dockerfile }} — nothing to verify"
+            echo "No ${DOCKERFILE} — nothing to verify"
           else
             echo "present=true" >> "$GITHUB_OUTPUT"
           fi
@@ -116,26 +118,37 @@ jobs:
       - name: hadolint (host)
         if: steps.have_df.outputs.present == 'true' && inputs.runner_image == ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
+          DOCKERFILE: ${{ inputs.dockerfile }}
         run: |
-          hadolint --failure-threshold "${{ steps.thr.outputs.hadolint }}" \
-            "${{ inputs.dockerfile }}"
+          hadolint --failure-threshold "${HADOLINT_THRESHOLD}" \
+            "${DOCKERFILE}"
 
       - name: hadolint (runner_image)
         if: steps.have_df.outputs.present == 'true' && inputs.runner_image != ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          WORKSPACE: ${{ github.workspace }}
+          WORKING_DIRECTORY: ${{ inputs.working_directory }}
+          RUNNER_IMAGE: ${{ inputs.runner_image }}
+          HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
+          DOCKERFILE: ${{ inputs.dockerfile }}
         run: |
-          docker run --rm -v "${{ github.workspace }}:/work:ro" -w "/work/${{ inputs.working_directory }}" \
-            "${{ inputs.runner_image }}" \
-            hadolint --failure-threshold "${{ steps.thr.outputs.hadolint }}" \
-            "${{ inputs.dockerfile }}"
+          docker run --rm -v "${WORKSPACE}:/work:ro" -w "/work/${WORKING_DIRECTORY}" \
+            "${RUNNER_IMAGE}" \
+            hadolint --failure-threshold "${HADOLINT_THRESHOLD}" \
+            "${DOCKERFILE}"
 
       - name: structure-test stub
         if: inputs.structure_test_config != ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          STRUCTURE_TEST_CONFIG: ${{ inputs.structure_test_config }}
         run: |
-          if [[ ! -f "${{ inputs.structure_test_config }}" ]]; then
-            echo "structure_test_config missing: ${{ inputs.structure_test_config }}" >&2
+          if [[ ! -f "${STRUCTURE_TEST_CONFIG}" ]]; then
+            echo "structure_test_config missing: ${STRUCTURE_TEST_CONFIG}" >&2
             exit 1
           fi
-          echo "structure-test config present: ${{ inputs.structure_test_config }}"
+          echo "structure-test config present: ${STRUCTURE_TEST_CONFIG}"
           echo "::notice::CDO-006 stub — run container-build for a real image + CST"

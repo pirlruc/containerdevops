@@ -107,7 +107,7 @@ jobs:
           repository: pirlruc/containerdevops
           # github.workflow_sha is the *caller* workflow; pass scripts_ref matching uses: @pin.
           ref: ${{ inputs.scripts_ref || github.sha }}
-          token: ${{ secrets.checkout_token || github.token }}
+          token: ${{ github.token }}  # same-repo; checkout_token is for commondevops only
           persist-credentials: false
           path: _containerdevops
           sparse-checkout: |
@@ -133,6 +133,8 @@ jobs:
 
       - name: Base image age gate (DOCKER-BUILD-006)
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          DOCKERFILE: ${{ inputs.dockerfile }}
         run: |
           FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           if [[ ! -f "$FILE" ]]; then
@@ -141,7 +143,7 @@ jobs:
           fi
           MAX="$(bash _containerdevops/scripts/read-thresholds.sh base_image_max_age_days "$FILE")"
           bash _containerdevops/scripts/check-base-image-age.sh \
-            "${{ inputs.dockerfile }}" "${MAX}"
+            "${DOCKERFILE}" "${MAX}"
 
       - name: Build (load)
         id: build
@@ -165,42 +167,51 @@ jobs:
       - name: container-structure-test
         if: hashFiles(inputs.structure_test_config) != ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          IMAGE_NAME: ${{ inputs.image_name }}
+          STRUCTURE_TEST_CONFIG: ${{ inputs.structure_test_config }}
         run: |
           container-structure-test test \
-            --image "${{ inputs.image_name }}" \
-            --config "${{ inputs.structure_test_config }}"
+            --image "${IMAGE_NAME}" \
+            --config "${STRUCTURE_TEST_CONFIG}"
 
       - name: Image size gate
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          IMAGE_NAME: ${{ inputs.image_name }}
         run: |
           FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
           MAX="$(bash _containerdevops/scripts/read-thresholds.sh image_max_size_mb "$FILE")"
-          bash _containerdevops/scripts/check-image-size.sh "${{ inputs.image_name }}" "${MAX}"
+          bash _containerdevops/scripts/check-image-size.sh "${IMAGE_NAME}" "${MAX}"
 
       - name: Dive efficiency
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          IMAGE_NAME: ${{ inputs.image_name }}
         run: |
           FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
           MIN="$(bash _containerdevops/scripts/read-thresholds.sh min_image_efficiency_percent "$FILE")"
-          dive --ci --json dive-report.json "${{ inputs.image_name }}" || true
+          dive --ci --json dive-report.json "${IMAGE_NAME}" || true
           if [[ -f dive-report.json ]]; then
             bash _containerdevops/scripts/check-image-efficiency.sh "${MIN}" dive-report.json
           else
             echo "dive JSON missing — treat as advisory miss"
-            [[ "${{ env.ADVISORY }}" == "true" ]] || exit 1
+            [[ "${ADVISORY}" == "true" ]] || exit 1
           fi
 
       - name: Save image tarball
         if: always()
+        env:
+          IMAGE_NAME: ${{ inputs.image_name }}
         run: |
-          if ! docker image inspect "${{ inputs.image_name }}" >/dev/null 2>&1; then
-            echo "No image ${{ inputs.image_name }} to save"
+          if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
+            echo "No image ${IMAGE_NAME} to save"
             exit 0
           fi
-          docker save "${{ inputs.image_name }}" -o image.tar
-          docker image inspect "${{ inputs.image_name }}" --format '{{.Id}}' > image-id.txt
+          docker save "${IMAGE_NAME}" -o image.tar
+          docker image inspect "${IMAGE_NAME}" --format '{{.Id}}' > image-id.txt
 
       - name: Upload image artifact
         if: always()

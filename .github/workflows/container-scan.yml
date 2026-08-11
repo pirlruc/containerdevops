@@ -75,7 +75,7 @@ jobs:
         with:
           repository: pirlruc/containerdevops
           ref: ${{ inputs.scripts_ref || github.sha }}
-          token: ${{ secrets.checkout_token || github.token }}
+          token: ${{ github.token }}  # same-repo; checkout_token is for commondevops only
           persist-credentials: false
           path: _containerdevops
           sparse-checkout: |
@@ -100,6 +100,9 @@ jobs:
 
       - name: Trivy image scan
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          PKG_TYPES: ${{ inputs.pkg_types }}
+          IMAGE: ${{ inputs.image }}
         run: |
           FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
@@ -107,29 +110,34 @@ jobs:
           mkdir -p scan-results
           CFG=()
           [[ -f trivy.yaml ]] && CFG=(--config trivy.yaml)
-          trivy image --scanners vuln --pkg-types "${{ inputs.pkg_types }}" \
+          trivy image --scanners vuln --pkg-types "${PKG_TYPES}" \
             --severity "CRITICAL,${SEV}" \
             --format sarif --output scan-results/trivy.sarif \
-            "${CFG[@]}" "${{ inputs.image }}"
-          trivy image --scanners vuln --pkg-types "${{ inputs.pkg_types }}" \
+            "${CFG[@]}" "${IMAGE}"
+          trivy image --scanners vuln --pkg-types "${PKG_TYPES}" \
             --severity "CRITICAL,${SEV}" \
-            --exit-code 1 "${CFG[@]}" "${{ inputs.image }}"
+            --exit-code 1 "${CFG[@]}" "${IMAGE}"
 
       - name: Syft SBOM
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          PKG_TYPES: ${{ inputs.pkg_types }}
+          IMAGE: ${{ inputs.image }}
         run: |
           mkdir -p scan-results
           SELECT=()
           # Align SBOM with Trivy pkg_types=library (skip OS catalogers for DHI noise).
-          if [[ "${{ inputs.pkg_types }}" == "library" ]]; then
+          if [[ "${PKG_TYPES}" == "library" ]]; then
             SELECT=(--select-catalogers python)
           fi
-          syft "${{ inputs.image }}" "${SELECT[@]}" \
+          syft "${IMAGE}" "${SELECT[@]}" \
             -o cyclonedx-json=scan-results/sbom.cdx.json \
             -o spdx-json=scan-results/sbom.spdx.json
 
       - name: Grype (SBOM)
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          IMAGE: ${{ inputs.image }}
         run: |
           CFG=()
           [[ -f .grype.yaml ]] && CFG=(--config .grype.yaml)
@@ -137,7 +145,7 @@ jobs:
             grype "sbom:scan-results/sbom.cdx.json" "${CFG[@]}" --fail-on high \
               -o json=scan-results/grype.json
           else
-            grype "${{ inputs.image }}" "${CFG[@]}" --fail-on high \
+            grype "${IMAGE}" "${CFG[@]}" --fail-on high \
               -o json=scan-results/grype.json
           fi
 

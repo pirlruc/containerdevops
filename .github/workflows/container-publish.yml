@@ -143,7 +143,7 @@ jobs:
           repository: pirlruc/containerdevops
           # github.workflow_sha is the *caller* workflow; pass scripts_ref matching uses: @pin.
           ref: ${{ inputs.scripts_ref || github.sha }}
-          token: ${{ secrets.checkout_token || github.token }}
+          token: ${{ github.token }}  # same-repo; checkout_token is for commondevops only
           persist-credentials: false
           path: _containerdevops
           sparse-checkout: |
@@ -180,15 +180,19 @@ jobs:
 
       - name: Owner
         id: owner
+        env:
+          GITHUB_OWNER: ${{ inputs.github_owner }}
+          OWNER: ${{ github.repository_owner }}
+          IMAGE_NAME: ${{ inputs.image_name }}
+          DOCKERHUB_IMAGE: ${{ inputs.dockerhub_image }}
         run: |
-          OWNER="${{ inputs.github_owner }}"
-          if [[ -z "${OWNER}" ]]; then OWNER="${{ github.repository_owner }}"; fi
+          if [[ -n "${GITHUB_OWNER}" ]]; then OWNER="${GITHUB_OWNER}"; fi
           echo "owner=${OWNER}" >> "$GITHUB_OUTPUT"
           {
             echo "images<<EOF"
-            echo "ghcr.io/${OWNER}/${{ inputs.image_name }}"
-            if [[ -n "${{ inputs.dockerhub_image }}" ]]; then
-              echo "${{ inputs.dockerhub_image }}"
+            echo "ghcr.io/${OWNER}/${IMAGE_NAME}"
+            if [[ -n "${DOCKERHUB_IMAGE}" ]]; then
+              echo "${DOCKERHUB_IMAGE}"
             fi
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
@@ -235,26 +239,35 @@ jobs:
       - name: Verify multi-arch (DOCKER-TEST-002)
         if: inputs.verify_platforms
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          OWNER: ${{ steps.owner.outputs.owner }}
+          IMAGE_NAME: ${{ inputs.image_name }}
+          PLATFORMS: ${{ inputs.platforms }}
+          VERIFY_COMMAND: ${{ inputs.verify_command }}
+          STRUCTURE_TEST_CONFIG: ${{ inputs.structure_test_config }}
         run: |
-          digest="${{ steps.build.outputs.digest }}"
-          subject="ghcr.io/${{ steps.owner.outputs.owner }}/${{ inputs.image_name }}@${digest}"
+          digest="${IMAGE_DIGEST}"
+          subject="ghcr.io/${OWNER}/${IMAGE_NAME}@${digest}"
           bash _containerdevops/scripts/verify-multiarch.sh \
             "${subject}" \
-            "${{ inputs.platforms }}" \
-            "${{ inputs.verify_command }}" \
-            "${{ inputs.structure_test_config }}"
+            "${PLATFORMS}" \
+            "${VERIFY_COMMAND}" \
+            "${STRUCTURE_TEST_CONFIG}"
 
       - name: Cosign sign (keyless)
         if: inputs.sign && github.actor != 'dependabot[bot]'
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         env:
           COSIGN_YES: "true"
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          META_TAGS: ${{ steps.meta.outputs.tags }}
         run: |
-          digest="${{ steps.build.outputs.digest }}"
+          digest="${IMAGE_DIGEST}"
           while IFS= read -r tag; do
             [[ -z "${tag}" ]] && continue
             cosign sign --yes "${tag}@${digest}"
-          done <<< "${{ steps.meta.outputs.tags }}"
+          done <<< "${META_TAGS}"
 
       - name: Attest provenance
         if: inputs.sign && github.actor != 'dependabot[bot]'

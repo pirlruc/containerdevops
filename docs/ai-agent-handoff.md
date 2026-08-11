@@ -75,6 +75,8 @@ git submodule update --init && git -C docs/guardrails checkout 1.1.0
 
 ## Recent history
 
+- 2026-08-11: moved `${{ }}` out of `run:` bodies into step `env:` in
+  `container-{lint,build,scan,publish,iac,devcontainer}.yml` (semgrep run-shell-injection).
 - 2026-08-11: runner_image dual jobs, age/multi-arch gates, ci-container publish caller,
   self-CI/security schedules, guardrails 1.1.0 + scaffold bump, deviations cleared.
 

@@ -102,7 +102,7 @@ jobs:
         with:
           repository: pirlruc/containerdevops
           ref: ${{ inputs.scripts_ref || github.sha }}
-          token: ${{ secrets.checkout_token || github.token }}
+          token: ${{ github.token }}  # same-repo; checkout_token is for commondevops only
           persist-credentials: false
           path: _containerdevops
           sparse-checkout: |
@@ -135,34 +135,50 @@ jobs:
       - name: hadolint (host)
         if: inputs.runner_image == ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
+          DOCKERFILE: ${{ inputs.dockerfile }}
         run: |
-          hadolint --failure-threshold "${{ steps.thr.outputs.hadolint }}" \
-            "${{ inputs.dockerfile }}"
+          hadolint --failure-threshold "${HADOLINT_THRESHOLD}" \
+            "${DOCKERFILE}"
 
       - name: hadolint (runner_image)
         if: inputs.runner_image != ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          WORKSPACE: ${{ github.workspace }}
+          WORKING_DIRECTORY: ${{ inputs.working_directory }}
+          RUNNER_IMAGE: ${{ inputs.runner_image }}
+          HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
+          DOCKERFILE: ${{ inputs.dockerfile }}
         run: |
-          docker run --rm -v "${{ github.workspace }}:/work:ro" -w "/work/${{ inputs.working_directory }}" \
-            "${{ inputs.runner_image }}" \
-            hadolint --failure-threshold "${{ steps.thr.outputs.hadolint }}" \
-            "${{ inputs.dockerfile }}"
+          docker run --rm -v "${WORKSPACE}:/work:ro" -w "/work/${WORKING_DIRECTORY}" \
+            "${RUNNER_IMAGE}" \
+            hadolint --failure-threshold "${HADOLINT_THRESHOLD}" \
+            "${DOCKERFILE}"
 
       - name: shellcheck entrypoints (host)
         if: inputs.shell_scripts != '' && inputs.runner_image == ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          SHELL_SCRIPTS: ${{ inputs.shell_scripts }}
         run: |
           # shellcheck disable=SC2086
-          shellcheck ${{ inputs.shell_scripts }}
+          shellcheck $SHELL_SCRIPTS
 
       - name: shellcheck entrypoints (runner_image)
         if: inputs.shell_scripts != '' && inputs.runner_image != ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          WORKSPACE: ${{ github.workspace }}
+          WORKING_DIRECTORY: ${{ inputs.working_directory }}
+          RUNNER_IMAGE: ${{ inputs.runner_image }}
+          SHELL_SCRIPTS: ${{ inputs.shell_scripts }}
         run: |
           # shellcheck disable=SC2086
-          docker run --rm -v "${{ github.workspace }}:/work:ro" -w "/work/${{ inputs.working_directory }}" \
-            "${{ inputs.runner_image }}" \
-            shellcheck ${{ inputs.shell_scripts }}
+          docker run --rm -v "${WORKSPACE}:/work:ro" -w "/work/${WORKING_DIRECTORY}" \
+            "${RUNNER_IMAGE}" \
+            shellcheck $SHELL_SCRIPTS
 
   infra:
     # CI-024 — pin updated after commondevops 1.0.0 lands (placeholder until then).

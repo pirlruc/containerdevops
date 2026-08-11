@@ -84,7 +84,7 @@ jobs:
           repository: pirlruc/containerdevops
           # github.workflow_sha is the *caller* workflow; pass scripts_ref matching uses: @pin.
           ref: ${{ inputs.scripts_ref || github.sha }}
-          token: ${{ secrets.checkout_token || github.token }}
+          token: ${{ github.token }}  # same-repo; checkout_token is for commondevops only
           persist-credentials: false
           path: _containerdevops
           sparse-checkout: |
@@ -103,11 +103,16 @@ jobs:
 
       - name: KICS scan
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          KICS_PATHS: ${{ inputs.paths }}
+          KICS_EXCLUDE: ${{ inputs.exclude_paths }}
+          KICS_CONFIG: ${{ inputs.kics_config }}
+          FAIL_ON: ${{ steps.thr.outputs.fail_on }}
         run: |
           mkdir -p kics-results
-          PATHS="${{ inputs.paths }}"
-          EXCL="${{ inputs.exclude_paths }}"
-          CFG="${{ inputs.kics_config }}"
+          PATHS="${KICS_PATHS}"
+          EXCL="${KICS_EXCLUDE}"
+          CFG="${KICS_CONFIG}"
           ARGS=(-p)
           IFS=',' read -ra P <<< "${PATHS}"
           for p in "${P[@]}"; do
@@ -133,15 +138,17 @@ jobs:
               -o /reports \
               "${CONFIG_ARGS[@]}" \
               --report-formats sarif,json \
-              --fail-on "${{ steps.thr.outputs.fail_on }}" \
+              --fail-on "${FAIL_ON}" \
               --no-progress
 
       - name: Compose config
         if: inputs.compose_files != ''
         continue-on-error: ${{ env.ADVISORY == 'true' }}
+        env:
+          COMPOSE_FILES: ${{ inputs.compose_files }}
         run: |
           # shellcheck disable=SC2086
-          for f in ${{ inputs.compose_files }}; do
+          for f in $COMPOSE_FILES; do
             echo "Validating ${f}"
             docker compose -f "${f}" config --quiet
           done
