@@ -114,13 +114,19 @@ jobs:
           mkdir -p scan-results
           CFG=()
           [[ -f trivy.yaml ]] && CFG=(--config trivy.yaml)
+          IGNORE=()
+          if [[ -f .trivyignore.yaml ]]; then
+            IGNORE=(--ignorefile .trivyignore.yaml)
+          elif [[ -f .trivyignore ]]; then
+            IGNORE=(--ignorefile .trivyignore)
+          fi
           trivy image --scanners vuln --pkg-types "${PKG_TYPES}" \
             --severity "CRITICAL,${SEV}" \
             --format sarif --output scan-results/trivy.sarif \
-            "${CFG[@]}" "${IMAGE}"
+            "${CFG[@]}" "${IGNORE[@]}" "${IMAGE}"
           trivy image --scanners vuln --pkg-types "${PKG_TYPES}" \
             --severity "CRITICAL,${SEV}" \
-            --exit-code 1 "${CFG[@]}" "${IMAGE}"
+            --exit-code 1 "${CFG[@]}" "${IGNORE[@]}" "${IMAGE}"
 
       - name: Syft SBOM
         continue-on-error: ${{ env.ADVISORY == 'true' }}

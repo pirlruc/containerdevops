@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `common/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `feature-dependency-update-policy` |
+| **Branch** | `main` |
 | **Role** | Reusable GitHub Actions for production container images + IaC |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -80,6 +80,9 @@ git submodule update --init && git -C docs/guardrails checkout 1.1.0
 
 ## Recent history
 
+- 2026-08-11: `container-scan.yml` honors `.trivyignore.yaml` / `.trivyignore`;
+  scheduled security probes `ghcr.io/pirlruc/ci-container:latest` and skips
+  rescan when the package is unpublished.
 - 2026-08-11: documented KICS `exclude-queries` in `docs/kics-exclusions.md`
   (`b03a748a-542d-44f4-bb86-9199ab4fd2d5` HEALTHCHECK — tooling image, not a service).
 - 2026-08-11: moved `${{ }}` out of `run:` bodies into step `env:` in
