@@ -28,7 +28,7 @@ on:
       ci_base:
         description: Digest-pinned or tagged ci-base ref for FROM
         type: string
-        default: "ghcr.io/pirlruc/ci-base:latest"
+        default: "ghcr.io/pirlruc/ci-base:1.0.0"
 
 concurrency:
   group: ci-container-image-${{ github.ref }}
@@ -59,6 +59,7 @@ jobs:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
   # Build/scan/publish need a resolvable CI_BASE (after commondevops publishes ci-base).
+  # Pin :1.0.0 (not :latest) for release/schedule; ci-base is ~1152 MB so size override matches.
   build:
     needs: lint
     if: >-
@@ -68,6 +69,7 @@ jobs:
        github.event_name == 'workflow_dispatch')
     permissions:
       contents: read
+      packages: read
     uses: ./.github/workflows/container-build.yml
     with:
       context: docker/ci-container
@@ -75,12 +77,16 @@ jobs:
       image_name: ci-container:ci
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
+      image_max_size_mb: "1500"
       build_args: |
-        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-base:latest' }}
+        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-base:1.0.0' }}
       blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || true }}
       dhi_login: false
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
+      # Omit ghcr_token first — reusable defaults to github.token.
+      # If pull DENIED: pass secrets.COMMONDEVOPS_READ_TOKEN (needs packages:read)
+      # or grant Actions access on ci-base package (Read for pirlruc/containerdevops).
 
   scan:
     needs: build
@@ -121,7 +127,7 @@ jobs:
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
       build_args: |
-        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-base:latest' }}
+        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-base:1.0.0' }}
       sign: ${{ github.event.repository.visibility == 'public' }}
       blocking: true
       dhi_login: false
@@ -132,3 +138,4 @@ jobs:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
+      # Same as build: github.token first; wire ghcr_token only if private pull DENIED.
