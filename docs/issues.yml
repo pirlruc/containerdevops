@@ -770,7 +770,7 @@ milestones:
           - tag_suffix empty preserves unsuffixed-only publish behaviour
           - tag_alias_unsuffixed publishes the unsuffixed set only when a suffix is set
           - ci-container-image.yml blocking expression matches the workflow_dispatch pattern
-          - CI_BASE default is digest-pinned to ci-lint 2.1.0
+          - CI_BASE default is digest-pinned to ci-lint 3.0.0
           - docs/workflows.md documents the variant-tagging contract
         guardrail_refs:
           - CI-026
@@ -814,7 +814,7 @@ milestones:
                 - .github/workflows/container-lint.yml
             verification:
               - "! grep -q '|| true }}' .github/workflows/ci-container-image.yml"
-              - grep -q 'sha256:4bfdcff97afef8f577e09eba5d07f548023b7bccee6cccc3d235fd33dde41f0f' .github/workflows/ci-container-image.yml
+              - grep -q 'sha256:a3601772133ff0479343c79c5d9573276ac35d5b74f31bf1416d5aeadd6bf0cf' .github/workflows/ci-container-image.yml
               - "! grep -q 'ci-base caller' .github/workflows/container-lint.yml"
               - actionlint .github/workflows/ci-container-image.yml
             guardrail_refs:

@@ -27,7 +27,7 @@ Shared infra/secrets/supply-chain forward to
 | `.github/scaffold` | `f8a6ba1…` |
 | `ghcr.io/pirlruc/ci-container` | tag `2.2.0` |
 | commondevops `uses:` | tag `2.0.2` → `4fd83922506d…` |
-| `CI_BASE` (ci-lint) | `2.1.0` digest `sha256:4bfdcff9…` |
+| `CI_BASE` (ci-lint) | `3.0.0` digest `sha256:a3601772…` |
 | Release | pending `2.3.0` (this branch) |
 
 ## Delivery status
@@ -109,7 +109,7 @@ python3 .github/scaffold/scripts/issues-sync.py \
 ## Recent history
 
 - 2026-08-12: CDO-WF-002 — artifact/SARIF uniqueness, variant tag_suffix contract,
-  fix always-true blocking, digest-pin CI_BASE to ci-lint 2.1.0, drop ci-base
+  fix always-true blocking, digest-pin CI_BASE to ci-lint 3.0.0, drop ci-base
   comment on container-lint.
 - 2026-08-12: CDO-WF-001 / CDO-SC-001 / CDO-SEC-001 — scan ignorefile opt-out,
   actionlint tarball + SHA256 installs, dive crash handling, commondevops pin
