@@ -28,8 +28,8 @@ on:
       ci_base:
         description: Digest-pinned or tagged ci-lint ref for FROM (CI-026)
         type: string
-        # commondevops ci-lint 2.1.0 (CI-026)
-        default: "ghcr.io/pirlruc/ci-lint@sha256:4bfdcff97afef8f577e09eba5d07f548023b7bccee6cccc3d235fd33dde41f0f"
+        # commondevops ci-lint 3.0.0 (CI-026)
+        default: "ghcr.io/pirlruc/ci-lint@sha256:a3601772133ff0479343c79c5d9573276ac35d5b74f31bf1416d5aeadd6bf0cf"
 
 concurrency:
   group: ci-container-image-${{ github.ref }}
@@ -80,7 +80,7 @@ jobs:
       platforms: linux/amd64
       image_max_size_mb: "700"
       build_args: |
-        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint@sha256:4bfdcff97afef8f577e09eba5d07f548023b7bccee6cccc3d235fd33dde41f0f' }}
+        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint@sha256:a3601772133ff0479343c79c5d9573276ac35d5b74f31bf1416d5aeadd6bf0cf' }}
       image_title: ci-container
       image_description: >-
         Short-lived CI toolchain image for container jobs: ci-lint plus dive and
@@ -131,7 +131,7 @@ jobs:
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
       build_args: |
-        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint@sha256:4bfdcff97afef8f577e09eba5d07f548023b7bccee6cccc3d235fd33dde41f0f' }}
+        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint@sha256:a3601772133ff0479343c79c5d9573276ac35d5b74f31bf1416d5aeadd6bf0cf' }}
       image_title: ci-container
       image_description: >-
         Short-lived CI toolchain image for container jobs: ci-lint plus dive and
