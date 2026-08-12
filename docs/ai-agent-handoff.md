@@ -25,11 +25,13 @@ Shared infra/secrets/supply-chain forward to
 |----------------------|-----|
 | `docs/guardrails` | commit `5a7ac83…` (post ci-base ref drop) |
 | `.github/scaffold` | `f8a6ba1…` |
-| `ghcr.io/pirlruc/ci-container` | tag `2.4.0` (pending `3.0.0` Alpine) |
+| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `3.0.0` → `sha256:9374acb5…` |
+| `ghcr.io/pirlruc/ci-container` (debian) | `3.0.0-debian` → `sha256:2345c107…` |
 | commondevops `uses:` | tag `2.0.2` → `4fd83922506d…` |
 | `CI_BASE` (ci-lint debian) | `4.0.0-debian` digest `sha256:ed619755…` |
 | `CI_BASE` (ci-lint alpine) | `4.0.0` digest `sha256:0a4691ba…` |
-| Release | `2.4.0` on main; next `3.0.0` (Alpine owns unsuffixed) |
+| Release (reusables callers pin) | `2.4.0` → `ea908fd0…` (unchanged by `3.0.0`) |
+| Release (ci-container image) | `3.0.0` (Alpine owns unsuffixed) |
 
 ## Delivery status
 
@@ -42,7 +44,7 @@ Shared infra/secrets/supply-chain forward to
 | CDO-SEC-001 — ignorefile opt-out + verify_command | Done |
 | CDO-WF-002 — variant tagging + multi-scan uniqueness | Done (`2.3.0`) |
 | CDO-IMG-001 — variant hardening / local parity | Done (`2.4.0`) |
-| CDO-IMG-002 — Alpine ci-container | In progress (`3.0.0`) |
+| CDO-IMG-002 — Alpine ci-container | Done (`3.0.0`) |
 
 ## Tool versions in scripts/install-container-tools.sh
 
@@ -58,16 +60,17 @@ both together.
 
 ```bash
 bash scripts/check-container-local.sh \
-  --dockerfile docker/ci-container/Dockerfile \
+  --dockerfile docker/ci-container/Dockerfile.alpine \
   --context docker/ci-container \
   --structure-test docker/ci-container/container-structure-test.yml \
   --advisory
-docker build --build-arg CI_BASE=ci-lint:local \
-  -t ci-container:local docker/ci-container
-bash scripts/check-image-size.sh ci-container:local 700
+docker build --build-arg CI_BASE=ci-lint:alpine-local \
+  -f docker/ci-container/Dockerfile.alpine \
+  -t ci-container:alpine-local docker/ci-container
+bash scripts/check-image-size.sh ci-container:alpine-local 900
 # Local gates (prefer host PATH; else Docker):
-docker run --rm -v "$PWD:/src:ro" -w /src --entrypoint actionlint ci-lint:local .github/workflows/*.yml
-docker run --rm -v "$PWD:/src:ro" -w /src --entrypoint shellcheck ci-lint:local scripts/*.sh
+docker run --rm -v "$PWD:/src:ro" -w /src --entrypoint actionlint ci-lint:alpine-local .github/workflows/*.yml
+docker run --rm -v "$PWD:/src:ro" -w /src --entrypoint shellcheck ci-lint:alpine-local scripts/*.sh
 python3 .github/scaffold/scripts/issues-sync.py \
   --repo pirlruc/containerdevops --yaml docs/issues.yml --dry-run
 ```
@@ -107,20 +110,26 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Local vs Actions:** nested `workflow_call` composition cannot be exercised with
   `act` (not installed). Prefer `actionlint` + `zizmor` + disposable-container
   install tests before push; composition is verified by the PR run.
-- **Size deviation:** `image_max_size_mb: 700` for ci-container is recorded in
-  `docs/guardrail-deviations.yml` (DOCKER-PERF-001 / CDO-IMG-001).
+- **Size deviation:** debian `700` / alpine `900` MB gates in
+  `docs/guardrail-deviations.yml` (DOCKER-PERF-001 / CDO-IMG-001, CDO-IMG-002).
+- **Reusable pin vs image tag:** callers of `container-{lint,build,scan,publish}.yml`
+  stay on `2.4.0` (`ea908fd0…`). Release `3.0.0` only changed `ci-container-image.yml`
+  + Dockerfiles — no reusable workflow delta.
 
 ## Suggested next work
 
-1. Land Alpine `ci-container` (CDO-IMG-002) after commondevops publishes Alpine `ci-lint`.
-2. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
-3. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
+1. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
+2. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
+3. Refresh donor digests / drop ignorefile entries before 2026-11-11.
 
 ## Recent history
 
-- 2026-08-12: CDO-IMG-001 in flight — per-variant GHA cache scopes, Hub Overview
-  gating, ci-container `.dockerignore` + structure test, ignorefile under
-  `docker/ci-container/`, local dive/age gates, DOCKER-PERF-001 deviation.
+- 2026-08-12: CDO-IMG-002 / release `3.0.0` — Alpine `ci-container` owns unsuffixed
+  tags; `bases` job for CI_BASE digests; PR build/scan; alpine size gate 900.
+  Publish: alpine `sha256:9374acb5…`, debian `sha256:2345c107…`.
+- 2026-08-12: CDO-IMG-001 / release `2.4.0` — per-variant GHA cache scopes, Hub
+  Overview gating, structure test, ignorefile under `docker/ci-container/`,
+  local dive/age gates, DOCKER-PERF-001 deviation.
 - 2026-08-12: release `2.3.1` — CI_BASE → ci-lint `3.0.0` (#74), guardrails bump (#75).
 - 2026-08-12: #74 re-pin CI_BASE to ci-lint `3.0.0`; #75 bump guardrails past ci-base drop.
 - 2026-08-12: CDO-WF-002 / release `2.3.0` — artifact/SARIF uniqueness, variant
