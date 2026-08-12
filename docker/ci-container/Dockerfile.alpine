@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
-# Container CI tooling image — extends commondevops ci-lint with dive + structure-test.
-# Build with: docker build --build-arg CI_BASE=ci-lint:local ...
+# Container CI tooling image (Alpine) — extends Alpine ci-lint with dive + structure-test.
+# Build with: docker build --build-arg CI_BASE=ci-lint:alpine-local -f Dockerfile.alpine ...
 # Publish target: ghcr.io/pirlruc/ci-container (and Docker Hub pirlruc/ci-container).
 # KICS stays a separate digest-pinned image (container-iac.yml).
 #
 # CI_BASE default is :local for bootstrap; publish callers must pass a digest-pinned
-# ghcr.io/pirlruc/ci-lint ref (CI-026).
+# ghcr.io/pirlruc/ci-lint Alpine ref (CI-026).
 #
 # No HEALTHCHECK: short-lived CI toolchain (CLI job container), not a supervised
 # service. KICS query b03a748a-542d-44f4-bb86-9199ab4fd2d5 is excluded with rationale
@@ -17,7 +17,7 @@ ARG CI_BASE=ghcr.io/pirlruc/ci-lint:local
 FROM ${CI_BASE}
 
 LABEL org.opencontainers.image.title="ci-container" \
-      org.opencontainers.image.description="Short-lived CI toolchain image for container jobs: ci-lint plus dive and container-structure-test. Debian 13 variant. Non-root 1000:1000, linux/amd64." \
+      org.opencontainers.image.description="Short-lived CI toolchain image for container jobs: ci-lint plus dive and container-structure-test. Alpine 3.24 variant. Non-root 1000:1000, linux/amd64." \
       org.opencontainers.image.source="https://github.com/pirlruc/containerdevops" \
       org.opencontainers.image.url="https://hub.docker.com/r/pirlruc/ci-container" \
       org.opencontainers.image.documentation="https://hub.docker.com/r/pirlruc/ci-container" \
@@ -26,10 +26,10 @@ LABEL org.opencontainers.image.title="ci-container" \
 
 USER root
 
-# wagoodman/dive:v0.13.1 — digest pinned (CI-026)
+# wagoodman/dive:v0.13.1 — digest pinned (CI-026); static Go binary
 COPY --from=wagoodman/dive:v0.13.1@sha256:f1886e6c32c094fc41a623c1989f5cb3e48aa766da5f0be233f911fc1d85ce10 \
   /usr/local/bin/dive /usr/local/bin/dive
-# ghcr.io/googlecontainertools/container-structure-test:1.22.1 — digest pinned (CI-026)
+# ghcr.io/googlecontainertools/container-structure-test:1.22.1 — digest pinned (CI-026); static
 COPY --from=ghcr.io/googlecontainertools/container-structure-test:1.22.1@sha256:710da3ca8ed29a42423315592f74f02df4e3d2ba19f1df7257bd481ea75ba5aa \
   /ko-app/container-structure-test /usr/local/bin/container-structure-test
 
