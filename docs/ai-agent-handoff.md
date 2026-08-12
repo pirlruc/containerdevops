@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `common/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `feature-scan-contract-hardening` (land on `main`) |
+| **Branch** | `feature-variant-tagging-and-scan-fixes` (land on `main`) |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -25,9 +25,10 @@ Shared infra/secrets/supply-chain forward to
 |----------------------|-----|
 | `docs/guardrails` | tag `1.1.0` → `6fe580c…` |
 | `.github/scaffold` | `f8a6ba1…` |
-| `ghcr.io/pirlruc/ci-container` | tag `2.1.0` |
+| `ghcr.io/pirlruc/ci-container` | tag `2.2.0` |
 | commondevops `uses:` | tag `2.0.2` → `4fd83922506d…` |
-| Release | pending `2.2.0` (this branch) |
+| `CI_BASE` (ci-lint) | `2.1.0` digest `sha256:4bfdcff9…` |
+| Release | pending `2.3.0` (this branch) |
 
 ## Delivery status
 
@@ -35,9 +36,10 @@ Shared infra/secrets/supply-chain forward to
 |--------------|--------|
 | Phase 1 — CDO-001…CDO-005 | Done |
 | CDO-006…CDO-016 | Done |
-| CDO-WF-001 — workflow contract / docs drift | **Done** (this branch) |
-| CDO-SC-001 — install-container-tools hardening | **Done** (this branch) |
-| CDO-SEC-001 — ignorefile opt-out + verify_command | **Done** (this branch) |
+| CDO-WF-001 — workflow contract / docs drift | Done |
+| CDO-SC-001 — install-container-tools hardening | Done |
+| CDO-SEC-001 — ignorefile opt-out + verify_command | Done |
+| CDO-WF-002 — variant tagging + multi-scan uniqueness | **In progress** (this branch) |
 
 ## Tool versions in scripts/install-container-tools.sh
 
@@ -72,6 +74,11 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Size gate** uses `du -sxm /` (store-independent). Do not use `docker inspect .Size`.
 - **ignorefile contract:** empty falls back to caller `.trivyignore.yaml`; set
   `ignorefile: none` (or `--no-ignorefile` locally) for unfiltered posture scans.
+- **Multi-scan uniqueness:** when a caller runs more than one build/scan in a
+  workflow, pass distinct `artifact_name`, `results_artifact`, and `sarif_category`
+  or artifacts collide and SARIF uploads overwrite each other in code scanning.
+- **Variant tags:** `tag_suffix` + `tag_alias_unsuffixed` — the lower-vulnerability
+  variant should own unsuffixed tags; others set `tag_alias_unsuffixed: false`.
 - **verify_command** must be a simple argv (no shell metacharacters); runs via
   `--entrypoint`, not `bash -lc`.
 - **OCI labels:** `docker/metadata-action` defaults to repo name/description. Pass
@@ -80,7 +87,7 @@ python3 .github/scaffold/scripts/issues-sync.py \
   read/write/delete (admin) scope.
 - **Hub Overview:** needs a Hub PAT with read/write/delete (admin). Push-only
   tokens return Forbidden; the sync step is advisory and does not fail publish.
-- **ci-container** extends **ci-lint**; publish needs `ci-lint:2.0.2` first.
+- **ci-container** extends **ci-lint**; publish needs the digest-pinned `CI_BASE`.
 - Private consumers pass `scripts_token` + matching `scripts_ref`; `checkout_token` only
   for nested commondevops calls (lint secrets/infra).
 - Scan stays on the host runner (`docker load`). Build/publish must not use job `container:`.
@@ -94,12 +101,16 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Suggested next work
 
-1. After merge: tag/release `2.2.0` and re-pin consumers (commondevops first).
-2. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
-3. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
+1. After merge: tag/release `2.3.0` with a PAT so `on: release` fires; re-pin consumers.
+2. After commondevops publishes Alpine `ci-supply-chain`, re-pin `CI_BASE` if needed.
+3. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
+4. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
 
 ## Recent history
 
+- 2026-08-12: CDO-WF-002 — artifact/SARIF uniqueness, variant tag_suffix contract,
+  fix always-true blocking, digest-pin CI_BASE to ci-lint 2.1.0, drop ci-base
+  comment on container-lint.
 - 2026-08-12: CDO-WF-001 / CDO-SC-001 / CDO-SEC-001 — scan ignorefile opt-out,
   actionlint tarball + SHA256 installs, dive crash handling, commondevops pin
   `2.0.2`, workflows.md drift fix, verify_command hardening.

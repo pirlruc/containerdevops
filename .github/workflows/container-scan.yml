@@ -34,6 +34,16 @@ on:
         required: false
         type: string
         default: ""
+      results_artifact:
+        description: Upload artifact name for scan-results/ (unique when multiple scans share a run)
+        required: false
+        type: string
+        default: container-scan-results
+      sarif_category:
+        description: Code scanning SARIF category (unique when multiple scans share a run)
+        required: false
+        type: string
+        default: trivy-image
     secrets:
       scripts_token:
         description: Token to read this repo scripts when called cross-repo; defaults to github.token
@@ -176,7 +186,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: container-scan-results
+          name: ${{ inputs.results_artifact }}
           path: scan-results/
           if-no-files-found: ignore
           retention-days: 7
@@ -187,4 +197,4 @@ jobs:
         uses: github/codeql-action/upload-sarif@5595ccaf912efad79be6eef63a5619ff05969be3 # v4.37.6
         with:
           sarif_file: scan-results/trivy.sarif
-          category: trivy-image
+          category: ${{ inputs.sarif_category }}

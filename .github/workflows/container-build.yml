@@ -59,6 +59,11 @@ on:
         required: false
         type: string
         default: ""
+      artifact_name:
+        description: Upload artifact name for image.tar (unique when multiple builds share a run)
+        required: false
+        type: string
+        default: container-image
     secrets:
       # Optional — required when Dockerfile FROM lines pull from dhi.io (Community DHI).
       DOCKERHUB_USERNAME:
@@ -265,7 +270,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: container-image
+          name: ${{ inputs.artifact_name }}
           path: |
             image.tar
             image-id.txt

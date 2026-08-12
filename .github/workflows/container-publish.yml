@@ -108,6 +108,20 @@ on:
         required: false
         type: string
         default: ""
+      tag_suffix:
+        description: >-
+          Suffix appended to every published tag (e.g. -alpine, -debian). Empty keeps
+          legacy unsuffixed tags only.
+        required: false
+        type: string
+        default: ""
+      tag_alias_unsuffixed:
+        description: >-
+          When tag_suffix is set, also publish the unsuffixed tag set (version, latest, …)
+          so the lower-vulnerability variant can own the default tags.
+        required: false
+        type: boolean
+        default: true
     secrets:
       DOCKERHUB_USERNAME:
         required: false
@@ -269,11 +283,16 @@ jobs:
         with:
           images: ${{ steps.owner.outputs.images }}
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha
-            type=raw,value=latest,enable=${{ inputs.tag_latest || (github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
-            type=raw,value={{date 'YYYYMMDD'}},enable=${{ inputs.tag_latest }}
+            type=semver,pattern={{version}},suffix=${{ inputs.tag_suffix }}
+            type=semver,pattern={{major}}.{{minor}},suffix=${{ inputs.tag_suffix }}
+            type=sha,suffix=${{ inputs.tag_suffix }}
+            type=raw,value=latest,suffix=${{ inputs.tag_suffix }},enable=${{ inputs.tag_latest || (github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
+            type=raw,value={{date 'YYYYMMDD'}},suffix=${{ inputs.tag_suffix }},enable=${{ inputs.tag_latest }}
+            type=semver,pattern={{version}},enable=${{ inputs.tag_suffix != '' && inputs.tag_alias_unsuffixed }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ inputs.tag_suffix != '' && inputs.tag_alias_unsuffixed }}
+            type=sha,enable=${{ inputs.tag_suffix != '' && inputs.tag_alias_unsuffixed }}
+            type=raw,value=latest,enable=${{ inputs.tag_suffix != '' && inputs.tag_alias_unsuffixed && (inputs.tag_latest || (github.ref == format('refs/heads/{0}', github.event.repository.default_branch))) }}
+            type=raw,value={{date 'YYYYMMDD'}},enable=${{ inputs.tag_suffix != '' && inputs.tag_alias_unsuffixed && inputs.tag_latest }}
           # DOCKER-DOC-001 — override repo-default title/description with image-specific values
           labels: |
             ${{ inputs.image_title != '' && format('org.opencontainers.image.title={0}', inputs.image_title) || '' }}

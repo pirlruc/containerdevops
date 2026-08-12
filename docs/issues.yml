@@ -741,3 +741,81 @@ milestones:
               - shellcheck scripts/verify-multiarch.sh
             guardrail_refs:
               - CI-025
+
+      - id: CDO-WF-002
+        status: open
+        title: Variant tagging and multi-scan artifact uniqueness
+        overview:
+          problem: >-
+            Parallel image variants (and blocking + posture scans in one run) collide
+            on hardcoded artifact names (container-image, container-scan-results) and
+            overwrite each other in code scanning under a shared SARIF category.
+            ci-container-image.yml also had an always-true blocking expression and a
+            stale tagged CI_BASE pin.
+          goal: >-
+            Additive artifact_name / results_artifact / sarif_category inputs on
+            build and scan; tag_suffix + tag_alias_unsuffixed on publish so a
+            lower-vulnerability variant can own unsuffixed tags; fix blocking and
+            digest-pin CI_BASE on the ci-container caller.
+        architecture:
+          target: container-build/scan/publish + ci-container-image.yml + workflows.md
+          modules:
+            - .github/workflows/container-build.yml
+            - .github/workflows/container-scan.yml
+            - .github/workflows/container-publish.yml
+            - .github/workflows/ci-container-image.yml
+            - docs/workflows.md
+        acceptance_criteria:
+          - artifact_name / results_artifact / sarif_category inputs default to legacy names
+          - tag_suffix empty preserves unsuffixed-only publish behaviour
+          - tag_alias_unsuffixed publishes the unsuffixed set only when a suffix is set
+          - ci-container-image.yml blocking expression matches the workflow_dispatch pattern
+          - CI_BASE default is digest-pinned to ci-lint 2.1.0
+          - docs/workflows.md documents the variant-tagging contract
+        guardrail_refs:
+          - CI-026
+          - DOCKER-DELIV-001
+        tasks:
+          - id: CDO-WF-002-T1
+            status: open
+            title: Add unique artifact and SARIF inputs to build and scan
+            instructions:
+              files:
+                - .github/workflows/container-build.yml
+                - .github/workflows/container-scan.yml
+            verification:
+              - grep -q artifact_name .github/workflows/container-build.yml
+              - grep -q results_artifact .github/workflows/container-scan.yml
+              - grep -q sarif_category .github/workflows/container-scan.yml
+              - actionlint .github/workflows/container-build.yml
+              - actionlint .github/workflows/container-scan.yml
+            guardrail_refs:
+              - CI-026
+          - id: CDO-WF-002-T2
+            status: open
+            title: Add tag_suffix and tag_alias_unsuffixed to container-publish
+            instructions:
+              files:
+                - .github/workflows/container-publish.yml
+                - docs/workflows.md
+            verification:
+              - grep -q tag_suffix .github/workflows/container-publish.yml
+              - grep -q tag_alias_unsuffixed .github/workflows/container-publish.yml
+              - grep -q "Variant tagging" docs/workflows.md
+              - actionlint .github/workflows/container-publish.yml
+            guardrail_refs:
+              - DOCKER-DELIV-001
+          - id: CDO-WF-002-T3
+            status: open
+            title: Fix ci-container blocking expression and digest-pin CI_BASE
+            instructions:
+              files:
+                - .github/workflows/ci-container-image.yml
+                - .github/workflows/container-lint.yml
+            verification:
+              - "! grep -q '|| true }}' .github/workflows/ci-container-image.yml"
+              - grep -q 'sha256:4bfdcff97afef8f577e09eba5d07f548023b7bccee6cccc3d235fd33dde41f0f' .github/workflows/ci-container-image.yml
+              - "! grep -q 'ci-base caller' .github/workflows/container-lint.yml"
+              - actionlint .github/workflows/ci-container-image.yml
+            guardrail_refs:
+              - CI-026
