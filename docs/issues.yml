@@ -549,3 +549,135 @@ milestones:
               - test -f docs/github-packages.md
             guardrail_refs:
               - DOCKER-DOC-002
+
+      - id: CDO-WF-001
+        status: open
+        title: "container-lint.yml infra job missing security-events: write causes startup_failure + stale caller docs"
+        overview:
+          problem: >-
+            The `infra:` job in container-lint.yml calls
+            pirlruc/commondevops/.github/workflows/common-infra-lint.yml but declares only
+            `permissions: contents: read`. That nested reusable runs actionlint, zizmor, and
+            shellcheck with SARIF upload and almost certainly declares `security-events: write`
+            in its own jobs. Because a reusable workflow cannot escalate beyond the caller job's
+            grants, the nested jobs receive security-events false and fail at startup with no
+            advisory path. In parallel, docs/workflows.md documents the container-build.yml size
+            gate incorrectly (claims docker inspect .Size; the script uses du -sxm /) and the
+            caller permissions table omits security-events: write for the run_infra_lint: true
+            case.
+          goal: >-
+            Add security-events: write to the infra: job in container-lint.yml; update
+            docs/workflows.md with the correct size-gate measurement method and a complete
+            per-flag caller permissions table so consumers avoid startup_failure.
+        architecture:
+          target: .github/workflows/container-lint.yml + docs/workflows.md
+          modules:
+            - .github/workflows/container-lint.yml
+            - docs/workflows.md
+        acceptance_criteria:
+          - infra: job in container-lint.yml declares security-events: write
+          - docs/workflows.md caller permissions table covers security-events: write for run_infra_lint: true
+          - docs/workflows.md size-gate paragraph describes du -sxm / not docker inspect .Size
+          - actionlint passes on container-lint.yml after the fix
+        guardrail_refs:
+          - CI-025
+          - CI-001
+        tasks:
+          - id: CDO-WF-001-T1
+            status: open
+            title: "Add security-events: write to infra: job in container-lint.yml"
+            instructions:
+              files:
+                - .github/workflows/container-lint.yml
+            verification:
+              - actionlint .github/workflows/container-lint.yml
+              - grep -A4 "^  infra:" .github/workflows/container-lint.yml | grep "security-events"
+            guardrail_refs:
+              - CI-025
+          - id: CDO-WF-001-T2
+            status: open
+            title: Update caller permissions table in docs/workflows.md to cover run_infra_lint
+            instructions:
+              files:
+                - docs/workflows.md
+            verification:
+              - grep "run_infra_lint" docs/workflows.md
+            guardrail_refs:
+              - CI-025
+          - id: CDO-WF-001-T3
+            status: open
+            title: Fix stale size-gate description in docs/workflows.md (docker inspect to du -sxm /)
+            instructions:
+              files:
+                - docs/workflows.md
+            verification:
+              - grep "du -sxm" docs/workflows.md
+              - "! grep 'docker image inspect' docs/workflows.md"
+
+      - id: CDO-SC-001
+        status: open
+        title: "install-container-tools.sh: actionlint unsigned shell-pipe from main + tool-version drift"
+        overview:
+          problem: >-
+            scripts/install-container-tools.sh installs actionlint by piping
+            https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash
+            directly to bash at runtime. The helper is fetched from the main branch — not a
+            tagged release or a digest-pinned URL — so its content can change between CI runs
+            without detection, violating the repo's supply-chain posture (CI-026). Every other
+            tool in the script installs from a versioned tarball URL. In addition, all nine tool
+            version constants (HADOLINT_VERSION, TRIVY_VERSION, SYFT_VERSION, GRYPE_VERSION,
+            DIVE_VERSION, CST_VERSION, COSIGN_VERSION, ACTIONLINT_VERSION, SHELLCHECK_VERSION)
+            are script-side constants outside the github-actions and docker Dependabot ecosystems
+            covered by CDO-008, so they silently drift until a human bumps them and there is no
+            upstream release URL in the file to guide the update.
+          goal: >-
+            Replace the actionlint curl | bash with a versioned direct binary download matching
+            the pattern used for all other tools; annotate each version constant with its
+            upstream GitHub releases URL; and record the manual-update process in the handoff
+            so future engineers know these constants are not Dependabot-managed.
+        architecture:
+          target: scripts/install-container-tools.sh + docs/ai-agent-handoff.md
+          modules:
+            - scripts/install-container-tools.sh
+            - docs/ai-agent-handoff.md
+        acceptance_criteria:
+          - actionlint installs via a versioned tarball (no curl | bash from main branch)
+          - Each version constant in install-container-tools.sh has an inline release URL comment
+          - shellcheck passes on install-container-tools.sh after the change
+          - docs/ai-agent-handoff.md notes that script tool-versions require manual bumps
+        guardrail_refs:
+          - CI-026
+          - SC-DEP-001
+        tasks:
+          - id: CDO-SC-001-T1
+            status: open
+            title: Replace actionlint unsigned pipe with versioned direct-tarball install
+            instructions:
+              files:
+                - scripts/install-container-tools.sh
+            verification:
+              - "! grep 'download-actionlint.bash' scripts/install-container-tools.sh"
+              - grep "actionlint.*linux.*amd64" scripts/install-container-tools.sh
+              - shellcheck scripts/install-container-tools.sh
+            guardrail_refs:
+              - CI-026
+          - id: CDO-SC-001-T2
+            status: open
+            title: Annotate version constants with upstream GitHub releases URLs
+            instructions:
+              files:
+                - scripts/install-container-tools.sh
+            verification:
+              - grep "github.com.*releases" scripts/install-container-tools.sh
+            guardrail_refs:
+              - SC-DEP-001
+          - id: CDO-SC-001-T3
+            status: open
+            title: Document tool-version update process in handoff (not Dependabot-managed)
+            instructions:
+              files:
+                - docs/ai-agent-handoff.md
+            verification:
+              - grep -i "install-container-tools\|tool.*version\|TRIVY_VERSION" docs/ai-agent-handoff.md
+            guardrail_refs:
+              - SC-DEP-001

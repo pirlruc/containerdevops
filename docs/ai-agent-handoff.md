@@ -91,8 +91,18 @@ python3 .github/scaffold/scripts/issues-sync.py \
 3. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
 4. Grant Actions Read on packages / keep Hub repos public.
 
+## Tool versions in scripts/install-container-tools.sh
+
+The nine version constants (`HADOLINT_VERSION`, `TRIVY_VERSION`, `SYFT_VERSION`,
+`GRYPE_VERSION`, `DIVE_VERSION`, `CST_VERSION`, `COSIGN_VERSION`, `ACTIONLINT_VERSION`,
+`SHELLCHECK_VERSION`) live only in that script and are **not tracked by Dependabot**
+(CDO-008 covers `github-actions` and `docker` only). Bump them manually when a release
+note or CVE advisory warrants an update; each constant will carry an inline release URL
+comment (CDO-SC-001-T2) to help locate the right page.
+
 ## Recent history
 
+- 2026-08-12: ai-reviewer pass — append CDO-WF-001 (infra: permissions gap) and CDO-SC-001 (actionlint unsigned pipe) to docs/issues.yml.
 - 2026-08-12: wire Dependabot `registries:` for private git + dhi.io.
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
