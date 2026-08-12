@@ -549,3 +549,195 @@ milestones:
               - test -f docs/github-packages.md
             guardrail_refs:
               - DOCKER-DOC-002
+
+      - id: CDO-WF-001
+        status: done
+        title: Workflow contract and documentation drift
+        overview:
+          problem: >-
+            docs/workflows.md describes the size gate as docker image inspect .Size while
+            scripts/check-image-size.sh measures via du -sxm /. Input tables omit
+            container-devcontainer.yml entirely and miss ignorefile / blocking / scripts_ref
+            on container-scan and several container-lint flags. container-build.yml runs
+            dive with || true which masks non-efficiency failures. Nested commondevops
+            pins still point at tag 1.0.0 while latest is 2.0.2.
+          goal: >-
+            Align workflows.md with the scripts and inputs that actually ship; make dive
+            failures advisory-only rather than always-ignored; bump commondevops uses: and
+            scripts_ref in lockstep to 2.0.2.
+        architecture:
+          target: docs/workflows.md + container-build.yml + commondevops pins
+          modules:
+            - docs/workflows.md
+            - .github/workflows/container-build.yml
+            - .github/workflows/container-lint.yml
+            - .github/workflows/containerdevops-security.yml
+        acceptance_criteria:
+          - docs/workflows.md size-gate paragraph describes du -sxm /
+          - docs/workflows.md documents container-devcontainer.yml and scan ignorefile/blocking/scripts_ref
+          - dive step does not use || true; non-zero exit fails unless ADVISORY
+          - All commondevops uses:/scripts_ref pairs pin 2.0.2 SHA
+        guardrail_refs:
+          - CI-001
+        tasks:
+          - id: CDO-WF-001-T1
+            status: done
+            title: Fix size-gate description in docs/workflows.md
+            instructions:
+              files:
+                - docs/workflows.md
+            verification:
+              - grep -q "du -sxm" docs/workflows.md
+              - "! grep -q \"docker image inspect --format '{{.Size}}'\" docs/workflows.md"
+          - id: CDO-WF-001-T2
+            status: done
+            title: Sync workflows.md input tables with live workflow inputs
+            instructions:
+              files:
+                - docs/workflows.md
+                - .github/workflows/container-lint.yml
+                - .github/workflows/container-scan.yml
+                - .github/workflows/container-devcontainer.yml
+            verification:
+              - grep -q "container-devcontainer.yml" docs/workflows.md
+              - grep -q "ignorefile" docs/workflows.md
+          - id: CDO-WF-001-T3
+            status: done
+            title: Stop masking dive non-efficiency failures in container-build.yml
+            instructions:
+              files:
+                - .github/workflows/container-build.yml
+            verification:
+              - "! grep -q 'dive .*|| true' .github/workflows/container-build.yml"
+              - actionlint .github/workflows/container-build.yml
+          - id: CDO-WF-001-T4
+            status: done
+            title: Bump commondevops pin to 2.0.2 in lockstep
+            instructions:
+              files:
+                - .github/workflows/container-lint.yml
+                - .github/workflows/containerdevops-security.yml
+            verification:
+              - "! grep -q a504555c4731ee886d2a48c4ec20d110ad9434f8 .github/workflows/*.yml"
+              - grep -q 4fd83922506d6d5191d593ff9768516e34211084 .github/workflows/container-lint.yml
+            guardrail_refs:
+              - CI-001
+
+      - id: CDO-SC-001
+        status: done
+        title: "install-container-tools.sh: actionlint tarball and checksum verification"
+        overview:
+          problem: >-
+            scripts/install-container-tools.sh installs actionlint by piping
+            download-actionlint.bash from the main branch into bash. Every other tool
+            uses a versioned tarball. None of the nine downloads verify SHA256 digests,
+            and version constants lack upstream release URL annotations for manual bumps
+            (outside Dependabot coverage).
+          goal: >-
+            Install actionlint from a versioned release tarball; verify SHA256 for every
+            downloaded artifact; annotate each version constant with its releases URL;
+            document the manual-update process in the handoff.
+        architecture:
+          target: scripts/install-container-tools.sh + docs/ai-agent-handoff.md
+          modules:
+            - scripts/install-container-tools.sh
+            - docs/ai-agent-handoff.md
+        acceptance_criteria:
+          - actionlint installs via a versioned tarball (no curl|bash from main)
+          - Every download verifies SHA256 against a pinned digest
+          - Each version constant has an inline release URL comment
+          - shellcheck passes on install-container-tools.sh
+          - docs/ai-agent-handoff.md notes script tool-versions require manual bumps
+        guardrail_refs:
+          - CI-026
+          - SC-DEP-001
+        tasks:
+          - id: CDO-SC-001-T1
+            status: done
+            title: Replace actionlint unsigned pipe with versioned tarball install
+            instructions:
+              files:
+                - scripts/install-container-tools.sh
+            verification:
+              - "! grep -q download-actionlint.bash scripts/install-container-tools.sh"
+              - grep -q "actionlint_.*_linux_amd64.tar.gz" scripts/install-container-tools.sh
+              - shellcheck scripts/install-container-tools.sh
+            guardrail_refs:
+              - CI-026
+          - id: CDO-SC-001-T2
+            status: done
+            title: Add SHA256 verification for all downloaded tool artifacts
+            instructions:
+              files:
+                - scripts/install-container-tools.sh
+            verification:
+              - grep -q "sha256sum" scripts/install-container-tools.sh
+              - shellcheck scripts/install-container-tools.sh
+          - id: CDO-SC-001-T3
+            status: done
+            title: Annotate version constants and document manual bumps in handoff
+            instructions:
+              files:
+                - scripts/install-container-tools.sh
+                - docs/ai-agent-handoff.md
+            verification:
+              - grep -q "github.com/.*/releases" scripts/install-container-tools.sh
+              - grep -qi "install-container-tools\|TRIVY_VERSION\|tool.version" docs/ai-agent-handoff.md
+            guardrail_refs:
+              - SC-DEP-001
+
+      - id: CDO-SEC-001
+        status: done
+        title: Harden reusable-workflow inputs for ignorefile and verify_command
+        overview:
+          problem: >-
+            container-scan.yml falls back to the caller root .trivyignore.yaml when
+            ignorefile is empty, so advisory posture scans that intentionally omit an
+            ignorefile are silently filtered. check-container-local.sh duplicates that
+            fallback. verify-multiarch.sh runs verify_command via bash -lc, creating a
+            template-injection surface for the verify_command workflow input.
+          goal: >-
+            Add an explicit ignorefile opt-out (sentinel none) in container-scan.yml and
+            matching --no-ignorefile in check-container-local.sh; reject shell
+            metacharacters in verify_command and run via --entrypoint argv.
+        architecture:
+          target: container-scan.yml + check-container-local.sh + verify-multiarch.sh
+          modules:
+            - .github/workflows/container-scan.yml
+            - scripts/check-container-local.sh
+            - scripts/verify-multiarch.sh
+            - docs/workflows.md
+        acceptance_criteria:
+          - ignorefile=none disables all Trivy ignorefiles in container-scan.yml
+          - check-container-local.sh --no-ignorefile skips root ignorefile fallback
+          - verify_command with shell metacharacters is rejected; smoke runs use --entrypoint
+          - docs/workflows.md documents the none sentinel
+        guardrail_refs:
+          - CI-025
+          - DOCKER-SEC-001
+        tasks:
+          - id: CDO-SEC-001-T1
+            status: done
+            title: Add ignorefile=none opt-out and align local parity script
+            instructions:
+              files:
+                - .github/workflows/container-scan.yml
+                - scripts/check-container-local.sh
+                - docs/workflows.md
+            verification:
+              - grep -q 'IGNOREFILE == "none"' .github/workflows/container-scan.yml
+              - grep -q "no-ignorefile" scripts/check-container-local.sh
+              - grep -q 'ignorefile.*none' docs/workflows.md
+            guardrail_refs:
+              - DOCKER-SEC-001
+          - id: CDO-SEC-001-T2
+            status: done
+            title: Harden verify_command against shell injection
+            instructions:
+              files:
+                - scripts/verify-multiarch.sh
+            verification:
+              - "! grep -q 'bash -lc' scripts/verify-multiarch.sh"
+              - shellcheck scripts/verify-multiarch.sh
+            guardrail_refs:
+              - CI-025

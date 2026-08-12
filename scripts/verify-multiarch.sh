@@ -11,11 +11,25 @@ set -euo pipefail
 
 IMAGE="${1:?image ref required}"
 PLATFORMS_CSV="${2:?platforms csv required}"
-VERIFY_CMD="${3:-true}"
+VERIFY_CMD="${3:-/bin/true}"
 CST_CONFIG="${4:-}"
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "error: docker is required" >&2
+  exit 2
+fi
+
+# Harden against shell injection from the verify_command workflow input.
+# Allow a simple argv (executable + optional args); reject metacharacters.
+if [[ "${VERIFY_CMD}" == *$'\n'* ]] || [[ "${VERIFY_CMD}" =~ [\;\|\&\$\`\(\)\<\>] ]] \
+  || [[ "${VERIFY_CMD}" == *'{'* ]] || [[ "${VERIFY_CMD}" == *'}'* ]]; then
+  echo "error: verify_command must be a simple argv (no shell metacharacters): ${VERIFY_CMD}" >&2
+  exit 2
+fi
+# shellcheck disable=SC2206  # intentional word-split of validated argv
+VERIFY_ARGV=(${VERIFY_CMD})
+if [[ ${#VERIFY_ARGV[@]} -eq 0 ]]; then
+  echo "error: verify_command is empty" >&2
   exit 2
 fi
 
@@ -80,8 +94,8 @@ for p in "${PLATFORMS[@]}"; do
   p="$(echo "${p}" | xargs)"
   [[ -z "${p}" ]] && continue
   echo "Smoke run --platform ${p}: ${VERIFY_CMD}"
-  # Run the full command string via bash -c so multi-word verify commands work.
-  if ! docker run --rm --platform "${p}" --entrypoint bash "${IMAGE}" -lc "${VERIFY_CMD}"; then
+  # Run via --entrypoint argv (no shell) after metacharacter validation above.
+  if ! docker run --rm --platform "${p}" --entrypoint "${VERIFY_ARGV[0]}" "${IMAGE}" "${VERIFY_ARGV[@]:1}"; then
     echo "error: smoke run failed on ${p}" >&2
     FAILED=1
     continue

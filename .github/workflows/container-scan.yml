@@ -30,7 +30,7 @@ on:
         type: string
         default: "os,library"
       ignorefile:
-        description: "Optional path to a Trivy ignorefile (default .trivyignore.yaml or .trivyignore)"
+        description: "Trivy ignorefile path; empty falls back to .trivyignore.yaml/.trivyignore; set to 'none' to disable ignores"
         required: false
         type: string
         default: ""
@@ -121,8 +121,13 @@ jobs:
           CFG=()
           [[ -f trivy.yaml ]] && CFG=(--config trivy.yaml)
           IGNORE=()
-          if [[ -n "${IGNOREFILE}" && -f "${IGNOREFILE}" ]]; then
+          if [[ "${IGNOREFILE}" == "none" ]]; then
+            echo "ignorefile=none — skipping Trivy ignorefiles"
+          elif [[ -n "${IGNOREFILE}" && -f "${IGNOREFILE}" ]]; then
             IGNORE=(--ignorefile "${IGNOREFILE}")
+          elif [[ -n "${IGNOREFILE}" ]]; then
+            echo "error: ignorefile path not found: ${IGNOREFILE}" >&2
+            exit 1
           elif [[ -f .trivyignore.yaml ]]; then
             IGNORE=(--ignorefile .trivyignore.yaml)
           elif [[ -f .trivyignore ]]; then

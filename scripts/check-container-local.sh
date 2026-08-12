@@ -16,7 +16,9 @@
 # Usage:
 #   bash scripts/check-container-local.sh --dockerfile Dockerfile --context .
 # Optional: --image NAME (skip build), --structure-test path, --skip-scan,
-#           --advisory (do not fail on trivy findings; default is blocking)
+#           --advisory (do not fail on trivy findings; default is blocking),
+#           --no-ignorefile (skip root .trivyignore.yaml fallback; mirrors
+#           container-scan.yml ignorefile=none)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -28,6 +30,7 @@ IMAGE=""
 STRUCTURE_TEST=""
 SKIP_SCAN=0
 ADVISORY=0
+NO_IGNOREFILE=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -37,6 +40,7 @@ while [[ $# -gt 0 ]]; do
     --structure-test) STRUCTURE_TEST="$2"; shift 2 ;;
     --skip-scan) SKIP_SCAN=1; shift ;;
     --advisory) ADVISORY=1; shift ;;
+    --no-ignorefile) NO_IGNOREFILE=1; shift ;;
     *) echo "Unknown arg: $1" >&2; exit 2 ;;
   esac
 done
@@ -132,7 +136,9 @@ bash "${ROOT}/scripts/check-image-size.sh" "${IMAGE}" "${MAX_MB}"
 if (( SKIP_SCAN == 0 )); then
   echo "==> trivy image"
   IGNORE=()
-  if [[ -f .trivyignore.yaml ]]; then
+  if (( NO_IGNOREFILE == 1 )); then
+    echo "  --no-ignorefile: skipping Trivy ignorefiles"
+  elif [[ -f .trivyignore.yaml ]]; then
     IGNORE=(--ignorefile .trivyignore.yaml)
   elif [[ -f .trivyignore ]]; then
     IGNORE=(--ignorefile .trivyignore)

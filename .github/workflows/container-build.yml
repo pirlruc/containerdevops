@@ -237,12 +237,16 @@ jobs:
           FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
           MIN="$(bash _containerdevops/scripts/read-thresholds.sh min_image_efficiency_percent "$FILE")"
-          dive --ci --json dive-report.json "${IMAGE_NAME}" || true
-          if [[ -f dive-report.json ]]; then
-            bash _containerdevops/scripts/check-image-efficiency.sh "${MIN}" dive-report.json
+          set +e
+          dive --ci --json dive-report.json "${IMAGE_NAME}"
+          dive_rc=$?
+          set -e
+          if [[ ! -f dive-report.json ]]; then
+            echo "dive failed without JSON (exit ${dive_rc}) — not an efficiency miss"
+            [[ "${ADVISORY}" == "true" ]] || exit "${dive_rc}"
           else
-            echo "dive JSON missing — treat as advisory miss"
-            [[ "${ADVISORY}" == "true" ]] || exit 1
+            # dive --ci may exit non-zero on its own thresholds; org floor is enforced here.
+            bash _containerdevops/scripts/check-image-efficiency.sh "${MIN}" dive-report.json
           fi
 
       - name: Save image tarball
