@@ -5,7 +5,7 @@ name: Container Lint (reusable)
 # Secrets (DOCKER-SEC-005) → commondevops common-secrets-sast.
 # commondevops pin: keep uses: and scripts_ref in lockstep (@4fd83922506d… = tag 2.0.2).
 #
-# runner_image: empty → install tools on the bare runner (bootstrap / ci-base caller).
+# runner_image: empty → install tools on the bare runner (bootstrap / publish caller).
 # Non-empty → docker run that image for hadolint/shellcheck (avoids job-level container:
 # which fails workflow validation when the expression can be empty).
 

@@ -74,6 +74,7 @@ tag `2.0.2`).
 | `platforms` | `linux/amd64` |
 | `scripts_ref` | `""` |
 | `blocking` | `false` |
+| `artifact_name` | `container-image` |
 
 Optional secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` — when set, the job
 logs in to **`dhi.io`** before Buildx so Community Docker Hardened Image `FROM`
@@ -88,7 +89,9 @@ Optional OCI label inputs: `image_title` (defaults to `image_name`),
 `image_description` (defaults to `image_name`). Prefer image-specific text —
 do not pass the repository description.
 
-Uploads `container-image` artifact (`image.tar`).
+Uploads the image tarball under `artifact_name` (default `container-image`).
+When a caller runs multiple builds in one workflow (e.g. distro variants), pass
+distinct `artifact_name` values so downloads stay unambiguous.
 
 **Size gate:** `scripts/check-image-size.sh` measures the image rootfs via
 `du -sxm /` inside a disposable container. This is store-independent (unlike
@@ -106,6 +109,8 @@ Tune `image_max_size_mb` against this measurement.
 | `ignorefile` | `""` |
 | `blocking` | `false` |
 | `scripts_ref` | `""` |
+| `results_artifact` | `container-scan-results` |
+| `sarif_category` | `trivy-image` |
 
 `ignorefile` contract:
 
@@ -117,6 +122,10 @@ Tune `image_max_size_mb` against this measurement.
 
 Local parity: `bash scripts/check-container-local.sh --no-ignorefile` mirrors
 `ignorefile: none`.
+
+When a caller runs multiple scans in one workflow (blocking + posture, or distro
+variants), pass distinct `results_artifact` and `sarif_category` values so
+artifact downloads and code-scanning uploads do not collide or overwrite.
 
 ## container-publish.yml
 
@@ -134,6 +143,18 @@ Local parity: `bash scripts/check-container-local.sh --no-ignorefile` mirrors
 | `image_vendor` | `""` (override OCI vendor) |
 | `dockerhub_readme` | `""` (path in caller checkout pushed as Hub Overview) |
 | `dockerhub_short_description` | `""` (Hub short description when readme is set) |
+| `tag_suffix` | `""` (e.g. `-alpine`, `-debian`; empty = legacy unsuffixed tags only) |
+| `tag_alias_unsuffixed` | `true` (when `tag_suffix` is set, also publish the unsuffixed tag set) |
+
+### Variant tagging contract
+
+Callers that publish two distro variants of the same `image_name` pass a
+distinct `tag_suffix` per publish job (e.g. `-alpine`, `-debian`). Set
+`tag_alias_unsuffixed: true` on the **lower-vulnerability** variant so it owns
+the unsuffixed tags (`{{version}}`, `latest`, …). Set
+`tag_alias_unsuffixed: false` on the other variant so it only publishes the
+suffixed tags. Empty `tag_suffix` preserves the pre-variant behaviour (unsuffixed
+tags only).
 
 Secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` when Hub enabled **or** when
 the Dockerfile pulls from `dhi.io`. Optional `ghcr_token` for private GHCR

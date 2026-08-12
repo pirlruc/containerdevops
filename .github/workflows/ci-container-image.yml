@@ -1,7 +1,7 @@
 ---
 # Thin caller — publishes ghcr.io/pirlruc/ci-container (CI-026).
 # Pins to this repo's reusable workflows at the same commit (scripts_ref in lockstep).
-# Publish on release:published or monthly rebuild; PRs lint only until ci-base exists.
+# Publish on release:published or monthly rebuild; PRs lint only (bootstrap).
 name: CI Container Image
 
 on:
@@ -28,7 +28,8 @@ on:
       ci_base:
         description: Digest-pinned or tagged ci-lint ref for FROM (CI-026)
         type: string
-        default: "ghcr.io/pirlruc/ci-lint:2.0.2"
+        # commondevops ci-lint 2.1.0 (CI-026)
+        default: "ghcr.io/pirlruc/ci-lint@sha256:4bfdcff97afef8f577e09eba5d07f548023b7bccee6cccc3d235fd33dde41f0f"
 
 concurrency:
   group: ci-container-image-${{ github.ref }}
@@ -79,12 +80,12 @@ jobs:
       platforms: linux/amd64
       image_max_size_mb: "700"
       build_args: |
-        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint:2.0.2' }}
+        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint@sha256:4bfdcff97afef8f577e09eba5d07f548023b7bccee6cccc3d235fd33dde41f0f' }}
       image_title: ci-container
       image_description: >-
         Short-lived CI toolchain image for container jobs: ci-lint plus dive and
         container-structure-test. Non-root 1000:1000, linux/amd64.
-      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || true }}
+      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
       dhi_login: false
     secrets:
       # Prefer github.token after package Actions access is granted (Read for this repo).
@@ -108,7 +109,7 @@ jobs:
       scripts_ref: ${{ github.sha }}
       pkg_types: library
       ignorefile: .trivyignore.yaml
-      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || true }}
+      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
 
   publish:
     needs: [build, scan]
@@ -130,7 +131,7 @@ jobs:
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
       build_args: |
-        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint:2.0.2' }}
+        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint@sha256:4bfdcff97afef8f577e09eba5d07f548023b7bccee6cccc3d235fd33dde41f0f' }}
       image_title: ci-container
       image_description: >-
         Short-lived CI toolchain image for container jobs: ci-lint plus dive and
