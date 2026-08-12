@@ -5,4 +5,15 @@
 #
 # Being stricter than the org default is always allowed and needs no entry here.
 
-deviations: []
+deviations:
+  - id: DOCKER-PERF-001
+    key: image_max_size_mb
+    org_default: 300
+    repo_value: 700
+    why: >-
+      ci-container extends ci-lint plus dive and container-structure-test;
+      measured rootfs exceeds the 300 MB org floor for CI toolchain images.
+    epic: CDO-IMG-001
+    owner: pirlruc
+    approved_by: Engineering Lead
+    review: 2026-12-31

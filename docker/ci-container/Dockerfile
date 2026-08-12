@@ -35,7 +35,7 @@ COPY --from=ghcr.io/googlecontainertools/container-structure-test:1.22.1@sha256:
 
 WORKDIR /workspace
 RUN if ! id -u 1000 >/dev/null 2>&1; then \
-      printf 'ci:x:1000:1000::/home/ci:/bin/bash\n' >> /etc/passwd; \
+      printf 'ci:x:1000:1000::/home/ci:/bin/sh\n' >> /etc/passwd; \
       printf 'ci:x:1000:\n' >> /etc/group; \
       mkdir -p /home/ci; \
     fi; \
@@ -44,4 +44,4 @@ RUN if ! id -u 1000 >/dev/null 2>&1; then \
 USER 1000:1000
 
 ENTRYPOINT []
-CMD ["bash"]
+CMD ["sh"]

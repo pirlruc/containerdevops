@@ -25,10 +25,10 @@ Shared infra/secrets/supply-chain forward to
 |----------------------|-----|
 | `docs/guardrails` | commit `5a7ac83…` (post ci-base ref drop) |
 | `.github/scaffold` | `f8a6ba1…` |
-| `ghcr.io/pirlruc/ci-container` | tag `2.3.1` |
+| `ghcr.io/pirlruc/ci-container` | tag `2.3.1` (pending `2.4.0` after this PR) |
 | commondevops `uses:` | tag `2.0.2` → `4fd83922506d…` |
 | `CI_BASE` (ci-lint) | `3.0.0` digest `sha256:a3601772…` |
-| Release | `2.3.1` (CI_BASE → ci-lint `3.0.0` + guardrails `5a7ac83…`) |
+| Release | `2.3.1` on main; next `2.4.0` (variant hardening) |
 
 ## Delivery status
 
@@ -40,6 +40,8 @@ Shared infra/secrets/supply-chain forward to
 | CDO-SC-001 — install-container-tools hardening | Done |
 | CDO-SEC-001 — ignorefile opt-out + verify_command | Done |
 | CDO-WF-002 — variant tagging + multi-scan uniqueness | Done (`2.3.0`) |
+| CDO-IMG-001 — variant hardening / local parity | In progress (`2.4.0`) |
+| CDO-IMG-002 — Alpine ci-container | Pending (after commondevops Alpine ci-lint) |
 
 ## Tool versions in scripts/install-container-tools.sh
 
@@ -54,9 +56,11 @@ both together.
 ## Commands
 
 ```bash
-bash scripts/check-container-local.sh --dockerfile Dockerfile --context .
-bash scripts/check-container-local.sh --image ci-container:local --no-ignorefile --advisory
-./scripts/sync-container-tooling.sh /path/to/consuming-repo
+bash scripts/check-container-local.sh \
+  --dockerfile docker/ci-container/Dockerfile \
+  --context docker/ci-container \
+  --structure-test docker/ci-container/container-structure-test.yml \
+  --advisory
 docker build --build-arg CI_BASE=ci-lint:local \
   -t ci-container:local docker/ci-container
 bash scripts/check-image-size.sh ci-container:local 700
@@ -74,11 +78,15 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Size gate** uses `du -sxm /` (store-independent). Do not use `docker inspect .Size`.
 - **ignorefile contract:** empty falls back to caller `.trivyignore.yaml`; set
   `ignorefile: none` (or `--no-ignorefile` locally) for unfiltered posture scans.
+  ci-container's ignorefile lives at `docker/ci-container/.trivyignore.yaml`.
 - **Multi-scan uniqueness:** when a caller runs more than one build/scan in a
   workflow, pass distinct `artifact_name`, `results_artifact`, and `sarif_category`
   or artifacts collide and SARIF uploads overwrite each other in code scanning.
 - **Variant tags:** `tag_suffix` + `tag_alias_unsuffixed` — the lower-vulnerability
   variant should own unsuffixed tags; others set `tag_alias_unsuffixed: false`.
+  Hub Overview sync runs only for the unsuffixed-owning variant.
+- **GHA cache scope:** build uses `scope=<artifact_name>`; publish uses
+  `scope=publish-<image_name><tag_suffix>` so parallel variants do not thrash.
 - **verify_command** must be a simple argv (no shell metacharacters); runs via
   `--entrypoint`, not `bash -lc`.
 - **OCI labels:** `docker/metadata-action` defaults to repo name/description. Pass
@@ -98,15 +106,20 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Local vs Actions:** nested `workflow_call` composition cannot be exercised with
   `act` (not installed). Prefer `actionlint` + `zizmor` + disposable-container
   install tests before push; composition is verified by the PR run.
+- **Size deviation:** `image_max_size_mb: 700` for ci-container is recorded in
+  `docs/guardrail-deviations.yml` (DOCKER-PERF-001 / CDO-IMG-001).
 
 ## Suggested next work
 
-1. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
-2. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
-3. Consumers still on `2.3.0` should move to `2.3.1` for the CI_BASE / guardrails pins.
+1. Land Alpine `ci-container` (CDO-IMG-002) after commondevops publishes Alpine `ci-lint`.
+2. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
+3. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
 
 ## Recent history
 
+- 2026-08-12: CDO-IMG-001 in flight — per-variant GHA cache scopes, Hub Overview
+  gating, ci-container `.dockerignore` + structure test, ignorefile under
+  `docker/ci-container/`, local dive/age gates, DOCKER-PERF-001 deviation.
 - 2026-08-12: release `2.3.1` — CI_BASE → ci-lint `3.0.0` (#74), guardrails bump (#75).
 - 2026-08-12: #74 re-pin CI_BASE to ci-lint `3.0.0`; #75 bump guardrails past ci-base drop.
 - 2026-08-12: CDO-WF-002 / release `2.3.0` — artifact/SARIF uniqueness, variant

@@ -6,10 +6,7 @@
 # | Tool                      | Host preferred     | Docker fallback                         |
 # |---------------------------|--------------------|-----------------------------------------|
 # | hadolint                  | hadolint           | hadolint/hadolint:2.12.0-alpine         |
-# | shellcheck                | shellcheck         | koalaman/shellcheck:v0.10.0             |
 # | trivy                     | trivy              | aquasec/trivy:0.73.0                    |
-# | syft                      | syft               | anchore/syft:v1.50.0                    |
-# | grype                     | grype              | anchore/grype:v0.116.1                  |
 # | dive                      | dive               | wagoodman/dive:v0.13.1                  |
 # | container-structure-test  | container-structure-test | ghcr.io/googlecontainertools/...:1.22.1 |
 #
@@ -17,8 +14,9 @@
 #   bash scripts/check-container-local.sh --dockerfile Dockerfile --context .
 # Optional: --image NAME (skip build), --structure-test path, --skip-scan,
 #           --advisory (do not fail on trivy findings; default is blocking),
-#           --no-ignorefile (skip root .trivyignore.yaml fallback; mirrors
-#           container-scan.yml ignorefile=none)
+#           --no-ignorefile (skip ignorefile fallback; mirrors
+#           container-scan.yml ignorefile=none),
+#           --skip-age (skip DOCKER-BUILD-006 base-image age gate)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -29,6 +27,7 @@ CONTEXT="."
 IMAGE=""
 STRUCTURE_TEST=""
 SKIP_SCAN=0
+SKIP_AGE=0
 ADVISORY=0
 NO_IGNOREFILE=0
 
@@ -39,11 +38,21 @@ while [[ $# -gt 0 ]]; do
     --image) IMAGE="$2"; shift 2 ;;
     --structure-test) STRUCTURE_TEST="$2"; shift 2 ;;
     --skip-scan) SKIP_SCAN=1; shift ;;
+    --skip-age) SKIP_AGE=1; shift ;;
     --advisory) ADVISORY=1; shift ;;
     --no-ignorefile) NO_IGNOREFILE=1; shift ;;
     *) echo "Unknown arg: $1" >&2; exit 2 ;;
   esac
 done
+
+if [[ ! -f "${DOCKERFILE}" ]]; then
+  echo "error: Dockerfile not found: ${DOCKERFILE}" >&2
+  exit 2
+fi
+if [[ ! -d "${CONTEXT}" ]]; then
+  echo "error: context directory not found: ${CONTEXT}" >&2
+  exit 2
+fi
 
 THRESHOLDS="${ROOT}/scripts/docker.profile.thresholds.yml"
 if [[ ! -f "${THRESHOLDS}" ]]; then
@@ -57,47 +66,7 @@ fi
 MAX_MB="$(bash "${ROOT}/scripts/read-thresholds.sh" image_max_size_mb "${THRESHOLDS}")"
 MIN_EFF="$(bash "${ROOT}/scripts/read-thresholds.sh" min_image_efficiency_percent "${THRESHOLDS}")"
 HADOLINT_LEVEL="$(bash "${ROOT}/scripts/read-thresholds.sh" hadolint_failure_threshold "${THRESHOLDS}")"
-
-run_tool() {
-  local name="$1"
-  shift
-  if command -v "${name}" >/dev/null 2>&1; then
-    echo "→ ${name} (host)"
-    "${name}" "$@"
-    return
-  fi
-  echo "→ ${name} (Docker fallback)"
-  case "${name}" in
-    hadolint)
-      docker run --rm -i hadolint/hadolint:2.12.0-alpine hadolint "$@" < "${DOCKERFILE}"
-      ;;
-    shellcheck)
-      docker run --rm -v "${PWD}:/src:ro" -w /src koalaman/shellcheck:v0.10.0 "$@"
-      ;;
-    trivy)
-      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.73.0 "$@"
-      ;;
-    syft)
-      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/syft:v1.50.0 "$@"
-      ;;
-    grype)
-      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "${PWD}:/work" -w /work anchore/grype:v0.116.1 "$@"
-      ;;
-    dive)
-      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock wagoodman/dive:v0.13.1 "$@"
-      ;;
-    container-structure-test)
-      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-        -v "${PWD}:/work:ro" -w /work \
-        ghcr.io/googlecontainertools/container-structure-test:1.22.1 \
-        "$@"
-      ;;
-    *)
-      echo "No Docker fallback for ${name}" >&2
-      exit 1
-      ;;
-  esac
-}
+MAX_AGE="$(bash "${ROOT}/scripts/read-thresholds.sh" base_image_max_age_days "${THRESHOLDS}")"
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "docker is required" >&2
@@ -112,13 +81,22 @@ else
     hadolint --failure-threshold "${HADOLINT_LEVEL}" - < "${DOCKERFILE}"
 fi
 
+if (( SKIP_AGE == 0 )); then
+  echo "==> base image age (max ${MAX_AGE} days)"
+  bash "${ROOT}/scripts/check-base-image-age.sh" "${DOCKERFILE}" "${MAX_AGE}"
+fi
+
 if [[ -z "${IMAGE}" ]]; then
   IMAGE="containerdevops-local:$(date +%s)"
   echo "==> buildx build → ${IMAGE}"
   docker buildx build --load -t "${IMAGE}" -f "${DOCKERFILE}" "${CONTEXT}"
 fi
 
-if [[ -n "${STRUCTURE_TEST}" && -f "${STRUCTURE_TEST}" ]]; then
+if [[ -n "${STRUCTURE_TEST}" ]]; then
+  if [[ ! -f "${STRUCTURE_TEST}" ]]; then
+    echo "error: structure-test config not found: ${STRUCTURE_TEST}" >&2
+    exit 2
+  fi
   echo "==> container-structure-test"
   if command -v container-structure-test >/dev/null 2>&1; then
     container-structure-test test --image "${IMAGE}" --config "${STRUCTURE_TEST}"
@@ -133,11 +111,38 @@ fi
 echo "==> image size"
 bash "${ROOT}/scripts/check-image-size.sh" "${IMAGE}" "${MAX_MB}"
 
+echo "==> dive efficiency (min ${MIN_EFF}%)"
+DIVE_DIR="$(mktemp -d)"
+DIVE_JSON="${DIVE_DIR}/dive.json"
+trap 'rm -rf "${DIVE_DIR}"' EXIT
+set +e
+if command -v dive >/dev/null 2>&1; then
+  dive --ci --json "${DIVE_JSON}" "${IMAGE}"
+  dive_rc=$?
+else
+  docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+    -v "${DIVE_DIR}:/out" \
+    wagoodman/dive:v0.13.1 \
+    --ci --json /out/dive.json "${IMAGE}"
+  dive_rc=$?
+fi
+set -e
+if [[ ! -f "${DIVE_JSON}" || ! -s "${DIVE_JSON}" ]]; then
+  echo "dive failed without JSON (exit ${dive_rc}) — not an efficiency miss" >&2
+  if (( ADVISORY == 0 )); then
+    exit "${dive_rc}"
+  fi
+else
+  bash "${ROOT}/scripts/check-image-efficiency.sh" "${MIN_EFF}" "${DIVE_JSON}"
+fi
+
 if (( SKIP_SCAN == 0 )); then
   echo "==> trivy image"
   IGNORE=()
   if (( NO_IGNOREFILE == 1 )); then
     echo "  --no-ignorefile: skipping Trivy ignorefiles"
+  elif [[ -f "${CONTEXT}/.trivyignore.yaml" ]]; then
+    IGNORE=(--ignorefile "${CONTEXT}/.trivyignore.yaml")
   elif [[ -f .trivyignore.yaml ]]; then
     IGNORE=(--ignorefile .trivyignore.yaml)
   elif [[ -f .trivyignore ]]; then
@@ -147,10 +152,21 @@ if (( SKIP_SCAN == 0 )); then
   if command -v trivy >/dev/null 2>&1; then
     trivy image --severity HIGH,CRITICAL --pkg-types library --exit-code 1 "${IGNORE[@]}" "${IMAGE}"
   else
+    # Resolve ignorefile paths inside the container mount at /work
+    DIGNORE=()
+    if [[ ${#IGNORE[@]} -gt 0 ]]; then
+      ig="${IGNORE[1]}"
+      if [[ "${ig}" == /* ]]; then
+        rel="${ig#"${PWD}"/}"
+        DIGNORE=(--ignorefile "/work/${rel}")
+      else
+        DIGNORE=(--ignorefile "/work/${ig}")
+      fi
+    fi
     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
       -v "${PWD}:/work:ro" -w /work \
       aquasec/trivy:0.73.0 image --severity HIGH,CRITICAL --pkg-types library --exit-code 1 \
-      "${IGNORE[@]}" "${IMAGE}"
+      "${DIGNORE[@]}" "${IMAGE}"
   fi
   trc=$?
   set -e
@@ -165,4 +181,3 @@ if (( SKIP_SCAN == 0 )); then
 fi
 
 echo "Local container checks finished for ${IMAGE}."
-echo "Note: dive efficiency gate (min ${MIN_EFF}%) is enforced in CI; run dive locally if installed."

@@ -68,6 +68,12 @@ on:
       ignorefile:
         type: string
         default: ""
+      results_artifact:
+        type: string
+        default: container-scan-results
+      sarif_category:
+        type: string
+        default: trivy-image
 
 # CI-025
 permissions: {}

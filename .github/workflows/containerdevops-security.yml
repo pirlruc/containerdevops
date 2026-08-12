@@ -93,5 +93,5 @@ jobs:
       image: ghcr.io/pirlruc/ci-container:latest
       scripts_ref: ${{ github.sha }}
       pkg_types: library
-      ignorefile: .trivyignore.yaml
+      ignorefile: docker/ci-container/.trivyignore.yaml
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}

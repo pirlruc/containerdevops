@@ -79,6 +79,8 @@ on:
           Defaults to github.token (works when package Actions access is granted or public).
         required: false
   workflow_dispatch:
+    # Capped at 10 inputs (GitHub limit); artifact_name / image_title /
+    # image_description are workflow_call-only.
     inputs:
       context:
         type: string
@@ -192,8 +194,9 @@ jobs:
           tags: ${{ inputs.image_name }}
           platforms: ${{ inputs.platforms }}
           build-args: ${{ inputs.build_args }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Per-variant scope so parallel debian/alpine builds do not thrash one cache.
+          cache-from: type=gha,scope=${{ inputs.artifact_name }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.artifact_name }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}

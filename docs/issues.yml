@@ -743,7 +743,7 @@ milestones:
               - CI-025
 
       - id: CDO-WF-002
-        status: open
+        status: done
         title: Variant tagging and multi-scan artifact uniqueness
         overview:
           problem: >-
@@ -777,7 +777,7 @@ milestones:
           - DOCKER-DELIV-001
         tasks:
           - id: CDO-WF-002-T1
-            status: open
+            status: done
             title: Add unique artifact and SARIF inputs to build and scan
             instructions:
               files:
@@ -792,7 +792,7 @@ milestones:
             guardrail_refs:
               - CI-026
           - id: CDO-WF-002-T2
-            status: open
+            status: done
             title: Add tag_suffix and tag_alias_unsuffixed to container-publish
             instructions:
               files:
@@ -806,7 +806,7 @@ milestones:
             guardrail_refs:
               - DOCKER-DELIV-001
           - id: CDO-WF-002-T3
-            status: open
+            status: done
             title: Fix ci-container blocking expression and digest-pin CI_BASE
             instructions:
               files:
@@ -817,5 +817,127 @@ milestones:
               - grep -q 'sha256:a3601772133ff0479343c79c5d9573276ac35d5b74f31bf1416d5aeadd6bf0cf' .github/workflows/ci-container-image.yml
               - "! grep -q 'ci-base caller' .github/workflows/container-lint.yml"
               - actionlint .github/workflows/ci-container-image.yml
+            guardrail_refs:
+              - CI-026
+
+      - id: CDO-IMG-001
+        status: open
+        title: Variant hardening and ci-container local/CI parity
+        overview:
+          problem: >-
+            Parallel variant builds share one BuildKit GHA cache; both variants race
+            on Hub Overview sync; ci-container lacks .dockerignore and a wired
+            structure test; root .trivyignore.yaml drifts from the per-image
+            convention; check-container-local.sh never enforces dive efficiency or
+            base-image age; the 700 MB size override was an undeclared deviation.
+          goal: >-
+            Per-variant GHA cache scopes; gate Hub Overview on tag_alias_unsuffixed;
+            add .dockerignore + structure test for ci-container; move ignorefile under
+            docker/ci-container/; enforce dive and age gates locally; record the
+            DOCKER-PERF-001 deviation.
+        architecture:
+          target: reusable workflows + docker/ci-container + local parity scripts
+          modules:
+            - .github/workflows/container-build.yml
+            - .github/workflows/container-publish.yml
+            - .github/workflows/container-scan.yml
+            - .github/workflows/ci-container-image.yml
+            - docker/ci-container/
+            - scripts/check-container-local.sh
+            - docs/guardrail-deviations.yml
+        acceptance_criteria:
+          - Build and publish use per-variant GHA cache scopes
+          - Hub Overview sync runs only for the unsuffixed-owning variant
+          - docker/ci-container has .dockerignore, structure-test config, and .trivyignore.yaml
+          - check-container-local.sh enforces dive efficiency and base-image age
+          - DOCKER-PERF-001 deviation recorded for the 700 MB size override
+        guardrail_refs:
+          - DOCKER-BUILD-005
+          - DOCKER-TEST-001
+          - DOCKER-PERF-001
+          - DOCKER-SEC-001
+        tasks:
+          - id: CDO-IMG-001-T1
+            status: open
+            title: Per-variant cache scopes and Hub Overview gating
+            instructions:
+              files:
+                - .github/workflows/container-build.yml
+                - .github/workflows/container-publish.yml
+                - docs/workflows.md
+            verification:
+              - grep -q 'scope=' .github/workflows/container-build.yml
+              - grep -q tag_alias_unsuffixed .github/workflows/container-publish.yml
+            guardrail_refs:
+              - DOCKER-DELIV-001
+          - id: CDO-IMG-001-T2
+            status: open
+            title: ci-container structure test, dockerignore, and per-image ignorefile
+            instructions:
+              files:
+                - docker/ci-container/.dockerignore
+                - docker/ci-container/container-structure-test.yml
+                - docker/ci-container/.trivyignore.yaml
+                - .github/workflows/ci-container-image.yml
+            verification:
+              - test -f docker/ci-container/.dockerignore
+              - test -f docker/ci-container/container-structure-test.yml
+              - test -f docker/ci-container/.trivyignore.yaml
+              - grep -q 'structure_test_config: docker/ci-container' .github/workflows/ci-container-image.yml
+            guardrail_refs:
+              - DOCKER-BUILD-005
+              - DOCKER-TEST-001
+          - id: CDO-IMG-001-T3
+            status: open
+            title: Local parity gates and size deviation record
+            instructions:
+              files:
+                - scripts/check-container-local.sh
+                - scripts/verify-multiarch.sh
+                - docs/guardrail-deviations.yml
+            verification:
+              - grep -q check-image-efficiency.sh scripts/check-container-local.sh
+              - grep -q check-base-image-age.sh scripts/check-container-local.sh
+              - "! grep -q 'docker tag .*|| true' scripts/verify-multiarch.sh"
+              - grep -q 'DOCKER-PERF-001' docs/guardrail-deviations.yml
+            guardrail_refs:
+              - DOCKER-PERF-001
+              - DOCKER-BUILD-006
+
+      - id: CDO-IMG-002
+        status: open
+        title: Alpine 3.24 variant for ci-container
+        overview:
+          problem: >-
+            ci-container is Debian-only while commondevops is adding an Alpine
+            ci-lint base; consumers that prefer the lower-vulnerability musl
+            posture need a matching ci-container variant.
+          goal: >-
+            Publish debian and alpine ci-container variants with distinct tag
+            suffixes; the lower-vulnerability variant owns unsuffixed tags.
+        architecture:
+          target: docker/ci-container + ci-container-image.yml
+          modules:
+            - docker/ci-container/Dockerfile
+            - docker/ci-container/Dockerfile.alpine
+            - .github/workflows/ci-container-image.yml
+        acceptance_criteria:
+          - Dockerfile.alpine builds FROM the Alpine ci-lint digest
+          - Parallel variant jobs use unique artifact/SARIF names
+          - Lower-vulnerability variant owns unsuffixed tags
+        guardrail_refs:
+          - CI-026
+          - DOCKER-DELIV-001
+        tasks:
+          - id: CDO-IMG-002-T1
+            status: open
+            title: Add Dockerfile.alpine and variant publish jobs
+            instructions:
+              files:
+                - docker/ci-container/Dockerfile.alpine
+                - .github/workflows/ci-container-image.yml
+            verification:
+              - test -f docker/ci-container/Dockerfile.alpine
+              - grep -q tag_suffix .github/workflows/ci-container-image.yml
             guardrail_refs:
               - CI-026

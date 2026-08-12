@@ -16,15 +16,16 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 
 | Tag | Meaning |
 |-----|---------|
-| `2.1.0` | Immutable release (prefer the current semver) |
-| `2.1` | Latest patch in the `2.1` line |
+| `2.4.0` | Immutable release (prefer the current semver) |
+| `2.4` | Latest patch in the `2.4` line |
 | `latest` | Latest non-prerelease publish |
 | `sha-<git>` | Exact git SHA of the published commit |
 
-Prefer a version tag or digest in production.
+Prefer a version tag or digest in production. Distro-suffixed tags
+(`-alpine` / `-debian`) land in a follow-up release when both variants publish.
 
 ```bash
-docker pull pirlruc/ci-container:2.1.0
+docker pull pirlruc/ci-container:2.4.0
 # or
 docker pull pirlruc/ci-container@sha256:<digest>
 ```
@@ -33,13 +34,13 @@ docker pull pirlruc/ci-container@sha256:<digest>
 
 ```bash
 docker run --rm -v "$PWD:/workspace:ro" -w /workspace \
-  pirlruc/ci-container:2.1.0 \
+  pirlruc/ci-container:2.4.0 \
   hadolint Dockerfile
 ```
 
 ```bash
 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-  pirlruc/ci-container:2.1.0 \
+  pirlruc/ci-container:2.4.0 \
   dive --ci my-app:local
 ```
 
@@ -52,7 +53,7 @@ docker run --rm \
   --security-opt no-new-privileges \
   --tmpfs /tmp:rw,noexec,nosuid,size=256m \
   -v "$PWD:/workspace:ro" -w /workspace \
-  pirlruc/ci-container:2.1.0 \
+  pirlruc/ci-container:2.4.0 \
   hadolint Dockerfile
 ```
 
