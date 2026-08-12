@@ -2,21 +2,26 @@
 # Cadence: docs/guardrails/supply-chain/profile.thresholds.yml
 # Process: https://github.com/pirlruc/methodologies/blob/main/github-issue-adr/docs/process/dependency-updates.md
 #
-# Personal-account private git (uncomment and set Dependabot secrets — not Actions):
-# registries:
-#   github-private:
-#     type: git
-#     url: https://github.com
-#     username: x-access-token
-#     password: ${{secrets.DEPENDABOT_GITHUB_TOKEN}}
-#   dhi:
-#     type: docker-registry
-#     url: https://dhi.io
-#     username: ${{secrets.DOCKERHUB_USERNAME}}
-#     password: ${{secrets.DOCKERHUB_TOKEN}}
-# Then add `registries: [github-private]` (and/or dhi) under each updates entry that needs them.
+# Personal-account private access (Dependabot secrets — not Actions):
+#   DEPENDABOT_GITHUB_TOKEN — Contents: Read on this repo, private submodules,
+#     and reusable-workflow hosts (commondevops, github-scaffold, guardrails).
+#   DOCKERHUB_USERNAME / DOCKERHUB_TOKEN — optional dhi.io pulls if donors move there.
+# When migrating from per-ecosystem configs, close stale Dependabot PRs before expecting
+# the grouped all-dependencies PR (open-PR limit otherwise blocks creation).
 
 version: 2
+
+registries:
+  github-private:
+    type: git
+    url: https://github.com
+    username: x-access-token
+    password: ${{secrets.DEPENDABOT_GITHUB_TOKEN}}
+  dhi:
+    type: docker-registry
+    url: https://dhi.io
+    username: ${{secrets.DOCKERHUB_USERNAME}}
+    password: ${{secrets.DOCKERHUB_TOKEN}}
 
 multi-ecosystem-groups:
   all-dependencies:
@@ -33,6 +38,8 @@ updates:
     directory: /
     patterns: ["*"]
     multi-ecosystem-group: all-dependencies
+    registries:
+      - github-private
     cooldown:
       default-days: 7
 
@@ -40,5 +47,8 @@ updates:
     directory: /docker/ci-container
     patterns: ["*"]
     multi-ecosystem-group: all-dependencies
+    registries:
+      - github-private
+      - dhi
     cooldown:
       default-days: 7
