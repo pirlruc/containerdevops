@@ -23,7 +23,7 @@ Shared infra/secrets/supply-chain forward to
 
 | Submodule / artifact | Pin |
 |----------------------|-----|
-| `docs/guardrails` | tag `1.1.0` → `6fe580c…` |
+| `docs/guardrails` | commit `5a7ac83…` (post ci-base ref drop) |
 | `.github/scaffold` | `f8a6ba1…` |
 | `ghcr.io/pirlruc/ci-container` | tag `2.2.0` |
 | commondevops `uses:` | tag `2.0.2` → `4fd83922506d…` |
