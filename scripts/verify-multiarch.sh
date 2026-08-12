@@ -115,7 +115,7 @@ for p in "${PLATFORMS[@]}"; do
     # Pull/platform-specific local tag for CST
     LOCAL_TAG="cst-verify:${p//\//-}"
     docker pull --platform "${p}" "${IMAGE}"
-    docker tag "${IMAGE}" "${LOCAL_TAG}" || true
+    docker tag "${IMAGE}" "${LOCAL_TAG}"
     if ! container-structure-test test --image "${LOCAL_TAG}" --config "${CST_CONFIG}"; then
       echo "error: structure-test failed on ${p}" >&2
       FAILED=1

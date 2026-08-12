@@ -16,26 +16,27 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 
 | Tag | Meaning |
 |-----|---------|
-| `2.1.0` | Immutable release (prefer the current semver) |
-| `2.1` | Latest patch in the `2.1` line |
+| `2.4.0` | Immutable release (prefer the current semver) |
+| `2.4` | Latest patch in the `2.4` line |
 | `latest` | Latest non-prerelease publish |
 | `sha-<git>` | Exact git SHA of the published commit |
 
-Prefer a version tag or digest in production.
+Prefer a version tag or digest in production. Distro-suffixed tags
+(`-alpine` / `-debian`) land in a follow-up release when both variants publish.
 
 ## Authentication
 
 If the package is public, anonymous pulls work:
 
 ```bash
-docker pull ghcr.io/pirlruc/ci-container:2.1.0
+docker pull ghcr.io/pirlruc/ci-container:2.4.0
 ```
 
 If the package is private, authenticate with a PAT that has `read:packages`:
 
 ```bash
 echo "$CR_PAT" | docker login ghcr.io -u USERNAME --password-stdin
-docker pull ghcr.io/pirlruc/ci-container:2.1.0
+docker pull ghcr.io/pirlruc/ci-container:2.4.0
 # or
 docker pull ghcr.io/pirlruc/ci-container@sha256:<digest>
 ```
@@ -47,7 +48,7 @@ jobs:
   lint:
     runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/pirlruc/ci-container:2.1.0
+      image: ghcr.io/pirlruc/ci-container:2.4.0
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -63,7 +64,7 @@ Grant the package **Actions** Read access for the calling repository when using
 
 ```bash
 docker run --rm -v "$PWD:/workspace:ro" -w /workspace \
-  ghcr.io/pirlruc/ci-container:2.1.0 \
+  ghcr.io/pirlruc/ci-container:2.4.0 \
   hadolint Dockerfile
 ```
 
@@ -76,7 +77,7 @@ docker run --rm \
   --security-opt no-new-privileges \
   --tmpfs /tmp:rw,noexec,nosuid,size=256m \
   -v "$PWD:/workspace:ro" -w /workspace \
-  ghcr.io/pirlruc/ci-container:2.1.0 \
+  ghcr.io/pirlruc/ci-container:2.4.0 \
   hadolint Dockerfile
 ```
 

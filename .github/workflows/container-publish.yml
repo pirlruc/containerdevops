@@ -324,11 +324,18 @@ jobs:
           provenance: false
           sbom: false
           build-args: ${{ inputs.build_args }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Per-variant scope so parallel debian/alpine builds do not thrash one cache.
+          cache-from: type=gha,scope=publish-${{ inputs.image_name }}${{ inputs.tag_suffix }}
+          cache-to: type=gha,mode=max,scope=publish-${{ inputs.image_name }}${{ inputs.tag_suffix }}
 
       - name: Docker Hub Overview
-        if: inputs.dockerhub_image != '' && inputs.dockerhub_readme != ''
+        # Only the variant that owns unsuffixed tags (or a legacy single-variant
+        # publish with empty tag_suffix) should sync the Hub Overview — otherwise
+        # parallel variant jobs race on the same description.
+        if: >-
+          inputs.dockerhub_image != '' &&
+          inputs.dockerhub_readme != '' &&
+          (inputs.tag_suffix == '' || inputs.tag_alias_unsuffixed)
         # Always advisory: Hub description API needs admin (read/write/delete) token
         # scope; a push-only PAT returns Forbidden and must not fail the image publish.
         continue-on-error: true

@@ -93,6 +93,9 @@ Uploads the image tarball under `artifact_name` (default `container-image`).
 When a caller runs multiple builds in one workflow (e.g. distro variants), pass
 distinct `artifact_name` values so downloads stay unambiguous.
 
+**BuildKit GHA cache:** `cache-from` / `cache-to` use `type=gha` with
+`scope=<artifact_name>` so parallel variant builds do not thrash a shared cache.
+
 **Size gate:** `scripts/check-image-size.sh` measures the image rootfs via
 `du -sxm /` inside a disposable container. This is store-independent (unlike
 `docker image inspect .Size`, which reports uncompressed size on classic Docker
@@ -156,6 +159,15 @@ the unsuffixed tags (`{{version}}`, `latest`, …). Set
 suffixed tags. Empty `tag_suffix` preserves the pre-variant behaviour (unsuffixed
 tags only).
 
+**Hub Overview sync:** when both `dockerhub_image` and `dockerhub_readme` are
+set, the Overview is pushed only for the variant that owns unsuffixed tags
+(`tag_suffix` empty, or `tag_alias_unsuffixed: true`). Other variants should
+still pass the same `dockerhub_readme` path for documentation, but the sync
+step is skipped so parallel publishes do not race on the Hub description.
+
+**BuildKit GHA cache:** publish uses `scope=publish-<image_name><tag_suffix>` so
+variant jobs keep separate caches.
+
 Secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` when Hub enabled **or** when
 the Dockerfile pulls from `dhi.io`. Optional `ghcr_token` for private GHCR
 pulls. The publish job logs in to `dhi.io` when those Hub secrets are present
@@ -164,11 +176,11 @@ pulls. The publish job logs in to `dhi.io` when those Hub secrets are present
 `sign: true`; no separate `attestations: write` grant is required on Free plan
 private repos — keep `sign: false` there).
 
-When `dockerhub_image` and `dockerhub_readme` are both set, the job pushes the
-readme as the Docker Hub Overview after the image push. The Hub token needs
-read/write/delete (admin-level) scope for the description API. A push-only
-token yields Forbidden; that step is always advisory so image publish still
-succeeds.
+When `dockerhub_image` and `dockerhub_readme` are both set (and the variant
+owns unsuffixed tags), the job pushes the readme as the Docker Hub Overview
+after the image push. The Hub token needs read/write/delete (admin-level)
+scope for the description API. A push-only token yields Forbidden; that step
+is always advisory so image publish still succeeds.
 
 ## container-iac.yml
 

@@ -76,6 +76,7 @@ jobs:
       context: docker/ci-container
       dockerfile: docker/ci-container/Dockerfile
       image_name: ci-container:ci
+      structure_test_config: docker/ci-container/container-structure-test.yml
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
       image_max_size_mb: "700"
@@ -108,7 +109,7 @@ jobs:
       image_artifact: container-image
       scripts_ref: ${{ github.sha }}
       pkg_types: library
-      ignorefile: .trivyignore.yaml
+      ignorefile: docker/ci-container/.trivyignore.yaml
       blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
 
   publish:
@@ -142,6 +143,7 @@ jobs:
       dockerhub_readme: docs/docker-hub.md
       dockerhub_short_description: >-
         CI toolchain: ci-lint plus dive and container-structure-test
+      structure_test_config: docker/ci-container/container-structure-test.yml
       sign: ${{ github.event.repository.visibility == 'public' }}
       blocking: true
       dhi_login: false

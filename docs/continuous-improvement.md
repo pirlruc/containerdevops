@@ -130,7 +130,7 @@ Provenance after human merge+sync uses these prefixes and the PR description; do
 | `scripts/` | Install, local parity, threshold readers, size gate (`du -sxm /`) |
 | `docker/ci-container/` | Container CI tooling image (extends ci-lint) |
 | `docs/` | Handoff, this prompt, authored `issues.yml`, deviations, Docker Hub and GitHub Packages pages |
-| `.trivyignore.yaml` | Path-scoped donor CVE ignores |
+| `.trivyignore.yaml` (under `docker/ci-container/`) | Path-scoped donor CVE ignores |
 | `.github/dependabot.yml` | Multi-ecosystem dependency updates |
 
 Ecosystem (URL only): [commondevops](https://github.com/pirlruc/commondevops),

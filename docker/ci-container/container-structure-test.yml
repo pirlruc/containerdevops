@@ -1,0 +1,49 @@
+schemaVersion: "2.0.0"
+metadataTest:
+  cmd: ["sh"]
+  envVars:
+    - key: PYTHONDONTWRITEBYTECODE
+      value: "1"
+    - key: PYTHONUNBUFFERED
+      value: "1"
+commandTests:
+  - name: shellcheck
+    command: "shellcheck"
+    args: ["--version"]
+    exitCode: 0
+  - name: hadolint
+    command: "hadolint"
+    args: ["--version"]
+    exitCode: 0
+  - name: actionlint
+    command: "actionlint"
+    args: ["-version"]
+    exitCode: 0
+  - name: gitleaks
+    command: "gitleaks"
+    args: ["version"]
+    exitCode: 0
+  - name: dive
+    command: "dive"
+    args: ["--version"]
+    exitCode: 0
+  - name: container-structure-test
+    command: "container-structure-test"
+    args: ["version"]
+    exitCode: 0
+fileExistenceTests:
+  - name: shell present
+    path: "/bin/sh"
+    shouldExist: true
+  - name: dive binary
+    path: "/usr/local/bin/dive"
+    shouldExist: true
+  - name: container-structure-test binary
+    path: "/usr/local/bin/container-structure-test"
+    shouldExist: true
+  - name: uv absent
+    path: "/usr/local/bin/uv"
+    shouldExist: false
+  - name: trivy absent
+    path: "/usr/local/bin/trivy"
+    shouldExist: false
