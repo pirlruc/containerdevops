@@ -80,18 +80,21 @@ python3 .github/scaffold/scripts/issues-sync.py \
   for nested commondevops calls (lint secrets/infra).
 - Scan stays on the host runner (`docker load`). Build/publish must not use job `container:`.
 - Dependabot PRs skip CI (CI-024) — replace with a human branch so checks run.
+- **Dependabot registries:** personal private repos need `registries:` wired to
+  Dependabot secrets (`DEPENDABOT_GITHUB_TOKEN`, `DOCKERHUB_*`). Without them,
+  updates fail with 401/403 on private submodules and reusable-workflow hosts.
 
 ## Suggested next work
 
-1. Land CDO-016; cut containerdevops `2.1.0` after commondevops `2.0.1` publishes ci-lint.
-2. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
-3. Delete GHCR `2.0.0` versions that carried the repo description.
+1. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
+2. Delete GHCR `2.0.0` versions that carried the repo description.
+3. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
 4. Grant Actions Read on packages / keep Hub repos public.
 
 ## Recent history
 
-- 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); CDO-008 closed.
+- 2026-08-12: wire Dependabot `registries:` for private git + dhi.io.
+- 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
-- 2026-08-11: release `1.0.1`; published `ci-container:1.0.1`.
 
 *Last updated: 2026-08-12*
