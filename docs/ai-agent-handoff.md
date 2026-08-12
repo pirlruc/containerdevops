@@ -25,10 +25,10 @@ Shared infra/secrets/supply-chain forward to
 |----------------------|-----|
 | `docs/guardrails` | commit `5a7ac83…` (post ci-base ref drop) |
 | `.github/scaffold` | `f8a6ba1…` |
-| `ghcr.io/pirlruc/ci-container` | tag `2.3.0` |
+| `ghcr.io/pirlruc/ci-container` | tag `2.3.1` |
 | commondevops `uses:` | tag `2.0.2` → `4fd83922506d…` |
 | `CI_BASE` (ci-lint) | `3.0.0` digest `sha256:a3601772…` |
-| Release | `2.3.0` published; main also has CI_BASE re-pin (#74) + guardrails bump (#75) — cut `2.3.1` when consumers need those on a tag |
+| Release | `2.3.1` (CI_BASE → ci-lint `3.0.0` + guardrails `5a7ac83…`) |
 
 ## Delivery status
 
@@ -101,12 +101,13 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Suggested next work
 
-1. Tag/release `2.3.1` so consumers pinned to a tag get CI_BASE → ci-lint `3.0.0` and guardrails `5a7ac83…`.
-2. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
-3. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
+1. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
+2. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
+3. Consumers still on `2.3.0` should move to `2.3.1` for the CI_BASE / guardrails pins.
 
 ## Recent history
 
+- 2026-08-12: release `2.3.1` — CI_BASE → ci-lint `3.0.0` (#74), guardrails bump (#75).
 - 2026-08-12: #74 re-pin CI_BASE to ci-lint `3.0.0`; #75 bump guardrails past ci-base drop.
 - 2026-08-12: CDO-WF-002 / release `2.3.0` — artifact/SARIF uniqueness, variant
   `tag_suffix` contract, fix always-true blocking, drop ci-base comment on
