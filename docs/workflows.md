@@ -54,6 +54,14 @@ or the run fails at startup before any step runs.
 | `dockerfile` | `Dockerfile` |
 | `working_directory` | `.` |
 | `shell_scripts` | `""` |
+| `scripts_ref` | `""` |
+| `runner_image` | `""` (host install when empty) |
+| `run_infra_lint` | `true` |
+| `run_secrets_scan` | `true` |
+| `blocking` | `false` |
+
+Nested commondevops pin: keep `uses:` and `scripts_ref` in lockstep (currently
+tag `2.0.2`).
 
 ## container-build.yml
 
@@ -64,6 +72,8 @@ or the run fails at startup before any step runs.
 | `image_name` | `containerdevops-ci:local` |
 | `structure_test_config` | `container-structure-test.yml` |
 | `platforms` | `linux/amd64` |
+| `scripts_ref` | `""` |
+| `blocking` | `false` |
 
 Optional secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` — when set, the job
 logs in to **`dhi.io`** before Buildx so Community Docker Hardened Image `FROM`
@@ -80,12 +90,11 @@ do not pass the repository description.
 
 Uploads `container-image` artifact (`image.tar`).
 
-**Size gate:** `scripts/check-image-size.sh` measures the image via
-`docker image inspect --format '{{.Size}}'`. On classic Docker Engine this is
-approximately the uncompressed rootfs; under containerd image-store hosts the
-same field can report a compressed value. Prefer validating thresholds against
-a GitHub-hosted runner (or `du -sxm /` inside a disposable container) when
-tuning `image_max_size_mb`.
+**Size gate:** `scripts/check-image-size.sh` measures the image rootfs via
+`du -sxm /` inside a disposable container. This is store-independent (unlike
+`docker image inspect .Size`, which reports uncompressed size on classic Docker
+Engine / GHA runners but a compressed value under containerd image-store hosts).
+Tune `image_max_size_mb` against this measurement.
 
 ## container-scan.yml
 
@@ -94,9 +103,20 @@ tuning `image_max_size_mb`.
 | `image` | required |
 | `image_artifact` | `""` (optional tarball load) |
 | `pkg_types` | `os,library` |
+| `ignorefile` | `""` |
+| `blocking` | `false` |
+| `scripts_ref` | `""` |
 
-Honors `.trivyignore.yaml` or `.trivyignore` in the **caller** workspace when
-present.
+`ignorefile` contract:
+
+| Value | Behaviour |
+|-------|-----------|
+| path to a file | Use that ignorefile (`--ignorefile <path>`) |
+| empty (`""`) | Fall back to caller-workspace `.trivyignore.yaml` or `.trivyignore` when present |
+| `none` | Disable all ignorefiles (for advisory posture scans that must not suppress findings) |
+
+Local parity: `bash scripts/check-container-local.sh --no-ignorefile` mirrors
+`ignorefile: none`.
 
 ## container-publish.yml
 
@@ -106,6 +126,7 @@ present.
 | `dockerhub_image` | `""` (set to `namespace/name` to push Hub) |
 | `platforms` | `linux/amd64,linux/arm64` |
 | `sign` | `false` |
+| `verify_command` | `/bin/true` (simple argv only — no shell metacharacters) |
 | `image_title` | `""` (override OCI title; empty keeps metadata-action default) |
 | `image_description` | `""` (override OCI description; consumer-facing, max 512 chars) |
 | `image_documentation` | `""` (override OCI documentation URL) |
@@ -139,3 +160,17 @@ succeeds.
 
 KICS `exclude-queries` IDs and why each is suppressed (not fixed) are recorded in
 [`docs/kics-exclusions.md`](kics-exclusions.md) (DOCKER-LINT-002).
+
+## container-devcontainer.yml
+
+| Input | Default |
+|-------|---------|
+| `dockerfile` | `.devcontainer/Dockerfile` |
+| `working_directory` | `.` |
+| `structure_test_config` | `""` (skip when empty) |
+| `scripts_ref` | `""` |
+| `runner_image` | `""` (host install when empty) |
+| `blocking` | `false` |
+
+Lints the devcontainer Dockerfile (hadolint) and optionally runs
+container-structure-test when `structure_test_config` is set.
