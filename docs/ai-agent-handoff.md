@@ -25,10 +25,11 @@ Shared infra/secrets/supply-chain forward to
 |----------------------|-----|
 | `docs/guardrails` | commit `5a7ac83…` (post ci-base ref drop) |
 | `.github/scaffold` | `f8a6ba1…` |
-| `ghcr.io/pirlruc/ci-container` | tag `2.3.1` (pending `2.4.0` after this PR) |
+| `ghcr.io/pirlruc/ci-container` | tag `2.4.0` (pending `3.0.0` Alpine) |
 | commondevops `uses:` | tag `2.0.2` → `4fd83922506d…` |
-| `CI_BASE` (ci-lint) | `3.0.0` digest `sha256:a3601772…` |
-| Release | `2.3.1` on main; next `2.4.0` (variant hardening) |
+| `CI_BASE` (ci-lint debian) | `4.0.0-debian` digest `sha256:ed619755…` |
+| `CI_BASE` (ci-lint alpine) | `4.0.0` digest `sha256:0a4691ba…` |
+| Release | `2.4.0` on main; next `3.0.0` (Alpine owns unsuffixed) |
 
 ## Delivery status
 
@@ -40,8 +41,8 @@ Shared infra/secrets/supply-chain forward to
 | CDO-SC-001 — install-container-tools hardening | Done |
 | CDO-SEC-001 — ignorefile opt-out + verify_command | Done |
 | CDO-WF-002 — variant tagging + multi-scan uniqueness | Done (`2.3.0`) |
-| CDO-IMG-001 — variant hardening / local parity | In progress (`2.4.0`) |
-| CDO-IMG-002 — Alpine ci-container | Pending (after commondevops Alpine ci-lint) |
+| CDO-IMG-001 — variant hardening / local parity | Done (`2.4.0`) |
+| CDO-IMG-002 — Alpine ci-container | In progress (`3.0.0`) |
 
 ## Tool versions in scripts/install-container-tools.sh
 

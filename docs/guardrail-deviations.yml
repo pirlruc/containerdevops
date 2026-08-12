@@ -11,9 +11,20 @@ deviations:
     org_default: 300
     repo_value: 700
     why: >-
-      ci-container extends ci-lint plus dive and container-structure-test;
+      ci-container (Debian) extends ci-lint plus dive and container-structure-test;
       measured rootfs exceeds the 300 MB org floor for CI toolchain images.
     epic: CDO-IMG-001
+    owner: pirlruc
+    approved_by: Engineering Lead
+    review: 2026-12-31
+  - id: DOCKER-PERF-001
+    key: image_max_size_mb
+    org_default: 300
+    repo_value: 900
+    why: >-
+      ci-container Alpine 3.24 variant extends Alpine ci-lint (~752 MB) plus dive
+      and container-structure-test; measured rootfs ~778 MB.
+    epic: CDO-IMG-002
     owner: pirlruc
     approved_by: Engineering Lead
     review: 2026-12-31

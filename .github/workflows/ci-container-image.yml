@@ -1,7 +1,8 @@
 ---
 # Thin caller — publishes ghcr.io/pirlruc/ci-container (CI-026).
+# Debian and Alpine variants; Alpine owns unsuffixed tags (follows ci-lint 4.0.0).
 # Pins to this repo's reusable workflows at the same commit (scripts_ref in lockstep).
-# Publish on release:published or monthly rebuild; PRs lint only (bootstrap).
+# CI_BASE digests are centralised in env below — update once per commondevops release.
 name: CI Container Image
 
 on:
@@ -25,11 +26,14 @@ on:
         description: Publish to GHCR (also on release / schedule)
         type: boolean
         default: false
-      ci_base:
-        description: Digest-pinned or tagged ci-lint ref for FROM (CI-026)
+      ci_base_debian:
+        description: Digest-pinned ci-lint Debian ref for FROM (CI-026)
         type: string
-        # commondevops ci-lint 3.0.0 (CI-026)
-        default: "ghcr.io/pirlruc/ci-lint@sha256:a3601772133ff0479343c79c5d9573276ac35d5b74f31bf1416d5aeadd6bf0cf"
+        default: ""
+      ci_base_alpine:
+        description: Digest-pinned ci-lint Alpine ref for FROM (CI-026)
+        type: string
+        default: ""
 
 concurrency:
   group: ci-container-image-${{ github.ref }}
@@ -39,6 +43,24 @@ permissions:
   contents: read
 
 jobs:
+  # Centralise CI_BASE digests once (reusable-workflow `with:` cannot use env).
+  # Update these two lines when commondevops publishes a new ci-lint.
+  bases:
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions:
+      contents: read
+    outputs:
+      debian: ${{ steps.set.outputs.debian }}
+      alpine: ${{ steps.set.outputs.alpine }}
+    steps:
+      - id: set
+        run: |
+          # commondevops ci-lint 4.0.0 — Alpine owns unsuffixed tags (CI-026)
+          echo "debian=ghcr.io/pirlruc/ci-lint@sha256:ed619755412c7f2ed720fa5bd8376e00fef8330a5d5f40cd41657d2618c8d2dd" >> "$GITHUB_OUTPUT"
+          echo "alpine=ghcr.io/pirlruc/ci-lint@sha256:0a4691ba3f505d6f4998016997adac9adcc016676b8daf572cdf2fa446d61872" >> "$GITHUB_OUTPUT"
+
   lint:
     if: >-
       github.actor != 'dependabot[bot]' &&
@@ -59,15 +81,33 @@ jobs:
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
-  # Build/scan/publish need a resolvable CI_BASE (after commondevops publishes ci-lint).
-  # Prefer digest pins for release/schedule; size override matches ~ci-lint + dive/CST.
-  build:
-    needs: lint
+  lint-alpine:
     if: >-
       github.actor != 'dependabot[bot]' &&
-      (github.event_name == 'release' ||
-       github.event_name == 'schedule' ||
-       github.event_name == 'workflow_dispatch')
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/container-lint.yml
+    with:
+      dockerfile: docker/ci-container/Dockerfile.alpine
+      working_directory: .
+      scripts_ref: ${{ github.sha }}
+      runner_image: ""
+      run_infra_lint: false
+      run_secrets_scan: false
+      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
+    secrets:
+      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
+
+  # Build/scan on PR once CI_BASE resolves from GHCR (ci-lint 4.0.0 published).
+  build:
+    needs: [lint, lint-alpine, bases]
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
       contents: read
       packages: read
@@ -75,45 +115,96 @@ jobs:
     with:
       context: docker/ci-container
       dockerfile: docker/ci-container/Dockerfile
-      image_name: ci-container:ci
+      image_name: ci-container:ci-debian
+      artifact_name: container-image-debian
       structure_test_config: docker/ci-container/container-structure-test.yml
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
       image_max_size_mb: "700"
       build_args: |
-        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint@sha256:a3601772133ff0479343c79c5d9573276ac35d5b74f31bf1416d5aeadd6bf0cf' }}
+        CI_BASE=${{ (github.event_name == 'workflow_dispatch' && inputs.ci_base_debian != '') && inputs.ci_base_debian || needs.bases.outputs.debian }}
       image_title: ci-container
       image_description: >-
         Short-lived CI toolchain image for container jobs: ci-lint plus dive and
-        container-structure-test. Non-root 1000:1000, linux/amd64.
+        container-structure-test. Debian 13 variant. Non-root 1000:1000, linux/amd64.
       blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
       dhi_login: false
     secrets:
-      # Prefer github.token after package Actions access is granted (Read for this repo).
-      # Only override with GHCR_READ_TOKEN (classic PAT, read:packages).
+      ghcr_token: ${{ secrets.GHCR_READ_TOKEN }}
+
+  build-alpine:
+    needs: [lint, lint-alpine, bases]
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/container-build.yml
+    with:
+      context: docker/ci-container
+      dockerfile: docker/ci-container/Dockerfile.alpine
+      image_name: ci-container:ci-alpine
+      artifact_name: container-image-alpine
+      structure_test_config: docker/ci-container/container-structure-test.yml
+      scripts_ref: ${{ github.sha }}
+      platforms: linux/amd64
+      # Rootfs ~778 MB measured via du -sxm /; headroom for base churn.
+      image_max_size_mb: "900"
+      build_args: |
+        CI_BASE=${{ (github.event_name == 'workflow_dispatch' && inputs.ci_base_alpine != '') && inputs.ci_base_alpine || needs.bases.outputs.alpine }}
+      image_title: ci-container
+      image_description: >-
+        Short-lived CI toolchain image for container jobs: ci-lint plus dive and
+        container-structure-test. Alpine 3.24 variant. Non-root 1000:1000, linux/amd64.
+      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
+      dhi_login: false
+    secrets:
       ghcr_token: ${{ secrets.GHCR_READ_TOKEN }}
 
   scan:
     needs: build
     if: >-
       github.actor != 'dependabot[bot]' &&
-      (github.event_name == 'release' ||
-       github.event_name == 'schedule' ||
-       github.event_name == 'workflow_dispatch')
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
       contents: read
       security-events: write
     uses: ./.github/workflows/container-scan.yml
     with:
-      image: ci-container:ci
-      image_artifact: container-image
+      image: ci-container:ci-debian
+      image_artifact: container-image-debian
+      results_artifact: container-scan-results-debian
+      sarif_category: trivy-image-debian
+      scripts_ref: ${{ github.sha }}
+      pkg_types: library
+      ignorefile: docker/ci-container/.trivyignore.yaml
+      blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
+
+  scan-alpine:
+    needs: build-alpine
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/container-scan.yml
+    with:
+      image: ci-container:ci-alpine
+      image_artifact: container-image-alpine
+      results_artifact: container-scan-results-alpine
+      sarif_category: trivy-image-alpine
       scripts_ref: ${{ github.sha }}
       pkg_types: library
       ignorefile: docker/ci-container/.trivyignore.yaml
       blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
 
   publish:
-    needs: [build, scan]
+    needs: [build, scan, bases]
     if: >-
       github.actor != 'dependabot[bot]' &&
       (github.event_name == 'release' ||
@@ -131,12 +222,60 @@ jobs:
       dockerhub_image: pirlruc/ci-container
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
+      tag_suffix: -debian
+      tag_alias_unsuffixed: false
       build_args: |
-        CI_BASE=${{ github.event_name == 'workflow_dispatch' && inputs.ci_base || 'ghcr.io/pirlruc/ci-lint@sha256:a3601772133ff0479343c79c5d9573276ac35d5b74f31bf1416d5aeadd6bf0cf' }}
+        CI_BASE=${{ (github.event_name == 'workflow_dispatch' && inputs.ci_base_debian != '') && inputs.ci_base_debian || needs.bases.outputs.debian }}
       image_title: ci-container
       image_description: >-
         Short-lived CI toolchain image for container jobs: ci-lint plus dive and
-        container-structure-test. Non-root 1000:1000, linux/amd64.
+        container-structure-test. Debian 13 variant. Non-root 1000:1000, linux/amd64.
+      image_documentation: https://hub.docker.com/r/pirlruc/ci-container
+      image_url: https://hub.docker.com/r/pirlruc/ci-container
+      image_vendor: pirlruc
+      dockerhub_readme: docs/docker-hub.md
+      dockerhub_short_description: >-
+        CI toolchain: ci-lint plus dive and container-structure-test
+      structure_test_config: docker/ci-container/container-structure-test.yml
+      sign: ${{ github.event.repository.visibility == 'public' }}
+      blocking: true
+      dhi_login: false
+      tag_latest: ${{ github.event_name != 'release' || github.event.release.prerelease == false }}
+      verify_platforms: true
+      verify_command: /bin/true
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      ghcr_token: ${{ secrets.GHCR_READ_TOKEN }}
+
+  publish-alpine:
+    needs: [build-alpine, scan-alpine, bases]
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name == 'release' ||
+       github.event_name == 'schedule' ||
+       (github.event_name == 'workflow_dispatch' && inputs.publish))
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/container-publish.yml
+    with:
+      context: docker/ci-container
+      dockerfile: docker/ci-container/Dockerfile.alpine
+      image_name: ci-container
+      dockerhub_image: pirlruc/ci-container
+      scripts_ref: ${{ github.sha }}
+      platforms: linux/amd64
+      tag_suffix: -alpine
+      tag_alias_unsuffixed: true
+      build_args: |
+        CI_BASE=${{ (github.event_name == 'workflow_dispatch' && inputs.ci_base_alpine != '') && inputs.ci_base_alpine || needs.bases.outputs.alpine }}
+      image_title: ci-container
+      image_description: >-
+        Short-lived CI toolchain image for container jobs: ci-lint plus dive and
+        container-structure-test. Alpine 3.24 variant (default unsuffixed tags).
+        Non-root 1000:1000, linux/amd64.
       image_documentation: https://hub.docker.com/r/pirlruc/ci-container
       image_url: https://hub.docker.com/r/pirlruc/ci-container
       image_vendor: pirlruc
