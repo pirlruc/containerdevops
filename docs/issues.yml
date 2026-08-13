@@ -904,6 +904,116 @@ milestones:
               - DOCKER-PERF-001
               - DOCKER-BUILD-006
 
+      - id: CDO-WF-003
+        status: open
+        title: Threshold and pin drift in scan/seed tooling (grype, scripts_ref, KICS)
+        overview:
+          problem: >-
+            Three least-friction defects persist after CDO-WF-002/CDO-SEC-001.
+            (1) container-scan.yml reads vuln_fail_on_severity for Trivy but hardcodes
+            grype --fail-on high, so an org or repo override of vuln_fail_on_severity
+            never reaches the SBOM gate (same class as a hadolint threshold being
+            ignored). (2) scripts/sync-container-tooling.sh substitutes only
+            @PLACEHOLDER_SHA, leaving three bare scripts_ref: PLACEHOLDER_SHA lines in
+            templates/ci-container.yml; a seeded consumer therefore breaks the
+            required uses:/scripts_ref lockstep and a private cross-repo caller fails
+            the scripts sparse-checkout at startup. (3) The KICS donor image digest
+            (KICS_IMAGE env in container-iac.yml) is not covered by any Dependabot
+            ecosystem, so it never appears in the monthly all-dependencies PR and
+            drifts silently.
+          goal: >-
+            Read the grype fail-on severity from the vendored thresholds like Trivy;
+            make sync-container-tooling replace every PLACEHOLDER_SHA occurrence;
+            register the KICS pin for dependency updates (or record a justified
+            Dependabot limitation). No change to CI-024/CI-025 or SHA-pin contracts.
+        architecture:
+          target: container-scan.yml + sync-container-tooling.sh + dependabot.yml
+          modules:
+            - .github/workflows/container-scan.yml
+            - scripts/sync-container-tooling.sh
+            - templates/ci-container.yml
+            - .github/dependabot.yml
+        acceptance_criteria:
+          - grype fail-on derives from vuln_fail_on_severity (same source as Trivy SEV)
+          - sync-container-tooling output contains no residual PLACEHOLDER_SHA tokens
+          - KICS_IMAGE digest is covered by a Dependabot ecosystem or a documented limitation
+        guardrail_refs:
+          - DOCKER-SEC-001
+          - CI-018
+        tasks:
+          - id: CDO-WF-003-T1
+            status: open
+            title: Read grype fail-on severity from vendored thresholds
+            instructions:
+              files:
+                - .github/workflows/container-scan.yml
+            verification:
+              - "! grep -q -- '--fail-on high' .github/workflows/container-scan.yml"
+              - grep -q 'vuln_fail_on_severity' .github/workflows/container-scan.yml
+            guardrail_refs:
+              - DOCKER-SEC-001
+          - id: CDO-WF-003-T2
+            status: open
+            title: Fix sync-container-tooling sed to replace all PLACEHOLDER_SHA tokens
+            instructions:
+              files:
+                - scripts/sync-container-tooling.sh
+                - templates/ci-container.yml
+            verification:
+              - "! bash -c 'REF=abc123; sed \"s|@PLACEHOLDER_SHA|@${REF}|g\" templates/ci-container.yml | grep -q PLACEHOLDER_SHA'"
+              - grep -q 'scripts_ref' templates/ci-container.yml
+            guardrail_refs:
+              - CI-018
+          - id: CDO-WF-003-T3
+            status: open
+            title: Track the KICS_IMAGE digest with Dependabot or document the limitation
+            instructions:
+              files:
+                - .github/dependabot.yml
+                - .github/workflows/container-iac.yml
+                - docs/ai-agent-handoff.md
+            verification:
+              - grep -q 'kics\|KICS' .github/dependabot.yml || grep -qi 'kics' docs/ai-agent-handoff.md
+            guardrail_refs:
+              - SC-DEP-001
+      - id: CDO-DOC-001
+        status: open
+        title: workflows.md publish-input drift (verify_platforms, verify_command, structure_test_config)
+        overview:
+          problem: >-
+            docs/workflows.md is the documented source of required caller inputs and
+            permissions (referenced from README and handoff). The container-publish.yml
+            input table omits verify_platforms (default true), verify_command, and
+            structure_test_config, so a consumer composing a caller in ~10 minutes does
+            not see that a per-platform smoke verification runs by default or that it
+            can be tuned — a discoverability/friction gap and a CDO-WF-class docs drift.
+          goal: >-
+            Add the missing container-publish.yml input rows (verify_platforms,
+            verify_command, structure_test_config) to docs/workflows.md so the
+            reference matches the shipped workflow contract.
+        architecture:
+          target: docs/workflows.md
+          modules:
+            - docs/workflows.md
+            - .github/workflows/container-publish.yml
+        acceptance_criteria:
+          - docs/workflows.md container-publish table lists verify_platforms, verify_command, structure_test_config
+          - actionlint / docs lint pass
+        guardrail_refs:
+          - DOCKER-DOC-001
+        tasks:
+          - id: CDO-DOC-001-T1
+            status: open
+            title: Add missing container-publish input rows to workflows.md
+            instructions:
+              files:
+                - docs/workflows.md
+            verification:
+              - grep -q 'verify_platforms' docs/workflows.md
+              - grep -q 'verify_command' docs/workflows.md
+              - grep -q 'structure_test_config' docs/workflows.md
+            guardrail_refs:
+              - DOCKER-DOC-001
       - id: CDO-IMG-002
         status: done
         title: Alpine 3.24 variant for ci-container
