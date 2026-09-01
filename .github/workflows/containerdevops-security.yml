@@ -26,7 +26,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@4fd83922506d6d5191d593ff9768516e34211084
+    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@e4e902e62c35aa7e546536a0ba5a7782e377128e
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
@@ -39,7 +39,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: pirlruc/commondevops/.github/workflows/common-supply-chain.yml@4fd83922506d6d5191d593ff9768516e34211084
+    uses: pirlruc/commondevops/.github/workflows/common-supply-chain.yml@e4e902e62c35aa7e546536a0ba5a7782e377128e
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
