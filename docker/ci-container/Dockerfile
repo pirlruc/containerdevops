@@ -26,10 +26,12 @@ LABEL org.opencontainers.image.title="ci-container" \
 
 USER root
 
-# wagoodman/dive:v0.13.1 — digest pinned (CI-026)
+# wagoodman/dive:v0.13.1 — digest pinned (CI-026). Re-confirmed 2026-09-11:
+# no newer tag; latest still this digest (CDO-IMG-003).
 COPY --from=wagoodman/dive:v0.13.1@sha256:f1886e6c32c094fc41a623c1989f5cb3e48aa766da5f0be233f911fc1d85ce10 \
   /usr/local/bin/dive /usr/local/bin/dive
-# ghcr.io/googlecontainertools/container-structure-test:1.22.1 — digest pinned (CI-026)
+# ghcr.io/googlecontainertools/container-structure-test:1.22.1 — digest pinned (CI-026).
+# Re-confirmed 2026-09-11: no 1.23.0; latest still this digest (CDO-IMG-003).
 COPY --from=ghcr.io/googlecontainertools/container-structure-test:1.22.1@sha256:710da3ca8ed29a42423315592f74f02df4e3d2ba19f1df7257bd481ea75ba5aa \
   /ko-app/container-structure-test /usr/local/bin/container-structure-test
 

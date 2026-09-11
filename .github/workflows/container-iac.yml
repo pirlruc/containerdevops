@@ -61,7 +61,9 @@ permissions: {}
 
 env:
   ADVISORY: ${{ inputs.blocking == false }}
-  # checkmarx/kics:v2.1.20-debian linux/amd64 (see home-assistant job-kics.sh)
+  # checkmarx/kics:v2.1.20-debian linux/amd64 (CI-026). Re-confirmed 2026-09-11:
+  # Hub has no v2.1.21 image (GitHub release 2026-07-30). Index digest is
+  # sha256:b29ec62a…; this pin is the linux/amd64 manifest (matches --platform).
   KICS_IMAGE: checkmarx/kics@sha256:aaf7bd6147f45b3717d4868be71d1c5ab2dceefbe9a2f95d3980d1ce8be6655a
 
 jobs:
@@ -165,7 +167,7 @@ jobs:
       - name: Upload KICS SARIF
         if: always() && hashFiles('kics-results/results.sarif') != ''
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@5595ccaf912efad79be6eef63a5619ff05969be3 # v4.37.6
+        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
         with:
           sarif_file: kics-results/results.sarif
           category: kics

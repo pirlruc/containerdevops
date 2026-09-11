@@ -62,7 +62,7 @@ or the run fails at startup before any step runs.
 | `blocking` | `false` |
 
 Nested commondevops pin: keep `uses:` and `scripts_ref` in lockstep (currently
-tag `2.0.2`).
+tag `4.1.0` → `dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3`).
 
 ## container-build.yml
 
@@ -175,7 +175,10 @@ Secrets: `ghcr_token`, `scripts_token` (both optional; forwarded to
 | `dockerhub_image` | `""` (set to `namespace/name` to push Hub) |
 | `platforms` | `linux/amd64,linux/arm64` |
 | `sign` | `false` |
+| `tag_latest` | `false` (needed on **release** refs; `push`/`schedule`/`workflow_dispatch` on `main` enable `latest` without this) |
+| `verify_platforms` | `true` (DOCKER-TEST-002 multi-arch verify after push) |
 | `verify_command` | `/bin/true` (simple argv only — no shell metacharacters) |
+| `structure_test_config` | `""` (optional CST config for per-platform verify; empty skips CST) |
 | `image_title` | `""` (override OCI title; empty keeps metadata-action default) |
 | `image_description` | `""` (override OCI description; consumer-facing, max 512 chars) |
 | `image_documentation` | `""` (override OCI documentation URL) |
@@ -205,6 +208,13 @@ step is skipped so parallel publishes do not race on the Hub description.
 **BuildKit GHA cache:** publish uses `scope=publish-<image_name><tag_suffix>` so
 variant jobs keep separate caches.
 
+**`latest` tag:** the reusable enables `latest` when `tag_latest` is true **or**
+when `github.ref_name == main` on `push`, `schedule`, or `workflow_dispatch`.
+Do not key this on the event's default-branch field — that payload is empty on
+`schedule`, so monthly CI-027 rebuilds would silently skip `latest`. Callers
+pass `tag_latest: true` only on non-prerelease **release** events (tag refs are
+not branch refs). Date tags (`YYYYMMDD`) still require the explicit input.
+
 Secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` when Hub enabled **or** when
 the Dockerfile pulls from `dhi.io`. Optional `ghcr_token` for private GHCR
 pulls. The publish job logs in to `dhi.io` when those Hub secrets are present
@@ -230,6 +240,12 @@ is always advisory so image publish still succeeds.
 
 KICS `exclude-queries` IDs and why each is suppressed (not fixed) are recorded in
 [`docs/kics-exclusions.md`](kics-exclusions.md) (DOCKER-LINT-002).
+
+`KICS_IMAGE` is a digest-pinned workflow env (`checkmarx/kics@sha256:…`), not a
+Dockerfile `FROM` and not a GitHub Action. Dependabot cannot manage it (docker
+ecosystem watches `/docker/ci-container` only). Refresh the pin in
+`container-iac.yml` when Checkmarx publishes a new image tag; see the comment in
+`.github/dependabot.yml` (CDO-WF-004-T3).
 
 ## container-devcontainer.yml
 

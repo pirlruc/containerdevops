@@ -32,7 +32,9 @@ CALLER="${TARGET}/.github/workflows/ci-container.yml"
 if [[ -e "${CALLER}" ]]; then
   echo "Kept existing ${CALLER}"
 else
-  sed "s|@PLACEHOLDER_SHA|@${REF}|g" \
+  # Replace every PLACEHOLDER_SHA token (uses: @PLACEHOLDER_SHA and bare
+  # scripts_ref: PLACEHOLDER_SHA) so seeded callers keep uses:/scripts_ref lockstep.
+  sed "s|PLACEHOLDER_SHA|${REF}|g" \
     "${CDO_ROOT}/templates/ci-container.yml" > "${CALLER}"
   echo "Seeded ${CALLER} (pinned @${REF})"
 fi

@@ -242,7 +242,9 @@ jobs:
       sign: ${{ github.event.repository.visibility == 'public' }}
       blocking: true
       dhi_login: false
-      tag_latest: ${{ github.event_name != 'release' || github.event.release.prerelease == false }}
+      # Release refs are not branch refs; schedule/dispatch on main get latest
+      # from container-publish.yml without passing tag_latest (CDO-WF-003).
+      tag_latest: ${{ github.event_name == 'release' && github.event.release.prerelease == false }}
       verify_platforms: true
       verify_command: /bin/true
     secrets:
@@ -288,7 +290,9 @@ jobs:
       sign: ${{ github.event.repository.visibility == 'public' }}
       blocking: true
       dhi_login: false
-      tag_latest: ${{ github.event_name != 'release' || github.event.release.prerelease == false }}
+      # Release refs are not branch refs; schedule/dispatch on main get latest
+      # from container-publish.yml without passing tag_latest (CDO-WF-003).
+      tag_latest: ${{ github.event_name == 'release' && github.event.release.prerelease == false }}
       verify_platforms: true
       verify_command: /bin/true
     secrets:

@@ -26,11 +26,11 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@4fd83922506d6d5191d593ff9768516e34211084
+    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
-      scripts_ref: 4fd83922506d6d5191d593ff9768516e34211084
+      scripts_ref: dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
@@ -39,11 +39,11 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: pirlruc/commondevops/.github/workflows/common-supply-chain.yml@4fd83922506d6d5191d593ff9768516e34211084
+    uses: pirlruc/commondevops/.github/workflows/common-supply-chain.yml@dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
-      scripts_ref: 4fd83922506d6d5191d593ff9768516e34211084
+      scripts_ref: dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 

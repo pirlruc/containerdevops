@@ -943,7 +943,7 @@ milestones:
               - CI-026
 
       - id: CDO-WF-003
-        status: open
+        status: done
         title: "container-publish latest-tag gate is false on schedule events"
         overview:
           problem: >-
@@ -984,7 +984,7 @@ milestones:
           - DOCKER-DELIV-001
         tasks:
           - id: CDO-WF-003-T1
-            status: open
+            status: done
             title: Make latest-tag enablement schedule-safe and align caller
             instructions:
               files:
@@ -999,7 +999,7 @@ milestones:
               - CI-027
 
       - id: CDO-IMG-003
-        status: open
+        status: done
         title: Refresh ci-container donor digests and prune .trivyignore.yaml
         overview:
           problem: >-
@@ -1043,7 +1043,7 @@ milestones:
           - DOCKER-PERF-001
         tasks:
           - id: CDO-IMG-003-T1
-            status: open
+            status: done
             title: Re-pull donors and prune stale trivyignore entries
             instructions:
               files:
@@ -1059,7 +1059,7 @@ milestones:
               - CI-026
               - DOCKER-SEC-001
           - id: CDO-IMG-003-T2
-            status: open
+            status: done
             title: Align local-parity fallback tool versions with donors
             instructions:
               files:
@@ -1072,7 +1072,7 @@ milestones:
               - CI-008
               - CI-026
           - id: CDO-IMG-003-T3
-            status: open
+            status: done
             title: Refresh KICS digest pin and its inline comment
             instructions:
               files:
@@ -1084,7 +1084,7 @@ milestones:
               - CI-026
 
       - id: CDO-WF-004
-        status: open
+        status: done
         title: Threshold and pin drift in scan/seed tooling (grype, scripts_ref, KICS)
         overview:
           problem: >-
@@ -1121,7 +1121,7 @@ milestones:
           - CI-018
         tasks:
           - id: CDO-WF-004-T1
-            status: open
+            status: done
             title: Read grype fail-on severity from vendored thresholds
             instructions:
               files:
@@ -1132,19 +1132,19 @@ milestones:
             guardrail_refs:
               - DOCKER-SEC-001
           - id: CDO-WF-004-T2
-            status: open
+            status: done
             title: Fix sync-container-tooling sed to replace all PLACEHOLDER_SHA tokens
             instructions:
               files:
                 - scripts/sync-container-tooling.sh
                 - templates/ci-container.yml
             verification:
-              - "! bash -c 'REF=abc123; sed \"s|@PLACEHOLDER_SHA|@${REF}|g\" templates/ci-container.yml | grep -q PLACEHOLDER_SHA'"
+              - "! bash -c 'REF=abc123; sed \"s|PLACEHOLDER_SHA|${REF}|g\" templates/ci-container.yml | grep -q PLACEHOLDER_SHA'"
               - grep -q 'scripts_ref' templates/ci-container.yml
             guardrail_refs:
               - CI-018
           - id: CDO-WF-004-T3
-            status: open
+            status: done
             title: Track the KICS_IMAGE digest with Dependabot or document the limitation
             instructions:
               files:
@@ -1157,7 +1157,7 @@ milestones:
               - SC-DEP-001
 
       - id: CDO-DOC-001
-        status: open
+        status: done
         title: workflows.md publish-input drift (verify_platforms, verify_command, structure_test_config)
         overview:
           problem: >-
@@ -1183,7 +1183,7 @@ milestones:
           - DOCKER-DOC-001
         tasks:
           - id: CDO-DOC-001-T1
-            status: open
+            status: done
             title: Add missing container-publish input rows to workflows.md
             instructions:
               files:
@@ -1194,3 +1194,46 @@ milestones:
               - grep -q 'structure_test_config' docs/workflows.md
             guardrail_refs:
               - DOCKER-DOC-001
+
+      - id: CDO-PIN-001
+        status: open
+        title: Bump docs/guardrails from a non-tag 1.1.0-4 SHA to tag 1.6.0
+        overview:
+          problem: >-
+            docs/guardrails is pinned at 5a7ac83 (describe 1.1.0-4-g5a7ac83), which
+            is not an annotated tag. Guardrails is at 1.6.0. SC-DEP-004 requires a
+            tag or full SHA that consumers can assert; a describe-suffix pin is
+            neither the current org default nor a recorded deviation.
+          goal: >-
+            Re-pin docs/guardrails to annotated tag 1.6.0 and remediate or record
+            deviations for any newly failing gates. Out of scope for the Wave E
+            workflow, scan, and donor-digest review.
+        decision: >-
+          In the context of a 1.1.0-4 gitlink while guardrails is at 1.6.0, facing
+          SC-DEP-004 freshness, we decided a dedicated pin-bump Epic rather than
+          bundling the submodule move with Wave E, to achieve an assertable tag
+          match, accepting that this repo stays on the 5a7ac83 pack until that
+          bump lands.
+        architecture:
+          target: docs/guardrails gitlink
+          modules:
+            - docs/guardrails
+            - docs/ai-agent-handoff.md
+        acceptance_criteria:
+          - git submodule status docs/guardrails resolves to annotated tag 1.6.0
+          - Newly failing gates are remediated or recorded in docs/guardrail-deviations.yml
+        out_of_scope:
+          - Implementing the pin bump in the same change as CDO-WF-003 / CDO-WF-004 / CDO-IMG-003 / CDO-DOC-001
+        guardrail_refs:
+          - SC-DEP-004
+        tasks:
+          - id: CDO-PIN-001-T1
+            status: open
+            title: Re-pin docs/guardrails at guardrails 1.6.0 and remediate gates
+            instructions:
+              files:
+                - docs/guardrails
+            verification:
+              - git -C docs/guardrails describe --tags --exact-match
+            guardrail_refs:
+              - SC-DEP-004
