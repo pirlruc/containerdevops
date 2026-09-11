@@ -43,6 +43,7 @@ or the run fails at startup before any step runs.
 | `container-lint.yml` | `contents: read`; add `security-events: write` when `run_secrets_scan: true` |
 | `container-build.yml` | `contents: read`, `packages: read` |
 | `container-scan.yml` | `contents: read`, `security-events: write`, `packages: read` |
+| `container-published-rescan.yml` | `contents: read`, `security-events: write`, `packages: read` |
 | `container-publish.yml` | `contents: read`, `packages: write`, `id-token: write` |
 | `container-iac.yml` | `contents: read`, `security-events: write` |
 | `container-devcontainer.yml` | `contents: read` |
@@ -135,6 +136,36 @@ Local parity: `bash scripts/check-container-local.sh --no-ignorefile` mirrors
 When a caller runs multiple scans in one workflow (blocking + posture, or distro
 variants), pass distinct `results_artifact` and `sarif_category` values so
 artifact downloads and code-scanning uploads do not collide or overwrite.
+
+## container-published-rescan.yml
+
+Probe a registry tag (GHCR login + `docker pull`) then, when the image is
+present, call `container-scan.yml` on the same `image`. The probe fails fast
+when the tag is not pullable so Trivy/Syft/Grype do not run. After `3.0.1`
+the scan job also logs in to GHCR; the probe's Docker state does not carry
+over.
+
+Same-repo callers use `uses: ./.github/workflows/container-published-rescan.yml`.
+Cross-repo callers pin a SHA **after this workflow is on the default branch**
+and pass matching `scripts_ref`. Do not pin a SHA that only exists on an
+unreleased branch from another private repo.
+
+| Input | Default |
+|-------|---------|
+| `image` | required |
+| `ignorefile` | `""` |
+| `pkg_types` | `os,library` |
+| `blocking` | `false` |
+| `scripts_ref` | `""` (must match `uses:` pin; forwarded to `container-scan.yml`) |
+| `results_artifact` | `container-scan-results` |
+| `sarif_category` | `trivy-image` |
+
+Secrets: `ghcr_token`, `scripts_token` (both optional; forwarded to
+`container-scan.yml`). Caller job must grant `packages: read`.
+
+`containerdevops-security.yml` uses this reusable for
+`ghcr.io/pirlruc/ci-container:latest`. commondevops / cppdevops stay on
+`container-scan.yml@3.0.1` until they can pin a released SHA of this file.
 
 ## container-publish.yml
 

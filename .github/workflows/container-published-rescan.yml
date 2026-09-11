@@ -1,0 +1,126 @@
+name: Container Published Rescan (reusable)
+
+# Probe a registry image (fail-fast skip when not pullable) then scan via
+# container-scan.yml. After 3.0.1 the scan job logs in to GHCR itself; the
+# probe still avoids a full Trivy/Syft/Grype run when the tag is missing.
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: Image ref to probe and scan (typically ghcr.io/…)
+        required: true
+        type: string
+      ignorefile:
+        description: "Trivy ignorefile path; empty falls back; set to 'none' to disable ignores"
+        required: false
+        type: string
+        default: ""
+      pkg_types:
+        description: Trivy --pkg-types (os,library or library)
+        required: false
+        type: string
+        default: "os,library"
+      blocking:
+        required: false
+        type: boolean
+        default: false
+      scripts_ref:
+        description: "Commit/tag/branch of this repo to checkout for scripts (must match uses: pin)"
+        required: false
+        type: string
+        default: ""
+      results_artifact:
+        description: Upload artifact name for scan-results/ (unique when multiple scans share a run)
+        required: false
+        type: string
+        default: container-scan-results
+      sarif_category:
+        description: Code scanning SARIF category (unique when multiple scans share a run)
+        required: false
+        type: string
+        default: trivy-image
+    secrets:
+      ghcr_token:
+        description: Optional PAT with read:packages when pulling a private GHCR image; defaults to github.token
+        required: false
+      scripts_token:
+        description: Token to read this repo scripts when called cross-repo; defaults to github.token
+        required: false
+  workflow_dispatch:
+    inputs:
+      image:
+        type: string
+        required: true
+      ignorefile:
+        type: string
+        default: ""
+      pkg_types:
+        type: string
+        default: "os,library"
+      blocking:
+        type: boolean
+        default: false
+      scripts_ref:
+        type: string
+        default: ""
+      results_artifact:
+        type: string
+        default: container-scan-results
+      sarif_category:
+        type: string
+        default: trivy-image
+
+# CI-025
+permissions: {}
+
+jobs:
+  probe:
+    # CI-024
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      present: ${{ steps.probe.outputs.present }}
+    steps:
+      - name: Log in to GHCR
+        if: startsWith(inputs.image, 'ghcr.io/')
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.ghcr_token || github.token }}
+
+      - id: probe
+        env:
+          IMAGE: ${{ inputs.image }}
+        run: |
+          if docker pull "${IMAGE}"; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "${IMAGE} not pullable yet; rescan will skip"
+          fi
+
+  scan:
+    needs: probe
+    if: github.actor != 'dependabot[bot]' && needs.probe.outputs.present == 'true'
+    permissions:
+      contents: read
+      security-events: write
+      packages: read
+    uses: ./.github/workflows/container-scan.yml
+    with:
+      image: ${{ inputs.image }}
+      ignorefile: ${{ inputs.ignorefile }}
+      pkg_types: ${{ inputs.pkg_types }}
+      blocking: ${{ inputs.blocking }}
+      scripts_ref: ${{ inputs.scripts_ref }}
+      results_artifact: ${{ inputs.results_artifact }}
+      sarif_category: ${{ inputs.sarif_category }}
+    secrets:
+      scripts_token: ${{ secrets.scripts_token }}
+      ghcr_token: ${{ secrets.ghcr_token }}

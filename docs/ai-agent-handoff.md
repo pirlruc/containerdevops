@@ -6,15 +6,16 @@
 |-------|-------|
 | **Folder** | `common/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `main` |
+| **Branch** | `feature-published-rescan` (from `origin/main` / tag `3.0.1`) |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
 ## Scope
 
 Owns `.github/workflows/container-{lint,build,scan,publish,iac,devcontainer}.yml`,
-`ci-container-image.yml`, self-CI / security callers, `scripts/`, `templates/`, and
-`docker/ci-container/`. Consumers pin `pirlruc/containerdevops@<sha|tag>`.
+`container-published-rescan.yml`, `ci-container-image.yml`, self-CI / security callers,
+`scripts/`, `templates/`, and `docker/ci-container/`. Consumers pin
+`pirlruc/containerdevops@<sha|tag>`.
 
 Shared infra/secrets/supply-chain forward to
 [pirlruc/commondevops](https://github.com/pirlruc/commondevops).
@@ -30,7 +31,7 @@ Shared infra/secrets/supply-chain forward to
 | commondevops `uses:` | tag `2.0.2` → `4fd83922506d…` |
 | `CI_BASE` (ci-lint debian) | `4.0.0-debian` digest `sha256:ed619755…` |
 | `CI_BASE` (ci-lint alpine) | `4.0.0` digest `sha256:0a4691ba…` |
-| Release (reusables callers pin) | `3.0.1` → `9a46e84…` (GHCR-login scan patch) |
+| Release (reusables callers pin) | `3.0.1` → `9a46e84…` (GHCR-login scan patch); this branch adds `container-published-rescan.yml` (unreleased until merge) |
 | Release (ci-container image) | `3.0.0` (Alpine owns unsuffixed) |
 
 ## Delivery status
@@ -112,7 +113,8 @@ python3 .github/scaffold/scripts/issues-sync.py \
   A probe job on another runner does not authenticate this job.
 - Same-repo reusable calls stay on `uses: ./.github/workflows/…` until actionlint
   ships `$/` support (rhysd/actionlint#732). zizmor `self-repository` is ignored
-  in `.github/config/zizmor.yml` for the three local callers.
+  in `.github/config/zizmor.yml` for local callers (`ci-container-image`,
+  `containerdevops-ci`, `containerdevops-security`, `container-published-rescan`).
 - Dependabot PRs skip CI (CI-024) — replace with a human branch so checks run.
 - **Dependabot registries:** personal private repos need `registries:` wired to
   Dependabot secrets (`DEPENDABOT_GITHUB_TOKEN`, `DOCKERHUB_*`). Without them,
@@ -123,26 +125,26 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Size deviation:** debian `700` / alpine `900` MB gates in
   `docs/guardrail-deviations.yml` (DOCKER-PERF-001 / CDO-IMG-001, CDO-IMG-002).
 - **Reusable pin vs image tag:** callers of `container-{lint,build,scan,publish}.yml`
-  stay on `3.0.1` (`9a46e84…`) for the GHCR-login scan patch.
-  Release `3.0.0` only changed `ci-container-image.yml` + Dockerfiles.
+  stay on `3.0.1` (`9a46e84…`) for the GHCR-login scan patch. Release `3.0.0` only
+  changed `ci-container-image.yml` + Dockerfiles. `container-published-rescan.yml`
+  is unreleased until this branch merges — same-repo `uses: ./` only until then.
 
 ## Suggested next work
 
-1. Implement CDO-WF-003 / CDO-IMG-003 / CDO-WF-004 / CDO-DOC-001 (accepted
-   copilot findings, not yet synced).
-2. Land GHCR-login scan patch (`3.0.1`); bump commondevops/cppdevops pins.
+1. After this branch merges, cut a reusable tag so commondevops/cppdevops can call
+   `container-published-rescan.yml` (they stay on `container-scan.yml@3.0.1` until then).
+2. Implement CDO-WF-003 / CDO-IMG-003 / CDO-WF-004 / CDO-DOC-001 (filed in `docs/issues.yml`).
 3. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
-4. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
-5. Refresh donor digests / drop ignorefile entries before 2026-11-11.
+4. Refresh donor digests / drop ignorefile entries before 2026-11-11.
 
 ## Recent history
 
-- 2026-09-11: accepted copilot ai-reviewer findings filed on
-  `feature-ai-reviewer-issues`. CDO-WF-003 collision resolved: PR #83 keeps
-  CDO-WF-003 (schedule-`latest`); PR #81's CDO-WF-003 is CDO-WF-004. CDO-IMG-003
-  and CDO-DOC-001 appended. Continuous improvement milestone added to
-  `docs/issues-sync-targets.yml`. Not committed; do not run live `issues-sync.py`
-  until approved.
+- 2026-09-11: Wave 4 — add `container-published-rescan.yml` (probe + nested
+  `container-scan.yml`) on `feature-published-rescan` from `3.0.1`. Same-repo
+  `containerdevops-security.yml` calls `./`. Cross-repo callers wait for a
+  released SHA. Do not rewind this branch behind tag `3.0.1`.
+- 2026-09-11: accepted copilot ai-reviewer findings filed (PR #85). CDO-WF-003
+  collision resolved: PR #83 keeps CDO-WF-003; PR #81 is CDO-WF-004.
 - 2026-09-11: GHCR login+pull in `container-scan.yml` for registry rescans;
   `packages: read` on scan callers; zizmor `self-repository` ignored until
   actionlint supports `uses: $/…`. Donor ignorefile extended for 2026-09 Go
