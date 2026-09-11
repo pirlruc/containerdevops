@@ -941,3 +941,144 @@ milestones:
               - grep -q tag_suffix .github/workflows/ci-container-image.yml
             guardrail_refs:
               - CI-026
+
+      - id: CDO-WF-003
+        status: open
+        title: "container-publish latest-tag gate is false on schedule events"
+        overview:
+          problem: >-
+            container-publish.yml enables the `latest` tag when
+            `inputs.tag_latest || github.ref == format('refs/heads/{0}',
+            github.event.repository.default_branch)`. `github.event.repository`
+            is populated for push/pull_request/release but is absent on
+            schedule events (an undocumented expression-context gap), so the
+            comparison evaluates against `refs/heads/` and monthly
+            DOCKER-BUILD-006 rebuilds never publish `latest` unless the caller
+            explicitly passes `tag_latest: true`. The in-repo
+            ci-container-image.yml caller triggers publish on schedule with
+            `tag_latest` wired only to release events, so scheduled ci-container
+            rebuilds silently skip the `latest` tag. Tag `type=sha` is
+            unaffected.
+          goal: >-
+            Publish `latest` on default-branch events using only contexts that
+            exist on every event (`github.ref_name`/`github.ref` against
+            `github.event_name`, never `github.event.repository` in reusable
+            workflows); record the schedule-context gap as a comment so the
+            next reviewer does not reintroduce it; align the in-repo caller's
+            `tag_latest` wiring.
+        architecture:
+          target: .github/workflows/container-publish.yml
+          modules:
+            - .github/workflows/container-publish.yml
+            - .github/workflows/ci-container-image.yml
+            - docs/workflows.md
+        acceptance_criteria:
+          - No `github.event.repository` reference remains in the reusable
+            workflow tag logic (push/release/schedule-safe expression)
+          - >-
+            A workflow_dispatch/schedule run on main emits the `latest` tag
+            without the caller passing `tag_latest: true`
+          - ci-container-image.yml tag_latest wiring matches the new contract
+        guardrail_refs:
+          - CI-027
+          - DOCKER-DELIV-001
+        tasks:
+          - id: CDO-WF-003-T1
+            status: open
+            title: Make latest-tag enablement schedule-safe and align caller
+            instructions:
+              files:
+                - .github/workflows/container-publish.yml
+                - .github/workflows/ci-container-image.yml
+                - docs/workflows.md
+            verification:
+              - "! grep -q 'github.event.repository' .github/workflows/container-publish.yml"
+              - actionlint .github/workflows/container-publish.yml .github/workflows/ci-container-image.yml
+              - grep -n 'tag_latest' docs/workflows.md
+            guardrail_refs:
+              - CI-027
+
+      - id: CDO-IMG-003
+        status: open
+        title: Refresh ci-container donor digests and prune .trivyignore.yaml
+        overview:
+          problem: >-
+            docker/ci-container/.trivyignore.yaml is stamped "Review:
+            2026-11-11 (CDO-015)" — roughly 60 days out — and the donor
+            binaries it suppresses (wagoodman/dive:v0.13.1 and
+            container-structure-test 1.22.1, both COPY --from digest-pinned
+            CI-026) have not been re-checked since CDO-015. The local-parity
+            fallback images in check-container-local.sh (hadolint 2.12.0-alpine,
+            trivy 0.73.0, dive v0.13.1, structure-test 1.22.1) are
+            version-pinned tags only, while the Dockerfile donors are
+            digest-pinned — the two paths drift silently. Related: KICS is
+            digest-pinned in a container-iac.yml env var with an inline
+            comment, outside Dependabot's docker scope. Prefer local-first
+            validation (docker build, Trivy library+ignorefile and raw
+            os,library, `du -sxm /` size) before any publish.
+          goal: >-
+            Re-pull donors: bump the dive/structure-test COPY --from digests
+            when upstream ships rebuilt images and drop matching
+            .trivyignore.yaml entries ahead of the 2026-11-11 review date;
+            align check-container-local.sh fallback versions (and digest-pin
+            them where a stable digest exists) with the Dockerfile donors.
+        architecture:
+          target: docker/ci-container + scripts + container-iac.yml
+          modules:
+            - docker/ci-container/Dockerfile
+            - docker/ci-container/Dockerfile.alpine
+            - docker/ci-container/.trivyignore.yaml
+            - scripts/check-container-local.sh
+            - .github/workflows/container-iac.yml
+        acceptance_criteria:
+          - Donor digests bumped or explicitly re-confirmed; stale ignorefile
+            entries dropped
+          - Local-parity fallback tool versions match the Dockerfile donors;
+            digest-pinned where stable digests exist
+          - ci-container builds locally and passes Trivy library+ignorefile
+            and the `du -sxm /` size gates (700/900) before any publish
+        guardrail_refs:
+          - CI-026
+          - DOCKER-SEC-001
+          - DOCKER-PERF-001
+        tasks:
+          - id: CDO-IMG-003-T1
+            status: open
+            title: Re-pull donors and prune stale trivyignore entries
+            instructions:
+              files:
+                - docker/ci-container/Dockerfile
+                - docker/ci-container/Dockerfile.alpine
+                - docker/ci-container/.trivyignore.yaml
+            verification:
+              - "docker build --build-arg CI_BASE=<pinned ci-lint> -f docker/ci-container/Dockerfile.alpine docker/ci-container"
+              - "trivy image --scanners vuln --pkg-types os,library --ignorefile docker/ci-container/.trivyignore.yaml <local image> exits 0"
+              - grep -c 'id:' docker/ci-container/.trivyignore.yaml is lower than at authoring or entries carry updated statements
+              - bash scripts/check-image-size.sh <local image> 900
+            guardrail_refs:
+              - CI-026
+              - DOCKER-SEC-001
+          - id: CDO-IMG-003-T2
+            status: open
+            title: Align local-parity fallback tool versions with donors
+            instructions:
+              files:
+                - scripts/check-container-local.sh
+            verification:
+              - grep -n 'dive' scripts/check-container-local.sh matches the Dockerfile donor tag
+              - grep -n 'container-structure-test' scripts/check-container-local.sh matches the Dockerfile donor tag
+              - shellcheck scripts/check-container-local.sh
+            guardrail_refs:
+              - CI-008
+              - CI-026
+          - id: CDO-IMG-003-T3
+            status: open
+            title: Refresh KICS digest pin and its inline comment
+            instructions:
+              files:
+                - .github/workflows/container-iac.yml
+            verification:
+              - grep -n 'KICS_IMAGE' .github/workflows/container-iac.yml shows a current checkmarx/kics digest
+              - actionlint .github/workflows/container-iac.yml
+            guardrail_refs:
+              - CI-026

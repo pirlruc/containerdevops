@@ -115,15 +115,22 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Reusable pin vs image tag:** callers of `container-{lint,build,scan,publish}.yml`
   stay on `2.4.0` (`ea908fd0…`). Release `3.0.0` only changed `ci-container-image.yml`
   + Dockerfiles — no reusable workflow delta.
+- **Schedule `latest` gap:** `container-publish.yml` gates `latest` on
+  `github.event.repository.default_branch`, which is absent on schedule events —
+  monthly rebuilds skip `latest` (CDO-WF-003).
 
 ## Suggested next work
 
 1. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
 2. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
-3. Refresh donor digests / drop ignorefile entries before 2026-11-11.
+3. Refresh donor digests / drop ignorefile entries before 2026-11-11 (CDO-IMG-003).
+4. Fix schedule-safe `latest` tagging in container-publish (CDO-WF-003).
 
 ## Recent history
 
+- 2026-09-11: ai-reviewer run — appended CDO-WF-003 (schedule-safe `latest` tag
+  gap in container-publish) and CDO-IMG-003 (donor digest refresh / trivyignore
+  pruning ahead of the 2026-11-11 review) to `docs/issues.yml`; sync pending.
 - 2026-08-12: CDO-IMG-002 / release `3.0.0` — Alpine `ci-container` owns unsuffixed
   tags; `bases` job for CI_BASE digests; PR build/scan; alpine size gate 900.
   Publish: alpine `sha256:9374acb5…`, debian `sha256:2345c107…`.
@@ -142,4 +149,4 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-08-12*
+*Last updated: 2026-09-11*
