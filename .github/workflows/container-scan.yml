@@ -48,6 +48,9 @@ on:
       scripts_token:
         description: Token to read this repo scripts when called cross-repo; defaults to github.token
         required: false
+      ghcr_token:
+        description: Optional PAT with read:packages when pulling a private GHCR image; defaults to github.token
+        required: false
   workflow_dispatch:
     inputs:
       image:
@@ -90,6 +93,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      packages: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -117,6 +121,22 @@ jobs:
       - name: Load image tarball
         if: inputs.image_artifact != ''
         run: docker load -i image-artifact/image.tar
+
+      # Probe jobs login+pull on a different runner; this job has no shared Docker state.
+      # Trivy then hits GHCR unauthenticated (UNAUTHORIZED) unless we login here.
+      - name: Log in to GHCR
+        if: startsWith(inputs.image, 'ghcr.io/') && inputs.image_artifact == ''
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.ghcr_token || github.token }}
+
+      - name: Pull GHCR image
+        if: startsWith(inputs.image, 'ghcr.io/') && inputs.image_artifact == ''
+        env:
+          IMAGE: ${{ inputs.image }}
+        run: docker pull "${IMAGE}"
 
       - name: Install tooling
         env:

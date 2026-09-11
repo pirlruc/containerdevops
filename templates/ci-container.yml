@@ -47,6 +47,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      packages: read
     uses: pirlruc/containerdevops/.github/workflows/container-scan.yml@PLACEHOLDER_SHA
     with:
       image: containerdevops-ci:local

@@ -24,7 +24,15 @@ vulnerabilities:
   - id: CVE-2026-39821
     paths:
       - "**/dive"
-    statement: Go/deps embedded in wagoodman/dive v0.13.1 donor; remaining until upstream rebuild.
+      - "**/actionlint"
+    statement: Go/deps embedded in wagoodman/dive v0.13.1 and rhysd/actionlint donors; remaining until upstream rebuild.
+
+  - id: CVE-2026-46600
+    paths:
+      - "**/dive"
+      - "**/actionlint"
+      - "**/container-structure-test"
+    statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
 
   - id: CVE-2024-25621
     paths:

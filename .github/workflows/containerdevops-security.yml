@@ -88,6 +88,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      packages: read
     uses: ./.github/workflows/container-scan.yml
     with:
       image: ghcr.io/pirlruc/ci-container:latest

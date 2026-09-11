@@ -103,6 +103,12 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - Private consumers pass `scripts_token` + matching `scripts_ref`; `checkout_token` only
   for nested commondevops calls (lint secrets/infra).
 - Scan stays on the host runner (`docker load`). Build/publish must not use job `container:`.
+- **GHCR rescan:** `container-scan.yml` logs in and `docker pull`s when `image` is a
+  `ghcr.io/` ref and no artifact is loaded. Callers must grant `packages: read`.
+  A probe job on another runner does not authenticate this job.
+- Same-repo reusable calls stay on `uses: ./.github/workflows/…` until actionlint
+  ships `$/` support (rhysd/actionlint#732). zizmor `self-repository` is ignored
+  in `.github/config/zizmor.yml` for the three local callers.
 - Dependabot PRs skip CI (CI-024) — replace with a human branch so checks run.
 - **Dependabot registries:** personal private repos need `registries:` wired to
   Dependabot secrets (`DEPENDABOT_GITHUB_TOKEN`, `DOCKERHUB_*`). Without them,
@@ -113,17 +119,21 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Size deviation:** debian `700` / alpine `900` MB gates in
   `docs/guardrail-deviations.yml` (DOCKER-PERF-001 / CDO-IMG-001, CDO-IMG-002).
 - **Reusable pin vs image tag:** callers of `container-{lint,build,scan,publish}.yml`
-  stay on `2.4.0` (`ea908fd0…`). Release `3.0.0` only changed `ci-container-image.yml`
-  + Dockerfiles — no reusable workflow delta.
+  stay on `2.4.0` (`ea908fd0…`) until the GHCR-login scan patch lands (planned `3.0.1`).
+  Release `3.0.0` only changed `ci-container-image.yml` + Dockerfiles.
 
 ## Suggested next work
 
-1. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
-2. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
-3. Refresh donor digests / drop ignorefile entries before 2026-11-11.
+1. Land GHCR-login scan patch (`3.0.1`); bump commondevops/cppdevops pins.
+2. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
+3. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
+4. Refresh donor digests / drop ignorefile entries before 2026-11-11.
 
 ## Recent history
 
+- 2026-09-11: GHCR login+pull in `container-scan.yml` for registry rescans;
+  `packages: read` on scan callers; zizmor `self-repository` ignored until
+  actionlint supports `uses: $/…`.
 - 2026-08-12: CDO-IMG-002 / release `3.0.0` — Alpine `ci-container` owns unsuffixed
   tags; `bases` job for CI_BASE digests; PR build/scan; alpine size gate 900.
   Publish: alpine `sha256:9374acb5…`, debian `sha256:2345c107…`.
@@ -142,4 +152,4 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-08-12*
+*Last updated: 2026-09-11*

@@ -172,6 +172,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      packages: read
     uses: ./.github/workflows/container-scan.yml
     with:
       image: ci-container:ci-debian
@@ -192,6 +193,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      packages: read
     uses: ./.github/workflows/container-scan.yml
     with:
       image: ci-container:ci-alpine
