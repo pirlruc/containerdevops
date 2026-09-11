@@ -15,6 +15,7 @@ Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails
 | `container-lint.yml` | hadolint, shellcheck; optional nested commondevops infra/secrets |
 | `container-build.yml` | buildx (no push), structure-test, dive, size gate (`du -sxm /`) |
 | `container-scan.yml` | Trivy + Syft SBOM + Grype on the **built image** |
+| `container-published-rescan.yml` | GHCR probe + `container-scan.yml` for a published registry tag |
 | `container-publish.yml` | Multi-arch push to GHCR and Docker Hub; optional cosign + provenance |
 | `container-iac.yml` | KICS + `docker compose config` |
 | `container-devcontainer.yml` | Devcontainer Dockerfile lint (structure-test stub) |

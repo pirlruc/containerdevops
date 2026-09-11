@@ -11,3 +11,4 @@ rules:
       - ci-container-image.yml
       - containerdevops-ci.yml
       - containerdevops-security.yml
+      - container-published-rescan.yml
