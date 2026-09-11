@@ -23,15 +23,18 @@ vulnerabilities:
 
   - id: CVE-2026-39821
     paths:
-      - "**/dive"
       - "**/actionlint"
+      - "**/container-structure-test"
+      - "**/dive"
+      - "**/gitleaks"
     statement: Go/deps embedded in wagoodman/dive v0.13.1 and rhysd/actionlint donors; remaining until upstream rebuild.
 
   - id: CVE-2026-46600
     paths:
-      - "**/dive"
       - "**/actionlint"
       - "**/container-structure-test"
+      - "**/dive"
+      - "**/gitleaks"
     statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
 
   - id: CVE-2024-25621
@@ -250,3 +253,57 @@ vulnerabilities:
     paths:
       - "**/grant"
     statement: Embedded deps in grant donor binary.
+
+  - id: CVE-2026-33818
+    paths:
+      - "**/actionlint"
+      - "**/container-structure-test"
+      - "**/dive"
+      - "**/gitleaks"
+    statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
+
+  - id: CVE-2026-56853
+    paths:
+      - "**/actionlint"
+      - "**/container-structure-test"
+      - "**/dive"
+      - "**/gitleaks"
+    statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
+
+  - id: CVE-2026-56854
+    paths:
+      - "**/container-structure-test"
+      - "**/gitleaks"
+    statement: golang.org/x/crypto embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
+
+  - id: CVE-2026-56858
+    paths:
+      - "**/actionlint"
+      - "**/container-structure-test"
+      - "**/dive"
+      - "**/gitleaks"
+    statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
+
+  - id: CVE-2026-56859
+    paths:
+      - "**/actionlint"
+      - "**/container-structure-test"
+      - "**/dive"
+      - "**/gitleaks"
+    statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
+
+  - id: CVE-2026-56860
+    paths:
+      - "**/actionlint"
+      - "**/container-structure-test"
+      - "**/dive"
+      - "**/gitleaks"
+    statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
+
+  - id: CVE-2026-56862
+    paths:
+      - "**/actionlint"
+      - "**/container-structure-test"
+      - "**/dive"
+      - "**/gitleaks"
+    statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.

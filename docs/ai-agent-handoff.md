@@ -133,7 +133,8 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 - 2026-09-11: GHCR login+pull in `container-scan.yml` for registry rescans;
   `packages: read` on scan callers; zizmor `self-repository` ignored until
-  actionlint supports `uses: $/…`.
+  actionlint supports `uses: $/…`. Donor ignorefile extended for 2026-09 Go
+  stdlib / x/crypto CVEs (actionlint, dive, CST, gitleaks).
 - 2026-08-12: CDO-IMG-002 / release `3.0.0` — Alpine `ci-container` owns unsuffixed
   tags; `bases` job for CI_BASE digests; PR build/scan; alpine size gate 900.
   Publish: alpine `sha256:9374acb5…`, debian `sha256:2345c107…`.
