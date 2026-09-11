@@ -30,7 +30,7 @@ Shared infra/secrets/supply-chain forward to
 | commondevops `uses:` | tag `2.0.2` → `4fd83922506d…` |
 | `CI_BASE` (ci-lint debian) | `4.0.0-debian` digest `sha256:ed619755…` |
 | `CI_BASE` (ci-lint alpine) | `4.0.0` digest `sha256:0a4691ba…` |
-| Release (reusables callers pin) | `2.4.0` → `ea908fd0…` (unchanged by `3.0.0`) |
+| Release (reusables callers pin) | `3.0.1` → `9a46e84…` (GHCR-login scan patch) |
 | Release (ci-container image) | `3.0.0` (Alpine owns unsuffixed) |
 
 ## Delivery status
@@ -45,6 +45,10 @@ Shared infra/secrets/supply-chain forward to
 | CDO-WF-002 — variant tagging + multi-scan uniqueness | Done (`2.3.0`) |
 | CDO-IMG-001 — variant hardening / local parity | Done (`2.4.0`) |
 | CDO-IMG-002 — Alpine ci-container | Done (`3.0.0`) |
+| CDO-WF-003 — schedule-safe `latest` tag | Open (filed; id from PR #83) |
+| CDO-IMG-003 — donor digest refresh | Open (filed) |
+| CDO-WF-004 — grype/scripts_ref/KICS drift | Open (filed; was CDO-WF-003 in PR #81) |
+| CDO-DOC-001 — workflows.md publish inputs | Open (filed) |
 
 ## Tool versions in scripts/install-container-tools.sh
 
@@ -119,18 +123,26 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Size deviation:** debian `700` / alpine `900` MB gates in
   `docs/guardrail-deviations.yml` (DOCKER-PERF-001 / CDO-IMG-001, CDO-IMG-002).
 - **Reusable pin vs image tag:** callers of `container-{lint,build,scan,publish}.yml`
-  stay on `2.4.0` (`ea908fd0…`) until the GHCR-login scan patch lands (planned `3.0.1`).
+  stay on `3.0.1` (`9a46e84…`) for the GHCR-login scan patch.
   Release `3.0.0` only changed `ci-container-image.yml` + Dockerfiles.
 
 ## Suggested next work
 
-1. Land GHCR-login scan patch (`3.0.1`); bump commondevops/cppdevops pins.
-2. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
-3. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
-4. Refresh donor digests / drop ignorefile entries before 2026-11-11.
+1. Implement CDO-WF-003 / CDO-IMG-003 / CDO-WF-004 / CDO-DOC-001 (accepted
+   copilot findings, not yet synced).
+2. Land GHCR-login scan patch (`3.0.1`); bump commondevops/cppdevops pins.
+3. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
+4. Paste Hub Overviews (or widen `DOCKERHUB_TOKEN` to admin) — sync was Forbidden.
+5. Refresh donor digests / drop ignorefile entries before 2026-11-11.
 
 ## Recent history
 
+- 2026-09-11: accepted copilot ai-reviewer findings filed on
+  `feature-ai-reviewer-issues`. CDO-WF-003 collision resolved: PR #83 keeps
+  CDO-WF-003 (schedule-`latest`); PR #81's CDO-WF-003 is CDO-WF-004. CDO-IMG-003
+  and CDO-DOC-001 appended. Continuous improvement milestone added to
+  `docs/issues-sync-targets.yml`. Not committed; do not run live `issues-sync.py`
+  until approved.
 - 2026-09-11: GHCR login+pull in `container-scan.yml` for registry rescans;
   `packages: read` on scan callers; zizmor `self-repository` ignored until
   actionlint supports `uses: $/…`. Donor ignorefile extended for 2026-09 Go
