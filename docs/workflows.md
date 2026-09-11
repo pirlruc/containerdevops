@@ -42,7 +42,7 @@ or the run fails at startup before any step runs.
 |----------|----------------------|
 | `container-lint.yml` | `contents: read`; add `security-events: write` when `run_secrets_scan: true` |
 | `container-build.yml` | `contents: read`, `packages: read` |
-| `container-scan.yml` | `contents: read`, `security-events: write` |
+| `container-scan.yml` | `contents: read`, `security-events: write`, `packages: read` |
 | `container-publish.yml` | `contents: read`, `packages: write`, `id-token: write` |
 | `container-iac.yml` | `contents: read`, `security-events: write` |
 | `container-devcontainer.yml` | `contents: read` |
@@ -114,6 +114,12 @@ Tune `image_max_size_mb` against this measurement.
 | `scripts_ref` | `""` |
 | `results_artifact` | `container-scan-results` |
 | `sarif_category` | `trivy-image` |
+
+Callers scanning a **registry** ref (`ghcr.io/...`) must grant `packages: read`.
+The scan job logs in to GHCR and `docker pull`s on the same runner — a preceding
+probe job's login does not carry over. Optional secret `ghcr_token` (PAT with
+`read:packages`) when `github.token` cannot pull; otherwise `github.token`.
+Artifact-loaded local tags skip login.
 
 `ignorefile` contract:
 
