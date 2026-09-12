@@ -2,13 +2,13 @@
 # Local CI parity for container gates (CI-008).
 # Host PATH tools preferred; missing tools run via digest-pinned images.
 #
-# Resolution table (host → Docker fallback):
+# Resolution table (host → Docker fallback, digest-pinned CI-026):
 # | Tool                      | Host preferred     | Docker fallback                         |
 # |---------------------------|--------------------|-----------------------------------------|
-# | hadolint                  | hadolint           | hadolint/hadolint:2.12.0-alpine         |
-# | trivy                     | trivy              | aquasec/trivy:0.73.0                    |
-# | dive                      | dive               | wagoodman/dive:v0.13.1                  |
-# | container-structure-test  | container-structure-test | ghcr.io/googlecontainertools/...:1.22.1 |
+# | hadolint                  | hadolint           | hadolint/hadolint:2.12.0-alpine@sha256:3c206a45… |
+# | trivy                     | trivy              | aquasec/trivy:0.73.0@sha256:7cced7ca…   |
+# | dive                      | dive               | wagoodman/dive:v0.13.1@sha256:f1886e6c… (matches Dockerfile) |
+# | container-structure-test  | container-structure-test | ghcr.io/googlecontainertools/...:1.22.1@sha256:710da3ca… (matches Dockerfile) |
 #
 # Usage:
 #   bash scripts/check-container-local.sh --dockerfile Dockerfile --context .
@@ -77,7 +77,7 @@ echo "==> hadolint (${HADOLINT_LEVEL})"
 if command -v hadolint >/dev/null 2>&1; then
   hadolint --failure-threshold "${HADOLINT_LEVEL}" "${DOCKERFILE}"
 else
-  docker run --rm -i hadolint/hadolint:2.12.0-alpine \
+  docker run --rm -i hadolint/hadolint:2.12.0-alpine@sha256:3c206a451cec6d486367e758645269fd7d696c5ccb6ff59d8b03b0e45268a199 \
     hadolint --failure-threshold "${HADOLINT_LEVEL}" - < "${DOCKERFILE}"
 fi
 
@@ -103,7 +103,7 @@ if [[ -n "${STRUCTURE_TEST}" ]]; then
   else
     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
       -v "${PWD}:/work:ro" -w /work \
-      ghcr.io/googlecontainertools/container-structure-test:1.22.1 \
+      ghcr.io/googlecontainertools/container-structure-test:1.22.1@sha256:710da3ca8ed29a42423315592f74f02df4e3d2ba19f1df7257bd481ea75ba5aa \
       test --image "${IMAGE}" --config "${STRUCTURE_TEST}"
   fi
 fi
@@ -122,7 +122,7 @@ if command -v dive >/dev/null 2>&1; then
 else
   docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
     -v "${DIVE_DIR}:/out" \
-    wagoodman/dive:v0.13.1 \
+    wagoodman/dive:v0.13.1@sha256:f1886e6c32c094fc41a623c1989f5cb3e48aa766da5f0be233f911fc1d85ce10 \
     --ci --json /out/dive.json "${IMAGE}"
   dive_rc=$?
 fi
@@ -165,7 +165,7 @@ if (( SKIP_SCAN == 0 )); then
     fi
     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
       -v "${PWD}:/work:ro" -w /work \
-      aquasec/trivy:0.73.0 image --severity HIGH,CRITICAL --pkg-types library --exit-code 1 \
+      aquasec/trivy:0.73.0@sha256:7cced7cae583819fc7806d4cbc0dbbc7cad18b99f7d3e235192e6da8c091045c image --severity HIGH,CRITICAL --pkg-types library --exit-code 1 \
       "${DIGNORE[@]}" "${IMAGE}"
   fi
   trc=$?

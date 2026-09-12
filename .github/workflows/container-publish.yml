@@ -49,7 +49,10 @@ on:
         type: string
         default: ""
       tag_latest:
-        description: Also push the raw latest tag (needed on release refs where is_default_branch is false)
+        description: >-
+          Also push the raw latest tag. Needed on release refs (tag refs are not
+          branch refs). push/schedule/workflow_dispatch on main enable latest
+          without this input.
         required: false
         type: boolean
         default: false
@@ -174,6 +177,11 @@ permissions: {}
 
 env:
   ADVISORY: ${{ inputs.blocking == false }}
+  # Enable `latest` on main for push/schedule/workflow_dispatch without an
+  # explicit tag_latest. Release tag refs are not branch refs — callers pass
+  # tag_latest there. Do not read default_branch from the event payload: that
+  # field is empty on schedule, which would skip latest on monthly CI-027 rebuilds.
+  PUBLISH_LATEST: ${{ inputs.tag_latest || (github.ref_name == 'main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')) }}
 
 jobs:
   publish:
@@ -208,7 +216,7 @@ jobs:
         uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
       - name: Log in to dhi.io
         if: inputs.dhi_login && github.actor != 'dependabot[bot]'
@@ -286,12 +294,12 @@ jobs:
             type=semver,pattern={{version}},suffix=${{ inputs.tag_suffix }}
             type=semver,pattern={{major}}.{{minor}},suffix=${{ inputs.tag_suffix }}
             type=sha,suffix=${{ inputs.tag_suffix }}
-            type=raw,value=latest,suffix=${{ inputs.tag_suffix }},enable=${{ inputs.tag_latest || (github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
+            type=raw,value=latest,suffix=${{ inputs.tag_suffix }},enable=${{ env.PUBLISH_LATEST }}
             type=raw,value={{date 'YYYYMMDD'}},suffix=${{ inputs.tag_suffix }},enable=${{ inputs.tag_latest }}
             type=semver,pattern={{version}},enable=${{ inputs.tag_suffix != '' && inputs.tag_alias_unsuffixed }}
             type=semver,pattern={{major}}.{{minor}},enable=${{ inputs.tag_suffix != '' && inputs.tag_alias_unsuffixed }}
             type=sha,enable=${{ inputs.tag_suffix != '' && inputs.tag_alias_unsuffixed }}
-            type=raw,value=latest,enable=${{ inputs.tag_suffix != '' && inputs.tag_alias_unsuffixed && (inputs.tag_latest || (github.ref == format('refs/heads/{0}', github.event.repository.default_branch))) }}
+            type=raw,value=latest,enable=${{ inputs.tag_suffix != '' && inputs.tag_alias_unsuffixed && env.PUBLISH_LATEST }}
             type=raw,value={{date 'YYYYMMDD'}},enable=${{ inputs.tag_suffix != '' && inputs.tag_alias_unsuffixed && inputs.tag_latest }}
           # DOCKER-DOC-001 — override repo-default title/description with image-specific values
           labels: |

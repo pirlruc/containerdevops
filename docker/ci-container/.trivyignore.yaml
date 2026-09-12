@@ -1,5 +1,8 @@
 # Vendor-static toolchain binaries — refresh digests when upstream ships fixes.
 # Review: 2026-11-11 (CDO-015)
+# Re-pulled 2026-09-11 (CDO-IMG-003): wagoodman/dive:v0.13.1 and
+# container-structure-test:1.22.1 index digests unchanged; no newer tags.
+# Entries kept (updated statements below) rather than dropped.
 vulnerabilities:
   - id: CVE-2026-33810
     paths:

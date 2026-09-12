@@ -198,13 +198,20 @@ jobs:
         env:
           IMAGE: ${{ inputs.image }}
         run: |
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
+          [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
+          SEV="$(bash _containerdevops/scripts/read-thresholds.sh vuln_fail_on_severity "$FILE" | tr '[:upper:]' '[:lower:]')"
+          if [[ -z "${SEV}" ]]; then
+            echo "empty vuln_fail_on_severity from $FILE" >&2
+            exit 1
+          fi
           CFG=()
           [[ -f .grype.yaml ]] && CFG=(--config .grype.yaml)
           if [[ -f scan-results/sbom.cdx.json ]]; then
-            grype "sbom:scan-results/sbom.cdx.json" "${CFG[@]}" --fail-on high \
+            grype "sbom:scan-results/sbom.cdx.json" "${CFG[@]}" --fail-on "${SEV}" \
               -o json=scan-results/grype.json
           else
-            grype "${IMAGE}" "${CFG[@]}" --fail-on high \
+            grype "${IMAGE}" "${CFG[@]}" --fail-on "${SEV}" \
               -o json=scan-results/grype.json
           fi
 
@@ -220,7 +227,7 @@ jobs:
       - name: Upload Trivy SARIF
         if: always() && hashFiles('scan-results/trivy.sarif') != ''
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@5595ccaf912efad79be6eef63a5619ff05969be3 # v4.37.6
+        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
         with:
           sarif_file: scan-results/trivy.sarif
           category: ${{ inputs.sarif_category }}

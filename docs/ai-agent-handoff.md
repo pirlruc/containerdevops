@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `common/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `feature-published-rescan` (from `origin/main` / tag `3.0.1`) |
+| **Branch** | `feature-wave-e-workflows` (from `origin/main` / tag `3.0.2`) |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -20,18 +20,22 @@ Owns `.github/workflows/container-{lint,build,scan,publish,iac,devcontainer}.yml
 Shared infra/secrets/supply-chain forward to
 [pirlruc/commondevops](https://github.com/pirlruc/commondevops).
 
-## Pins (2026-08-12)
+## Pins (2026-09-11)
 
 | Submodule / artifact | Pin |
 |----------------------|-----|
-| `docs/guardrails` | commit `5a7ac83…` (post ci-base ref drop) |
+| `docs/guardrails` | commit `5a7ac83…` (`1.1.0-4`, not a tag) — **CDO-PIN-001, do not bump this wave** |
 | `.github/scaffold` | `f8a6ba1…` |
 | `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `3.0.0` → `sha256:9374acb5…` |
 | `ghcr.io/pirlruc/ci-container` (debian) | `3.0.0-debian` → `sha256:2345c107…` |
-| commondevops `uses:` | tag `2.0.2` → `4fd83922506d…` |
+| commondevops `uses:` / `scripts_ref` | tag `4.1.0` → `dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3` (CI-034 lockstep) |
 | `CI_BASE` (ci-lint debian) | `4.0.0-debian` digest `sha256:ed619755…` |
 | `CI_BASE` (ci-lint alpine) | `4.0.0` digest `sha256:0a4691ba…` |
-| Release (reusables callers pin) | `3.0.1` → `9a46e84…` (GHCR-login scan patch); this branch adds `container-published-rescan.yml` (unreleased until merge) |
+| `docker/setup-buildx-action` | `4.3.0` → `37fe6310…` |
+| `github/codeql-action/upload-sarif` | `4.37.8` → `db488dde…` |
+| KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
+| dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
+| Release (reusables callers pin) | `3.0.2` → `3607bf08…` (`container-published-rescan.yml`); Wave E unreleased until this PR merges |
 | Release (ci-container image) | `3.0.0` (Alpine owns unsuffixed) |
 
 ## Delivery status
@@ -46,10 +50,11 @@ Shared infra/secrets/supply-chain forward to
 | CDO-WF-002 — variant tagging + multi-scan uniqueness | Done (`2.3.0`) |
 | CDO-IMG-001 — variant hardening / local parity | Done (`2.4.0`) |
 | CDO-IMG-002 — Alpine ci-container | Done (`3.0.0`) |
-| CDO-WF-003 — schedule-safe `latest` tag | Open (filed; id from PR #83) |
-| CDO-IMG-003 — donor digest refresh | Open (filed) |
-| CDO-WF-004 — grype/scripts_ref/KICS drift | Open (filed; was CDO-WF-003 in PR #81) |
-| CDO-DOC-001 — workflows.md publish inputs | Open (filed) |
+| CDO-WF-003 — schedule-safe `latest` tag | Done (this branch) |
+| CDO-IMG-003 — donor digest refresh | Done (re-confirmed; no donor bumps) |
+| CDO-WF-004 — grype/scripts_ref/KICS drift | Done (this branch) |
+| CDO-DOC-001 — workflows.md publish inputs | Done (this branch) |
+| CDO-PIN-001 — guardrails 1.6.0 pin | Open (filed; do not bump this wave) |
 
 ## Tool versions in scripts/install-container-tools.sh
 
@@ -115,7 +120,6 @@ python3 .github/scaffold/scripts/issues-sync.py \
   ships `$/` support (rhysd/actionlint#732). zizmor `self-repository` is ignored
   in `.github/config/zizmor.yml` for local callers (`ci-container-image`,
   `containerdevops-ci`, `containerdevops-security`, `container-published-rescan`).
-- Dependabot PRs skip CI (CI-024) — replace with a human branch so checks run.
 - **Dependabot registries:** personal private repos need `registries:` wired to
   Dependabot secrets (`DEPENDABOT_GITHUB_TOKEN`, `DOCKERHUB_*`). Without them,
   updates fail with 401/403 on private submodules and reusable-workflow hosts.
@@ -125,24 +129,44 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Size deviation:** debian `700` / alpine `900` MB gates in
   `docs/guardrail-deviations.yml` (DOCKER-PERF-001 / CDO-IMG-001, CDO-IMG-002).
 - **Reusable pin vs image tag:** callers of `container-{lint,build,scan,publish}.yml`
-  stay on `3.0.1` (`9a46e84…`) for the GHCR-login scan patch. Release `3.0.0` only
-  changed `ci-container-image.yml` + Dockerfiles. `container-published-rescan.yml`
-  is unreleased until this branch merges — same-repo `uses: ./` only until then.
+  stay on `3.0.2` (`3607bf08…`) until Wave E merges and a new reusable tag is cut.
+- **`latest` on schedule:** `container-publish.yml` uses `github.ref_name == main` plus
+  event name (`push`/`schedule`/`workflow_dispatch`). Do not reintroduce the event
+  default-branch field in reusable tag logic — it is empty on `schedule`. Callers pass
+  `tag_latest` only on non-prerelease **release** events.
+- **KICS digest:** `KICS_IMAGE` in `container-iac.yml` is a workflow env pin. Dependabot
+  docker watches `/docker/ci-container` only and cannot bump env-var digests. Refresh
+  manually (CDO-WF-004-T3). GitHub `checkmarx/kics` `v2.1.21` (2026-07-30) has no Hub
+  image tag as of 2026-09-11; stay on `v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…`.
+- **Donor ignorefile:** dive `v0.13.1` and CST `1.22.1` digests re-confirmed 2026-09-11;
+  no newer tags, so `.trivyignore.yaml` entries were not dropped. Next review 2026-11-11.
+- **Dependabot PRs skip CI (CI-024)** — replace with a human branch so checks run.
+  Do not merge Dependabot PR #82: it pins commondevops `4.0.0` (`e4e902e`) and does not
+  update matching `scripts_ref` (CI-034 split). Wave E re-pins `4.1.0` instead.
 
 ## Suggested next work
 
-1. After this branch merges, cut a reusable tag so commondevops/cppdevops can call
-   `container-published-rescan.yml` (they stay on `container-scan.yml@3.0.1` until then).
-2. Implement CDO-WF-003 / CDO-IMG-003 / CDO-WF-004 / CDO-DOC-001 (filed in `docs/issues.yml`).
-3. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
-4. Refresh donor digests / drop ignorefile entries before 2026-11-11.
+1. After this Wave E PR merges, cut a reusable tag so consumers pick up schedule-safe
+   `latest`, grype threshold wiring, and the commondevops `4.1.0` pin.
+2. CDO-PIN-001 — re-pin `docs/guardrails` to annotated tag `1.6.0` and remediate gates
+   (do not bundle with unrelated workflow work).
+3. Confirm the next monthly Dependabot `all-dependencies` PR (Insights). Close #82 as
+   superseded once this PR exists.
+4. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship
+   rebuilt images.
 
 ## Recent history
 
+- 2026-09-11: Wave E on `feature-wave-e-workflows` — commondevops `4.1.0`
+  (`dcd9ca1c4eb8…`) lockstep `uses:`/`scripts_ref` (CI-034; do not merge PR #82's
+  `4.0.0` split pin); setup-buildx `4.3.0` + codeql-action `4.37.8`; schedule-safe
+  `latest` (CDO-WF-003); grype `vuln_fail_on_severity`; `PLACEHOLDER_SHA` seed fix;
+  KICS Dependabot limitation documented; donor digests re-confirmed (no bumps);
+  CDO-PIN-001 filed (guardrails stays `5a7ac83`).
 - 2026-09-11: Wave 4 — add `container-published-rescan.yml` (probe + nested
-  `container-scan.yml`) on `feature-published-rescan` from `3.0.1`. Same-repo
+  `container-scan.yml`) merged as `3.0.2` (#86). Same-repo
   `containerdevops-security.yml` calls `./`. Cross-repo callers wait for a
-  released SHA. Do not rewind this branch behind tag `3.0.1`.
+  released SHA.
 - 2026-09-11: accepted copilot ai-reviewer findings filed (PR #85). CDO-WF-003
   collision resolved: PR #83 keeps CDO-WF-003; PR #81 is CDO-WF-004.
 - 2026-09-11: GHCR login+pull in `container-scan.yml` for registry rescans;

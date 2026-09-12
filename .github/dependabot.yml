@@ -52,3 +52,10 @@ updates:
       - dhi
     cooldown:
       default-days: 7
+
+  # KICS is not a Dockerfile FROM and is not a GitHub Action: container-iac.yml
+  # pins checkmarx/kics as KICS_IMAGE (workflow env digest). Dependabot's docker
+  # ecosystem only watches /docker/ci-container, and github-actions does not bump
+  # docker digests in env vars. Refresh KICS_IMAGE manually when Checkmarx
+  # publishes a new image tag (v2.1.21 GitHub release has no Hub tag as of
+  # 2026-09-11). See docs/workflows.md (CDO-WF-004-T3).
