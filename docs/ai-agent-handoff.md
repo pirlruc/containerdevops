@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `common/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `feature-wave-e-workflows` (from `origin/main` / tag `3.0.2`) |
+| **Branch** | `main` (tag **3.1.0**) |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -35,7 +35,7 @@ Shared infra/secrets/supply-chain forward to
 | `github/codeql-action/upload-sarif` | `4.37.8` → `db488dde…` |
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
-| Release (reusables callers pin) | `3.0.2` → `3607bf08…` (`container-published-rescan.yml`); Wave E unreleased until this PR merges |
+| Release (reusables callers pin) | **3.1.0** → `622d7215f72e52c39869aa04dc69aa2f35b9b35b` |
 | Release (ci-container image) | `3.0.0` (Alpine owns unsuffixed) |
 
 ## Delivery status
@@ -50,11 +50,11 @@ Shared infra/secrets/supply-chain forward to
 | CDO-WF-002 — variant tagging + multi-scan uniqueness | Done (`2.3.0`) |
 | CDO-IMG-001 — variant hardening / local parity | Done (`2.4.0`) |
 | CDO-IMG-002 — Alpine ci-container | Done (`3.0.0`) |
-| CDO-WF-003 — schedule-safe `latest` tag | Done (this branch) |
-| CDO-IMG-003 — donor digest refresh | Done (re-confirmed; no donor bumps) |
-| CDO-WF-004 — grype/scripts_ref/KICS drift | Done (this branch) |
-| CDO-DOC-001 — workflows.md publish inputs | Done (this branch) |
-| CDO-PIN-001 — guardrails 1.6.0 pin | Open (filed; do not bump this wave) |
+| CDO-WF-003 — schedule-safe `latest` tag | Done (`3.1.0`) |
+| CDO-IMG-003 — donor digest refresh | Done (`3.1.0`; re-confirmed, no donor bumps) |
+| CDO-WF-004 — grype/scripts_ref/KICS drift | Done (`3.1.0`) |
+| CDO-DOC-001 — workflows.md publish inputs | Done (`3.1.0`) |
+| CDO-PIN-001 — guardrails 1.6.0 pin | Open ([#111](https://github.com/pirlruc/containerdevops/issues/111)) |
 
 ## Tool versions in scripts/install-container-tools.sh
 
@@ -129,7 +129,7 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Size deviation:** debian `700` / alpine `900` MB gates in
   `docs/guardrail-deviations.yml` (DOCKER-PERF-001 / CDO-IMG-001, CDO-IMG-002).
 - **Reusable pin vs image tag:** callers of `container-{lint,build,scan,publish}.yml`
-  stay on `3.0.2` (`3607bf08…`) until Wave E merges and a new reusable tag is cut.
+  pin **3.1.0** (`622d7215…`) for schedule-safe `latest` and the commondevops 4.1.0 lockstep.
 - **`latest` on schedule:** `container-publish.yml` uses `github.ref_name == main` plus
   event name (`push`/`schedule`/`workflow_dispatch`). Do not reintroduce the event
   default-branch field in reusable tag logic — it is empty on `schedule`. Callers pass
@@ -146,17 +146,14 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Suggested next work
 
-1. After this Wave E PR merges, cut a reusable tag so consumers pick up schedule-safe
-   `latest`, grype threshold wiring, and the commondevops `4.1.0` pin.
-2. CDO-PIN-001 — re-pin `docs/guardrails` to annotated tag `1.6.0` and remediate gates
-   (do not bundle with unrelated workflow work).
-3. Confirm the next monthly Dependabot `all-dependencies` PR (Insights). Close #82 as
-   superseded once this PR exists.
-4. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship
-   rebuilt images.
+1. Callers re-pin reusable workflows to tag **3.1.0** with matching `scripts_ref`.
+2. CDO-PIN-001 — re-pin `docs/guardrails` to annotated tag `1.6.0` and remediate gates.
+3. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
+4. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship rebuilt images.
 
 ## Recent history
 
+- 2026-09-12: Tagged **3.1.0** + GitHub Release. issues-sync closed CDO-WF-003/004, CDO-IMG-003, CDO-DOC-001; created CDO-PIN-001 (#111).
 - 2026-09-11: Wave E on `feature-wave-e-workflows` — commondevops `4.1.0`
   (`dcd9ca1c4eb8…`) lockstep `uses:`/`scripts_ref` (CI-034; do not merge PR #82's
   `4.0.0` split pin); setup-buildx `4.3.0` + codeql-action `4.37.8`; schedule-safe
