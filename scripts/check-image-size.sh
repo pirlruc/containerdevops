@@ -17,6 +17,6 @@ fi
 
 echo "Image ${IMAGE} rootfs: ${mb} MB (limit ${MAX_MB} MB; measured via du -sxm /)"
 if (( mb > MAX_MB )); then
-  echo "DOCKER-PERF-001: image exceeds image_max_size_mb=${MAX_MB}" >&2
+  echo "DOCKER-PERF: image exceeds size floor ${MAX_MB} MB (application=image_max_size_mb / toolchain=ci_image_max_size_mb)" >&2
   exit 1
 fi

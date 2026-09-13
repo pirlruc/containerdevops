@@ -66,7 +66,7 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-published-rescan.yml
     with:
-      image: ghcr.io/pirlruc/ci-container:latest
+      image: ghcr.io/pirlruc/ci-container:3.0.0@sha256:9374acb5caed2cf9482a86eb9689a76d7afb3ac2bb1f97973c1a2a423c137365
       scripts_ref: ${{ github.sha }}
       pkg_types: library
       ignorefile: docker/ci-container/.trivyignore.yaml

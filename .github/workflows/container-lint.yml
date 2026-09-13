@@ -124,21 +124,19 @@ jobs:
         id: thr
         working-directory: ${{ github.workspace }}
         run: |
+          set -euo pipefail
           FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           if [[ ! -f "$FILE" ]]; then
             echo "missing vendored thresholds at $FILE" >&2
             exit 1
           fi
           VALUE="$(bash _containerdevops/scripts/read-thresholds.sh hadolint_failure_threshold "$FILE")"
-          if [[ -z "$VALUE" ]]; then
-            echo "empty hadolint_failure_threshold from $FILE" >&2
-            exit 1
-          fi
           echo "hadolint=${VALUE}" >> "$GITHUB_OUTPUT"
 
       - name: hadolint (host)
+        id: hadolint_host
         if: inputs.runner_image == ''
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        continue-on-error: true
         env:
           HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
           DOCKERFILE: ${{ inputs.dockerfile }}
@@ -147,8 +145,9 @@ jobs:
             "${DOCKERFILE}"
 
       - name: hadolint (runner_image)
+        id: hadolint_image
         if: inputs.runner_image != ''
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        continue-on-error: true
         env:
           WORKSPACE: ${{ github.workspace }}
           WORKING_DIRECTORY: ${{ inputs.working_directory }}
@@ -162,8 +161,9 @@ jobs:
             "${DOCKERFILE}"
 
       - name: shellcheck entrypoints (host)
+        id: shellcheck_host
         if: inputs.shell_scripts != '' && inputs.runner_image == ''
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        continue-on-error: true
         env:
           SHELL_SCRIPTS: ${{ inputs.shell_scripts }}
         run: |
@@ -171,8 +171,9 @@ jobs:
           shellcheck $SHELL_SCRIPTS
 
       - name: shellcheck entrypoints (runner_image)
+        id: shellcheck_image
         if: inputs.shell_scripts != '' && inputs.runner_image != ''
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        continue-on-error: true
         env:
           WORKSPACE: ${{ github.workspace }}
           WORKING_DIRECTORY: ${{ inputs.working_directory }}
@@ -183,6 +184,24 @@ jobs:
           docker run --rm -v "${WORKSPACE}:/work:ro" -w "/work/${WORKING_DIRECTORY}" \
             "${RUNNER_IMAGE}" \
             shellcheck $SHELL_SCRIPTS
+
+      - name: Gate — lint
+        if: always()
+        working-directory: ${{ github.workspace }}
+        env:
+          ADVISORY: ${{ env.ADVISORY }}
+          HOST: ${{ steps.hadolint_host.outcome }}
+          IMAGE: ${{ steps.hadolint_image.outcome }}
+          SH_HOST: ${{ steps.shellcheck_host.outcome }}
+          SH_IMAGE: ${{ steps.shellcheck_image.outcome }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [[ "${HOST}" != "skipped" && -n "${HOST}" ]]; then args+=(hadolint_host="${HOST}"); fi
+          if [[ "${IMAGE}" != "skipped" && -n "${IMAGE}" ]]; then args+=(hadolint_image="${IMAGE}"); fi
+          if [[ "${SH_HOST}" != "skipped" && -n "${SH_HOST}" ]]; then args+=(shellcheck_host="${SH_HOST}"); fi
+          if [[ "${SH_IMAGE}" != "skipped" && -n "${SH_IMAGE}" ]]; then args+=(shellcheck_image="${SH_IMAGE}"); fi
+          bash _containerdevops/scripts/gate-aggregate.sh "${args[@]}"
 
   infra:
     # Nested commondevops pin — keep uses: and scripts_ref in lockstep (@dcd9ca1c4eb8… = tag 4.1.0).

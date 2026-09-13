@@ -16,10 +16,48 @@ concurrency:
   group: containerdevops-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# CI-025 — caller grants the max scopes callees may request.
+# CI-025 / CI-031 — caller grants the max scopes callees may request.
 permissions: {}
 
 jobs:
+  pins:
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: SC-DEP-004 submodule pin assert
+        run: sh scripts/check-submodule-pins.sh
+
+  docs:
+    if: github.actor != 'dependabot[bot]'
+    permissions:
+      contents: read
+    uses: pirlruc/commondevops/.github/workflows/common-doc-verify.yml@dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3
+    with:
+      blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
+      shell_scripts: scripts/*.sh
+      ruff_paths: scripts/lint-doc-links.py scripts/validate-yaml.py
+      yaml_files: docs/issues.yml docs/guardrail-deviations.yml .github/dependabot.yml
+      yaml_globs: .github/workflows/*.yml
+      run_link_lint: true
+      scripts_ref: dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3
+    secrets:
+      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
+
+  scaffold:
+    if: github.actor != 'dependabot[bot]'
+    permissions:
+      contents: read
+    uses: pirlruc/commondevops/.github/workflows/common-scaffold-verify.yml@dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3
+    with:
+      blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
+      scripts_ref: dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3
+
   lint:
     if: github.actor != 'dependabot[bot]'
     permissions:

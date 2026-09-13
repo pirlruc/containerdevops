@@ -1,7 +1,9 @@
 # Workflows reference
 
-All workflows: `workflow_call` + `workflow_dispatch`, `blocking` default `false`
-(`ADVISORY` env + `continue-on-error` on gate steps).
+All workflows: `workflow_call` + `workflow_dispatch`, `blocking` default `false`.
+Finding steps collect then fail via `scripts/gate-aggregate.sh` (`ADVISORY` when
+`blocking` is false). Missing thresholds or required tools fail closed regardless
+of `blocking` (CI-022 / CI-035).
 
 ## Shared inputs
 
@@ -20,7 +22,7 @@ All workflows: `workflow_call` + `workflow_dispatch`, `blocking` default `false`
 
 | Input | Required | Meaning |
 |-------|----------|---------|
-| `scripts_ref` | Cross-repo callers | Commit/tag/branch matching the `uses: …@pin` — scripts checkout uses this. Same-repo `workflow_dispatch` falls back to `github.sha`. Do **not** use `github.workflow_sha` (that is the caller’s workflow). |
+| `scripts_ref` | Cross-repo callers | Commit/tag/branch matching the `uses: …@pin` (CI-034). Same-repo `workflow_dispatch` falls back to `github.sha`. Do **not** use `github.workflow_sha` (that is the caller’s workflow). Empty `scripts_ref` on a cross-repo caller fails closed. |
 
 Reusable jobs sparse-checkout this repository into `_containerdevops` for
 `scripts/` (install helpers + vendored `docker.profile.thresholds.yml`).
@@ -32,7 +34,7 @@ Thresholds are vendored under `scripts/` because `docs/guardrails` is a private
 submodule and is not available from nested checkout. Keep the vendored file in
 sync with the guardrails docker pack.
 
-## Required caller permissions
+## Required caller permissions (CI-031)
 
 A reusable workflow **cannot escalate** beyond the permissions the caller job
 grants. Callers must mirror (or exceed) the callee job’s `permissions:` block
@@ -76,6 +78,14 @@ tag `4.1.0` → `dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3`).
 | `scripts_ref` | `""` |
 | `blocking` | `false` |
 | `artifact_name` | `container-image` |
+| `size_class` | `application` |
+| `image_max_size_mb` | `""` (override; empty reads the vendored key for `size_class`) |
+
+`size_class` selects the size floor (DOCKER-PERF-002): `application` reads
+`image_max_size_mb` (300); `ci_toolchain` reads `ci_image_max_size_mb` (2000).
+Pass `size_class: ci_toolchain` for `ci-lint` / `ci-container` / `ci-cpp` images.
+`workflow_dispatch` is capped at 10 inputs — `size_class` is `workflow_call`-only;
+dispatch callers can still pass `image_max_size_mb`.
 
 Optional secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` — when set, the job
 logs in to **`dhi.io`** before Buildx so Community Docker Hardened Image `FROM`
@@ -101,7 +111,7 @@ distinct `artifact_name` values so downloads stay unambiguous.
 `du -sxm /` inside a disposable container. This is store-independent (unlike
 `docker image inspect .Size`, which reports uncompressed size on classic Docker
 Engine / GHA runners but a compressed value under containerd image-store hosts).
-Tune `image_max_size_mb` against this measurement.
+Tune `image_max_size_mb` / `ci_image_max_size_mb` against this measurement.
 
 ## container-scan.yml
 
@@ -115,6 +125,9 @@ Tune `image_max_size_mb` against this measurement.
 | `scripts_ref` | `""` |
 | `results_artifact` | `container-scan-results` |
 | `sarif_category` | `trivy-image` |
+
+A missing `vuln_fail_on_severity` key fails closed (CI-022) before Trivy/Grype
+run — it does not degrade to CRITICAL-only.
 
 Callers scanning a **registry** ref (`ghcr.io/...`) must grant `packages: read`.
 The scan job logs in to GHCR and `docker pull`s on the same runner — a preceding
@@ -163,9 +176,10 @@ unreleased branch from another private repo.
 Secrets: `ghcr_token`, `scripts_token` (both optional; forwarded to
 `container-scan.yml`). Caller job must grant `packages: read`.
 
-`containerdevops-security.yml` uses this reusable for
-`ghcr.io/pirlruc/ci-container:latest`. commondevops / cppdevops stay on
-`container-scan.yml@3.0.1` until they can pin a released SHA of this file.
+`containerdevops-security.yml` uses this reusable for digest-pinned
+`ghcr.io/pirlruc/ci-container:3.0.0@sha256:9374acb5…` (CI-026; do not float
+`:latest`). commondevops / cppdevops stay on `container-scan.yml` until they
+can pin a released SHA of this file.
 
 ## container-publish.yml
 
@@ -240,6 +254,11 @@ is always advisory so image publish still succeeds.
 
 KICS `exclude-queries` IDs and why each is suppressed (not fixed) are recorded in
 [`docs/kics-exclusions.md`](kics-exclusions.md) (DOCKER-LINT-002).
+
+When `compose_files` is set, `scripts/check-compose-gates.sh` also enforces
+measurable DOCKER-COMPOSE rules (digest-pinned images, healthcheck, privileged
+cap, port bind, memory limits). Unmeasurable rules (bind-mount comments, volume
+backup docs) stay documented here.
 
 `KICS_IMAGE` is a digest-pinned workflow env (`checkmarx/kics@sha256:…`), not a
 Dockerfile `FROM` and not a GitHub Action. Dependabot cannot manage it (docker

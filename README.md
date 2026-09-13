@@ -5,8 +5,8 @@ images — hadolint, buildx, container-structure-test, Trivy/Syft/Grype, SBOM,
 signing, GHCR and Docker Hub publishing, plus KICS, Compose Spec validation,
 and the `ci-container` toolchain image.
 
-Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails/tree/main/docker)
-(`DOCKER-*`). Pin this repo by commit SHA (`CI-018`).
+Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails/tree/1.6.0/docker)
+(`DOCKER-*`), pinned at `docs/guardrails/` tag `1.6.0`. Pin this repo by commit SHA (`CI-018`).
 
 ## Workflows
 
@@ -17,7 +17,7 @@ Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails
 | `container-scan.yml` | Trivy + Syft SBOM + Grype on the **built image** |
 | `container-published-rescan.yml` | GHCR probe + `container-scan.yml` for a published registry tag |
 | `container-publish.yml` | Multi-arch push to GHCR and Docker Hub; optional cosign + provenance |
-| `container-iac.yml` | KICS + `docker compose config` |
+| `container-iac.yml` | KICS + `docker compose config` + DOCKER-COMPOSE measurable gates |
 | `container-devcontainer.yml` | Devcontainer Dockerfile lint (structure-test stub) |
 | `ci-container-image.yml` | Publish `ghcr.io/pirlruc/ci-container` |
 
@@ -25,7 +25,7 @@ All workflows accept `blocking` (default `false`) using the advisory pattern, an
 are callable via `workflow_call` or manual `workflow_dispatch`.
 
 See [docs/workflows.md](docs/workflows.md) for **required caller permissions**
-(a reusable workflow cannot escalate beyond the caller's grant).
+(CI-031 — a reusable workflow cannot escalate beyond the caller's grant).
 
 ## Caller example
 
@@ -74,6 +74,9 @@ to Enterprise Cloud.
 
 ```bash
 bash scripts/check-container-local.sh --dockerfile Dockerfile --context .
+# CI toolchain images:
+bash scripts/check-container-local.sh --dockerfile docker/ci-container/Dockerfile.alpine \
+  --context docker/ci-container --size-class ci_toolchain
 ```
 
 Tools missing from the host PATH run via digest-pinned images (see the script's

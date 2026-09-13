@@ -16,6 +16,7 @@
 #           --advisory (do not fail on trivy findings; default is blocking),
 #           --no-ignorefile (skip ignorefile fallback; mirrors
 #           container-scan.yml ignorefile=none),
+#           --size-class application|ci_toolchain (DOCKER-PERF-001 vs 002),
 #           --skip-age (skip DOCKER-BUILD-006 base-image age gate)
 set -euo pipefail
 
@@ -30,6 +31,7 @@ SKIP_SCAN=0
 SKIP_AGE=0
 ADVISORY=0
 NO_IGNOREFILE=0
+SIZE_CLASS="application"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -37,6 +39,7 @@ while [[ $# -gt 0 ]]; do
     --context) CONTEXT="$2"; shift 2 ;;
     --image) IMAGE="$2"; shift 2 ;;
     --structure-test) STRUCTURE_TEST="$2"; shift 2 ;;
+    --size-class) SIZE_CLASS="$2"; shift 2 ;;
     --skip-scan) SKIP_SCAN=1; shift ;;
     --skip-age) SKIP_AGE=1; shift ;;
     --advisory) ADVISORY=1; shift ;;
@@ -63,10 +66,17 @@ if [[ ! -f "${THRESHOLDS}" ]]; then
   exit 1
 fi
 
-MAX_MB="$(bash "${ROOT}/scripts/read-thresholds.sh" image_max_size_mb "${THRESHOLDS}")"
 MIN_EFF="$(bash "${ROOT}/scripts/read-thresholds.sh" min_image_efficiency_percent "${THRESHOLDS}")"
 HADOLINT_LEVEL="$(bash "${ROOT}/scripts/read-thresholds.sh" hadolint_failure_threshold "${THRESHOLDS}")"
 MAX_AGE="$(bash "${ROOT}/scripts/read-thresholds.sh" base_image_max_age_days "${THRESHOLDS}")"
+SEV="$(bash "${ROOT}/scripts/read-thresholds.sh" vuln_fail_on_severity "${THRESHOLDS}")"
+SEV_UP="$(printf '%s' "${SEV}" | tr '[:lower:]' '[:upper:]')"
+case "${SIZE_CLASS}" in
+  application) SIZE_KEY=image_max_size_mb ;;
+  ci_toolchain) SIZE_KEY=ci_image_max_size_mb ;;
+  *) echo "unknown --size-class '${SIZE_CLASS}' (application|ci_toolchain)" >&2; exit 2 ;;
+esac
+MAX_MB="$(bash "${ROOT}/scripts/read-thresholds.sh" "${SIZE_KEY}" "${THRESHOLDS}")"
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "docker is required" >&2
@@ -150,7 +160,7 @@ if (( SKIP_SCAN == 0 )); then
   fi
   set +e
   if command -v trivy >/dev/null 2>&1; then
-    trivy image --severity HIGH,CRITICAL --pkg-types library --exit-code 1 "${IGNORE[@]}" "${IMAGE}"
+    trivy image --severity "CRITICAL,${SEV_UP}" --pkg-types library --exit-code 1 "${IGNORE[@]}" "${IMAGE}"
   else
     # Resolve ignorefile paths inside the container mount at /work
     DIGNORE=()
@@ -165,7 +175,7 @@ if (( SKIP_SCAN == 0 )); then
     fi
     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
       -v "${PWD}:/work:ro" -w /work \
-      aquasec/trivy:0.73.0@sha256:7cced7cae583819fc7806d4cbc0dbbc7cad18b99f7d3e235192e6da8c091045c image --severity HIGH,CRITICAL --pkg-types library --exit-code 1 \
+      aquasec/trivy:0.73.0@sha256:7cced7cae583819fc7806d4cbc0dbbc7cad18b99f7d3e235192e6da8c091045c image --severity "CRITICAL,${SEV_UP}" --pkg-types library --exit-code 1 \
       "${DIGNORE[@]}" "${IMAGE}"
   fi
   trc=$?

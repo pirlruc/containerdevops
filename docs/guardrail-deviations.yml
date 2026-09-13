@@ -1,30 +1,22 @@
 # Recorded departures from the guardrails pinned at docs/guardrails/.
 #
 # Field definitions: https://github.com/pirlruc/guardrails#deviation-rule
-# Approval flow:     https://github.com/pirlruc/methodologies/blob/1.1.0/github-issue-adr/docs/process/guardrail-compliance.md
+# Approval flow:     https://github.com/pirlruc/methodologies/blob/1.5.0/github-issue-adr/docs/process/guardrail-compliance.md
 #
 # Being stricter than the org default is always allowed and needs no entry here.
 
 deviations:
-  - id: DOCKER-PERF-001
-    key: image_max_size_mb
-    org_default: 300
-    repo_value: 700
+  # DOCKER-PERF-001 image_max_size_mb deviations retired: ci-container is a CI
+  # toolchain image and uses ci_image_max_size_mb (2000) via size_class=ci_toolchain
+  # (DOCKER-PERF-002 / CDO-PIN-001).
+  - id: REL-CHG-001
+    key: changelog_required
+    org_default: true
+    repo_value: false
     why: >-
-      ci-container (Debian) extends ci-lint plus dive and container-structure-test;
-      measured rootfs exceeds the 300 MB org floor for CI toolchain images.
-    epic: CDO-IMG-001
-    owner: pirlruc
-    approved_by: Engineering Lead
-    review: 2026-12-31
-  - id: DOCKER-PERF-001
-    key: image_max_size_mb
-    org_default: 300
-    repo_value: 900
-    why: >-
-      ci-container Alpine 3.24 variant extends Alpine ci-lint (~752 MB) plus dive
-      and container-structure-test; measured rootfs ~778 MB.
-    epic: CDO-IMG-002
+      Release-notes-only ops repo; GitHub Releases carry the notes. Guardrails
+      GR-CHG-001 is open to clarify changelog_required for this case.
+    epic: CDO-PIN-001
     owner: pirlruc
     approved_by: Engineering Lead
     review: 2026-12-31
