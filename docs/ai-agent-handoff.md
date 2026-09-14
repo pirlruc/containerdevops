@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `common/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `feature-guardrails-16` (from `main` tag **3.1.0**) |
+| **Branch** | `main` tag **4.0.0** |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -36,7 +36,7 @@ Shared infra/secrets/supply-chain forward to
 | `docker/setup-qemu-action` | `4.3.0` → `1f40c722…` |
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
-| Release (reusables callers pin) | **3.1.0** → `622d7215f72e52c39869aa04dc69aa2f35b9b35b` |
+| Release (reusables callers pin) | **4.0.0** → `a29ebe54d321e25e639ff34b704da1a0ddd45655` |
 | Release (ci-container image) | `3.0.0` (Alpine owns unsuffixed) |
 
 ## Delivery status
@@ -135,8 +135,7 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Size deviation:** retired. ci-container uses `ci_image_max_size_mb` (2000).
   REL-CHG-001 records no root CHANGELOG (GitHub Releases; GR-CHG-001).
 - **Reusable pin vs image tag:** callers of `container-{lint,build,scan,publish}.yml`
-  pin **3.1.0** (`622d7215…`) until **4.0.0** lands (`size_class`, fail-closed
-  thresholds, collect-then-fail). Scheduled rescan uses digest-pinned `3.0.0`.
+  pin **4.0.0** (`a29ebe54…`). Scheduled rescan uses digest-pinned `3.0.0`.
 - **`latest` on schedule:** `container-publish.yml` uses `github.ref_name == main` plus
   event name (`push`/`schedule`/`workflow_dispatch`). Do not reintroduce the event
   default-branch field in reusable tag logic — it is empty on `schedule`. Callers pass
@@ -160,6 +159,8 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Recent history
 
+- 2026-09-14: Tagged **4.0.0** + GitHub Release (`a29ebe54…`, #114). Callers pin
+  `size_class: ci_toolchain` and matching `scripts_ref`.
 - 2026-09-14: CDO-PIN-001 — guardrails `1.6.0` + scaffold `1.5.0`; `size_class`
   (DOCKER-PERF-002) retires image-size deviations; fail-closed threshold reader
   (CI-022); collect-then-fail; compose gates; digest-pinned rescan; Dependabot
