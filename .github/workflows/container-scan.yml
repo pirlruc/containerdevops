@@ -211,7 +211,7 @@ jobs:
           if [[ "${PKG_TYPES}" == "library" ]]; then
             # Language catalogs, not python-only. Omit golang/binary so Grype
             # does not fail on vendor-static Go donors already in .trivyignore.yaml.
-            SELECT=(--select-catalogers python,javascript,java,dotnet,ruby,php,rust,dart,swift)
+            SELECT=(--select-catalogers "python,javascript,java,dotnet,ruby,php,rust,dart,swift")
           fi
           syft "${IMAGE}" "${SELECT[@]}" \
             -o cyclonedx-json=scan-results/sbom.cdx.json \
