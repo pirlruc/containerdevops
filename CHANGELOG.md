@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [5.0.1] - 2026-09-14
+
+### Fixed
+
+- Reusable-workflow `image_ref` / `digest` outputs were empty for callers when
+  the handoff step used `if: always()`. Scan then received a blank `image`.
+  Handoff now runs on a successful build without `always()`, and always emits
+  a `ghcr.io/owner/pkg@sha256:…` ref.
+
 ## [5.0.0] - 2026-09-14
 
 MAJOR: GHCR digest handoff replaces the image-tar artifact; `latest` no longer races.
