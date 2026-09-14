@@ -40,7 +40,9 @@ MAJOR: GHCR digest handoff replaces the image-tar artifact; `latest` no longer r
 
 - Local dive fallback writes `dive-report.json` in the repo (gitignored) so
   Docker Desktop can mount it.
-- Syft uses full library catalogers (not Python-only) when `pkg_types: library`.
+- Syft uses language catalogers (not Python-only) when `pkg_types: library`,
+  omitting golang/binary so Grype does not fail on donor Go stdlib already
+  ignored in Trivy.
 - Alpine image lint runs secrets scan.
 
 ## [4.0.0] - 2026-09-14
