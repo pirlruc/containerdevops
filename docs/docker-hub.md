@@ -16,20 +16,20 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 
 | Tag | Meaning |
 |-----|---------|
-| `3.0.0` / `3.0.0-alpine` | Immutable Alpine release (default unsuffixed = Alpine) |
-| `3.0.0-debian` | Immutable Debian 13 release |
+| `5.0.0` / `5.0.0-alpine` | Immutable Alpine release (default unsuffixed = Alpine) |
+| `5.0.0-debian` | Immutable Debian 13 release |
 | `latest` / `latest-alpine` | Latest non-prerelease Alpine publish |
 | `latest-debian` | Latest non-prerelease Debian publish |
 | `sha-<git>` / `sha-<git>-alpine` / `sha-<git>-debian` | Exact git SHA of the published commit |
 
-Alpine owns the unsuffixed tags to match `ci-lint` 4.0.0 (lower OS vulnerability
+Alpine owns the unsuffixed tags to match `ci-lint` (lower OS vulnerability
 posture). Prefer an explicit `-alpine` / `-debian` suffix when the libc matters;
 prefer a digest in production.
 
 ```bash
-docker pull pirlruc/ci-container:3.0.0
+docker pull pirlruc/ci-container:5.0.0
 # or
-docker pull pirlruc/ci-container:3.0.0-debian
+docker pull pirlruc/ci-container:5.0.0-debian
 # or
 docker pull pirlruc/ci-container@sha256:<digest>
 ```
@@ -38,13 +38,13 @@ docker pull pirlruc/ci-container@sha256:<digest>
 
 ```bash
 docker run --rm -v "$PWD:/workspace:ro" -w /workspace \
-  pirlruc/ci-container:3.0.0 \
+  pirlruc/ci-container:5.0.0 \
   hadolint Dockerfile
 ```
 
 ```bash
 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-  pirlruc/ci-container:3.0.0 \
+  pirlruc/ci-container:5.0.0 \
   dive --ci my-app:local
 ```
 
@@ -57,7 +57,7 @@ docker run --rm \
   --security-opt no-new-privileges \
   --tmpfs /tmp:rw,noexec,nosuid,size=256m \
   -v "$PWD:/workspace:ro" -w /workspace \
-  pirlruc/ci-container:3.0.0 \
+  pirlruc/ci-container:5.0.0 \
   hadolint Dockerfile
 ```
 

@@ -43,7 +43,7 @@ or the run fails at startup before any step runs.
 | Workflow | Caller job must grant |
 |----------|----------------------|
 | `container-lint.yml` | `contents: read`; add `security-events: write` when `run_secrets_scan: true` |
-| `container-build.yml` | `contents: read`, `packages: read` |
+| `container-build.yml` | `contents: read`, `packages: write` |
 | `container-scan.yml` | `contents: read`, `security-events: write`, `packages: read` |
 | `container-published-rescan.yml` | `contents: read`, `security-events: write`, `packages: read` |
 | `container-publish.yml` | `contents: read`, `packages: write`, `id-token: write` |
@@ -64,7 +64,7 @@ or the run fails at startup before any step runs.
 | `blocking` | `false` |
 
 Nested commondevops pin: keep `uses:` and `scripts_ref` in lockstep (currently
-tag `4.1.0` → `dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3`).
+tag `5.0.0` → `bcddb5db4ba5d291aa7f434d447e43175f14136c`).
 
 ## container-build.yml
 
@@ -77,9 +77,20 @@ tag `4.1.0` → `dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3`).
 | `platforms` | `linux/amd64` |
 | `scripts_ref` | `""` |
 | `blocking` | `false` |
-| `artifact_name` | `container-image` |
+| `artifact_name` | `container-image` (cache scope + ephemeral tag suffix) |
+| `upload_image_artifact` | `false` |
+| `handoff_package` | `""` (GHCR name; default is `image_name` before colon) |
 | `size_class` | `application` |
 | `image_max_size_mb` | `""` (override; empty reads the vendored key for `size_class`) |
+
+Outputs: `image_ref` (`ghcr.io/owner/pkg@sha256:…`), `digest`, `handoff_tag`,
+`handoff_package`.
+
+After local load + CST/size/dive, the job pushes
+`ghcr.io/<owner>/<handoff_package>:ci-run-<run_id>-<suffix>` and exports
+`image_ref`. Callers pass that into `container-scan.yml` (`image`) and
+`container-publish.yml` (`source_image`). Do **not** pass long-lived
+`image_artifact` unless `upload_image_artifact: true`.
 
 `size_class` selects the size floor (DOCKER-PERF-002): `application` reads
 `image_max_size_mb` (300); `ci_toolchain` reads `ci_image_max_size_mb` (2000).
@@ -100,11 +111,7 @@ Optional OCI label inputs: `image_title` (defaults to `image_name`),
 `image_description` (defaults to `image_name`). Prefer image-specific text —
 do not pass the repository description.
 
-Uploads the image tarball under `artifact_name` (default `container-image`).
-When a caller runs multiple builds in one workflow (e.g. distro variants), pass
-distinct `artifact_name` values so downloads stay unambiguous.
-
-**BuildKit GHA cache:** `cache-from` / `cache-to` use `type=gha` with
+**BuildKit GHA cache:** `cache-from` / `cache-to` use `type=gha,mode=min` with
 `scope=<artifact_name>` so parallel variant builds do not thrash a shared cache.
 
 **Size gate:** `scripts/check-image-size.sh` measures the image rootfs via
@@ -125,6 +132,10 @@ Tune `image_max_size_mb` / `ci_image_max_size_mb` against this measurement.
 | `scripts_ref` | `""` |
 | `results_artifact` | `container-scan-results` |
 | `sarif_category` | `trivy-image` |
+
+Callers should pass `image: ${{ needs.build.outputs.image_ref }}` (GHCR digest)
+and leave `image_artifact` empty. The optional tarball path is legacy
+(`upload_image_artifact: true` on build).
 
 A missing `vuln_fail_on_severity` key fails closed (CI-022) before Trivy/Grype
 run — it does not degrade to CRITICAL-only.
@@ -153,10 +164,9 @@ artifact downloads and code-scanning uploads do not collide or overwrite.
 ## container-published-rescan.yml
 
 Probe a registry tag (GHCR login + `docker pull`) then, when the image is
-present, call `container-scan.yml` on the same `image`. The probe fails fast
-when the tag is not pullable so Trivy/Syft/Grype do not run. After `3.0.1`
-the scan job also logs in to GHCR; the probe's Docker state does not carry
-over.
+present, call `container-scan.yml` on the same `image`. When `blocking: true`
+and the image is not pullable, the probe **fails closed**. When advisory, the
+scan job is skipped.
 
 Same-repo callers use `uses: ./.github/workflows/container-published-rescan.yml`.
 Cross-repo callers pin a SHA **after this workflow is on the default branch**
@@ -177,15 +187,16 @@ Secrets: `ghcr_token`, `scripts_token` (both optional; forwarded to
 `container-scan.yml`). Caller job must grant `packages: read`.
 
 `containerdevops-security.yml` uses this reusable for digest-pinned
-`ghcr.io/pirlruc/ci-container:3.0.0@sha256:9374acb5…` (CI-026; do not float
-`:latest`). commondevops / cppdevops stay on `container-scan.yml` until they
-can pin a released SHA of this file.
+`ghcr.io/pirlruc/ci-container:5.0.0@sha256:…` after this release (CI-026; do not
+float `:latest`). Callers pin a released SHA of this file.
 
 ## container-publish.yml
 
 | Input | Default |
 |-------|---------|
 | `image_name` | required |
+| `source_image` | `""` (`ghcr.io/…@sha256:…` from build; empty rebuilds from Dockerfile) |
+| `rebuild` | `false` (set true to ignore `source_image` and rebuild) |
 | `dockerhub_image` | `""` (set to `namespace/name` to push Hub) |
 | `platforms` | `linux/amd64,linux/arm64` |
 | `sign` | `false` |
@@ -202,6 +213,13 @@ can pin a released SHA of this file.
 | `dockerhub_short_description` | `""` (Hub short description when readme is set) |
 | `tag_suffix` | `""` (e.g. `-alpine`, `-debian`; empty = legacy unsuffixed tags only) |
 | `tag_alias_unsuffixed` | `true` (when `tag_suffix` is set, also publish the unsuffixed tag set) |
+
+`docker/metadata-action` uses `flavor: latest=false` so only explicit
+`type=raw,value=latest` rules apply. Alpine owns unsuffixed `latest`.
+
+When `source_image` is set and `rebuild` is false, publish **retags** that
+digest onto GHCR/Hub (`docker buildx imagetools create`). That is the default
+for `ci-container-image.yml` so the scanned digest is what ships.
 
 ### Variant tagging contract
 
@@ -279,3 +297,14 @@ ecosystem watches `/docker/ci-container` only). Refresh the pin in
 
 Lints the devcontainer Dockerfile (hadolint) and optionally runs
 container-structure-test when `structure_test_config` is set.
+
+## container-handoff-cleanup.yml
+
+Deletes a GHCR package **version** only when its tags are solely the ephemeral
+`ci-run-*` tag. Call from PR jobs after scan. **Never** call after publish
+retag — that digest also carries `{{version}}` / `latest`.
+
+## artifact-sweep.yml
+
+Scheduled / `workflow_dispatch` job that deletes leftover `container-image*`
+Actions artifacts. Does not delete GHCR packages or scan-result artifacts.

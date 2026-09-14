@@ -31,7 +31,7 @@ jobs:
     needs: lint
     permissions:
       contents: read
-      packages: read
+      packages: write
     uses: pirlruc/containerdevops/.github/workflows/container-build.yml@PLACEHOLDER_SHA
     with:
       context: .
@@ -50,8 +50,7 @@ jobs:
       packages: read
     uses: pirlruc/containerdevops/.github/workflows/container-scan.yml@PLACEHOLDER_SHA
     with:
-      image: containerdevops-ci:local
-      image_artifact: container-image
+      image: ${{ needs.build.outputs.image_ref }}
       scripts_ref: PLACEHOLDER_SHA
       blocking: ${{ inputs.blocking }}
     secrets:

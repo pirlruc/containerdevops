@@ -55,6 +55,13 @@ Re-filing completed or open work is a failure of this run.
 Judge every finding against least friction: a consumer can pin a SHA and call a reusable
 workflow correctly in ~10 minutes.
 
+**Evidence rule (non-negotiable):** before claiming a nested reusable, companion repo,
+or downstream workflow "declares", "requires", or "fails with" a specific permission,
+input, or behaviour, **read the referenced file in this checkout** (or fetch the pinned
+`uses:` SHA via `gh`/raw URL). Do **not** infer companion contents from naming or
+comments. Findings that guess at another workflow's `permissions:` or SARIF steps are
+invalid and must not be filed.
+
 **Also look for defects in what the tree actually ships:**
 
 | Class | Examples |
@@ -126,7 +133,7 @@ Provenance after human merge+sync uses these prefixes and the PR description; do
 
 | Area | Intent |
 |------|--------|
-| `.github/workflows/` | Reusable `container-*` workflows + self CI + ci-container caller |
+| `.github/workflows/` | Reusable `container-*` workflows (GHCR digest handoff, not image tars) + self CI + ci-container caller |
 | `scripts/` | Install, local parity, threshold readers, size gate (`du -sxm /`) |
 | `docker/ci-container/` | Container CI tooling image (extends ci-lint) |
 | `docs/` | Handoff, this prompt, authored `issues.yml`, deviations, Docker Hub and GitHub Packages pages |
