@@ -96,21 +96,32 @@ jobs:
       - name: Resolve iac_fail_on
         id: thr
         run: |
+          set -euo pipefail
           FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
-          [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
-          echo "fail_on=$(bash _containerdevops/scripts/read-thresholds.sh iac_fail_on "$FILE")" >> "$GITHUB_OUTPUT"
+          if [[ ! -f "$FILE" ]]; then
+            echo "missing vendored thresholds at $FILE" >&2
+            exit 1
+          fi
+          FAIL_ON="$(bash _containerdevops/scripts/read-thresholds.sh iac_fail_on "$FILE")"
+          echo "fail_on=${FAIL_ON}" >> "$GITHUB_OUTPUT"
 
       - name: Pull KICS (digest-pinned)
         run: docker pull "${KICS_IMAGE}"
 
       - name: KICS scan
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        id: kics
+        continue-on-error: true
         env:
           KICS_PATHS: ${{ inputs.paths }}
           KICS_EXCLUDE: ${{ inputs.exclude_paths }}
           KICS_CONFIG: ${{ inputs.kics_config }}
           FAIL_ON: ${{ steps.thr.outputs.fail_on }}
         run: |
+          set -euo pipefail
+          if [[ -z "${FAIL_ON}" ]]; then
+            echo "empty iac_fail_on" >&2
+            exit 1
+          fi
           mkdir -p kics-results
           PATHS="${KICS_PATHS}"
           EXCL="${KICS_EXCLUDE}"
@@ -144,16 +155,47 @@ jobs:
               --no-progress
 
       - name: Compose config
+        id: compose_config
         if: inputs.compose_files != ''
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        continue-on-error: true
         env:
           COMPOSE_FILES: ${{ inputs.compose_files }}
         run: |
+          set -euo pipefail
           # shellcheck disable=SC2086
           for f in $COMPOSE_FILES; do
             echo "Validating ${f}"
             docker compose -f "${f}" config --quiet
           done
+
+      - name: Compose gates (DOCKER-COMPOSE-001/002/005/006/007)
+        id: compose_gates
+        if: inputs.compose_files != ''
+        continue-on-error: true
+        env:
+          COMPOSE_FILES: ${{ inputs.compose_files }}
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC2086
+          bash _containerdevops/scripts/check-compose-gates.sh $COMPOSE_FILES
+
+      - name: Gate — iac
+        if: always()
+        env:
+          ADVISORY: ${{ env.ADVISORY }}
+          KICS: ${{ steps.kics.outcome }}
+          COMPOSE_CONFIG: ${{ steps.compose_config.outcome }}
+          COMPOSE_GATES: ${{ steps.compose_gates.outcome }}
+        run: |
+          set -euo pipefail
+          args=(kics="${KICS}")
+          if [[ "${COMPOSE_CONFIG}" != "skipped" && -n "${COMPOSE_CONFIG}" ]]; then
+            args+=(compose_config="${COMPOSE_CONFIG}")
+          fi
+          if [[ "${COMPOSE_GATES}" != "skipped" && -n "${COMPOSE_GATES}" ]]; then
+            args+=(compose_gates="${COMPOSE_GATES}")
+          fi
+          bash _containerdevops/scripts/gate-aggregate.sh "${args[@]}"
 
       - name: Upload KICS results
         if: always()
@@ -167,7 +209,7 @@ jobs:
       - name: Upload KICS SARIF
         if: always() && hashFiles('kics-results/results.sarif') != ''
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         with:
           sarif_file: kics-results/results.sarif
           category: kics

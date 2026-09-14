@@ -109,26 +109,35 @@ jobs:
         if: steps.have_df.outputs.present == 'true'
         working-directory: ${{ github.workspace }}
         run: |
+          set -euo pipefail
           FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           if [[ ! -f "$FILE" ]]; then
             echo "missing vendored thresholds at $FILE" >&2
             exit 1
           fi
-          echo "hadolint=$(bash _containerdevops/scripts/read-thresholds.sh hadolint_failure_threshold "$FILE")" >> "$GITHUB_OUTPUT"
+          VALUE="$(bash _containerdevops/scripts/read-thresholds.sh hadolint_failure_threshold "$FILE")"
+          echo "hadolint=${VALUE}" >> "$GITHUB_OUTPUT"
 
       - name: hadolint (host)
+        id: hadolint_host
         if: steps.have_df.outputs.present == 'true' && inputs.runner_image == ''
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        continue-on-error: true
         env:
           HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
           DOCKERFILE: ${{ inputs.dockerfile }}
         run: |
+          set -euo pipefail
+          if [[ -z "${HADOLINT_THRESHOLD}" ]]; then
+            echo "empty hadolint_failure_threshold" >&2
+            exit 1
+          fi
           hadolint --failure-threshold "${HADOLINT_THRESHOLD}" \
             "${DOCKERFILE}"
 
       - name: hadolint (runner_image)
+        id: hadolint_image
         if: steps.have_df.outputs.present == 'true' && inputs.runner_image != ''
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        continue-on-error: true
         env:
           WORKSPACE: ${{ github.workspace }}
           WORKING_DIRECTORY: ${{ inputs.working_directory }}
@@ -136,20 +145,47 @@ jobs:
           HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
           DOCKERFILE: ${{ inputs.dockerfile }}
         run: |
+          set -euo pipefail
+          if [[ -z "${HADOLINT_THRESHOLD}" ]]; then
+            echo "empty hadolint_failure_threshold" >&2
+            exit 1
+          fi
           docker run --rm -v "${WORKSPACE}:/work:ro" -w "/work/${WORKING_DIRECTORY}" \
             "${RUNNER_IMAGE}" \
             hadolint --failure-threshold "${HADOLINT_THRESHOLD}" \
             "${DOCKERFILE}"
 
       - name: structure-test stub
+        id: cst_stub
         if: inputs.structure_test_config != ''
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        continue-on-error: true
         env:
           STRUCTURE_TEST_CONFIG: ${{ inputs.structure_test_config }}
         run: |
+          set -euo pipefail
           if [[ ! -f "${STRUCTURE_TEST_CONFIG}" ]]; then
             echo "structure_test_config missing: ${STRUCTURE_TEST_CONFIG}" >&2
             exit 1
           fi
           echo "structure-test config present: ${STRUCTURE_TEST_CONFIG}"
           echo "::notice::CDO-006 stub — run container-build for a real image + CST"
+
+      - name: Gate — devcontainer
+        if: always()
+        working-directory: ${{ github.workspace }}
+        env:
+          ADVISORY: ${{ env.ADVISORY }}
+          HOST: ${{ steps.hadolint_host.outcome }}
+          IMAGE: ${{ steps.hadolint_image.outcome }}
+          CST: ${{ steps.cst_stub.outcome }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [[ "${HOST}" != "skipped" && -n "${HOST}" ]]; then args+=(hadolint_host="${HOST}"); fi
+          if [[ "${IMAGE}" != "skipped" && -n "${IMAGE}" ]]; then args+=(hadolint_image="${IMAGE}"); fi
+          if [[ "${CST}" != "skipped" && -n "${CST}" ]]; then args+=(cst_stub="${CST}"); fi
+          if [[ ${#args[@]} -eq 0 ]]; then
+            echo "No devcontainer gates ran"
+            exit 0
+          fi
+          bash _containerdevops/scripts/gate-aggregate.sh "${args[@]}"

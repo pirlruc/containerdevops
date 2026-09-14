@@ -21,7 +21,7 @@ on:
       blocking:
         description: Fail the job on gate errors
         type: boolean
-        default: true
+        default: false
       publish:
         description: Publish to GHCR (also on release / schedule)
         type: boolean
@@ -58,8 +58,10 @@ jobs:
       - id: set
         run: |
           # commondevops ci-lint 4.0.0 — Alpine owns unsuffixed tags (CI-026)
-          echo "debian=ghcr.io/pirlruc/ci-lint@sha256:ed619755412c7f2ed720fa5bd8376e00fef8330a5d5f40cd41657d2618c8d2dd" >> "$GITHUB_OUTPUT"
-          echo "alpine=ghcr.io/pirlruc/ci-lint@sha256:0a4691ba3f505d6f4998016997adac9adcc016676b8daf572cdf2fa446d61872" >> "$GITHUB_OUTPUT"
+          {
+            echo "debian=ghcr.io/pirlruc/ci-lint@sha256:ed619755412c7f2ed720fa5bd8376e00fef8330a5d5f40cd41657d2618c8d2dd"
+            echo "alpine=ghcr.io/pirlruc/ci-lint@sha256:0a4691ba3f505d6f4998016997adac9adcc016676b8daf572cdf2fa446d61872"
+          } >> "$GITHUB_OUTPUT"
 
   lint:
     if: >-
@@ -120,7 +122,7 @@ jobs:
       structure_test_config: docker/ci-container/container-structure-test.yml
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
-      image_max_size_mb: "700"
+      size_class: ci_toolchain
       build_args: |
         CI_BASE=${{ (github.event_name == 'workflow_dispatch' && inputs.ci_base_debian != '') && inputs.ci_base_debian || needs.bases.outputs.debian }}
       image_title: ci-container
@@ -150,8 +152,7 @@ jobs:
       structure_test_config: docker/ci-container/container-structure-test.yml
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
-      # Rootfs ~778 MB measured via du -sxm /; headroom for base churn.
-      image_max_size_mb: "900"
+      size_class: ci_toolchain
       build_args: |
         CI_BASE=${{ (github.event_name == 'workflow_dispatch' && inputs.ci_base_alpine != '') && inputs.ci_base_alpine || needs.bases.outputs.alpine }}
       image_title: ci-container

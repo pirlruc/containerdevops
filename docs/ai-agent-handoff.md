@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `common/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `main` (tag **3.1.0**) |
+| **Branch** | `feature-guardrails-16` (from `main` tag **3.1.0**) |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -20,19 +20,20 @@ Owns `.github/workflows/container-{lint,build,scan,publish,iac,devcontainer}.yml
 Shared infra/secrets/supply-chain forward to
 [pirlruc/commondevops](https://github.com/pirlruc/commondevops).
 
-## Pins (2026-09-11)
+## Pins (2026-09-14)
 
 | Submodule / artifact | Pin |
 |----------------------|-----|
-| `docs/guardrails` | commit `5a7ac83…` (`1.1.0-4`, not a tag) — **CDO-PIN-001, do not bump this wave** |
-| `.github/scaffold` | `f8a6ba1…` |
+| `docs/guardrails` | tag **1.6.0** → `77cf16eb…` |
+| `.github/scaffold` | tag **1.5.0** → `9e04ed53…` |
 | `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `3.0.0` → `sha256:9374acb5…` |
 | `ghcr.io/pirlruc/ci-container` (debian) | `3.0.0-debian` → `sha256:2345c107…` |
 | commondevops `uses:` / `scripts_ref` | tag `4.1.0` → `dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3` (CI-034 lockstep) |
 | `CI_BASE` (ci-lint debian) | `4.0.0-debian` digest `sha256:ed619755…` |
 | `CI_BASE` (ci-lint alpine) | `4.0.0` digest `sha256:0a4691ba…` |
 | `docker/setup-buildx-action` | `4.3.0` → `37fe6310…` |
-| `github/codeql-action/upload-sarif` | `4.37.8` → `db488dde…` |
+| `github/codeql-action/upload-sarif` | `4.37.9` → `cdf488f5…` |
+| `docker/setup-qemu-action` | `4.3.0` → `1f40c722…` |
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
 | Release (reusables callers pin) | **3.1.0** → `622d7215f72e52c39869aa04dc69aa2f35b9b35b` |
@@ -54,7 +55,7 @@ Shared infra/secrets/supply-chain forward to
 | CDO-IMG-003 — donor digest refresh | Done (`3.1.0`; re-confirmed, no donor bumps) |
 | CDO-WF-004 — grype/scripts_ref/KICS drift | Done (`3.1.0`) |
 | CDO-DOC-001 — workflows.md publish inputs | Done (`3.1.0`) |
-| CDO-PIN-001 — guardrails 1.6.0 pin | Open ([#111](https://github.com/pirlruc/containerdevops/issues/111)) |
+| CDO-PIN-001 — guardrails 1.6.0 pin | Done (this wave) |
 
 ## Tool versions in scripts/install-container-tools.sh
 
@@ -73,11 +74,13 @@ bash scripts/check-container-local.sh \
   --dockerfile docker/ci-container/Dockerfile.alpine \
   --context docker/ci-container \
   --structure-test docker/ci-container/container-structure-test.yml \
+  --size-class ci_toolchain \
   --advisory
+sh scripts/check-submodule-pins.sh
 docker build --build-arg CI_BASE=ci-lint:alpine-local \
   -f docker/ci-container/Dockerfile.alpine \
   -t ci-container:alpine-local docker/ci-container
-bash scripts/check-image-size.sh ci-container:alpine-local 900
+bash scripts/check-image-size.sh ci-container:alpine-local 2000
 # Local gates (prefer host PATH; else Docker):
 docker run --rm -v "$PWD:/src:ro" -w /src --entrypoint actionlint ci-lint:alpine-local .github/workflows/*.yml
 docker run --rm -v "$PWD:/src:ro" -w /src --entrypoint shellcheck ci-lint:alpine-local scripts/*.sh
@@ -87,7 +90,10 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Known pitfalls
 
-- **Caller permissions:** document in `docs/workflows.md`. Missing `packages: read`
+- **Size class:** CI toolchain images pass `size_class: ci_toolchain` so
+  `container-build.yml` reads `ci_image_max_size_mb` (2000, DOCKER-PERF-002).
+  Do not re-record DOCKER-PERF-001 deviations for ci-container.
+- **Caller permissions:** document in `docs/workflows.md` (CI-031). Missing `packages: read`
   on a container-build caller → **startup_failure**.
 - **Size gate** uses `du -sxm /` (store-independent). Do not use `docker inspect .Size`.
 - **ignorefile contract:** empty falls back to caller `.trivyignore.yaml`; set
@@ -126,10 +132,11 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Local vs Actions:** nested `workflow_call` composition cannot be exercised with
   `act` (not installed). Prefer `actionlint` + `zizmor` + disposable-container
   install tests before push; composition is verified by the PR run.
-- **Size deviation:** debian `700` / alpine `900` MB gates in
-  `docs/guardrail-deviations.yml` (DOCKER-PERF-001 / CDO-IMG-001, CDO-IMG-002).
+- **Size deviation:** retired. ci-container uses `ci_image_max_size_mb` (2000).
+  REL-CHG-001 records no root CHANGELOG (GitHub Releases; GR-CHG-001).
 - **Reusable pin vs image tag:** callers of `container-{lint,build,scan,publish}.yml`
-  pin **3.1.0** (`622d7215…`) for schedule-safe `latest` and the commondevops 4.1.0 lockstep.
+  pin **3.1.0** (`622d7215…`) until **4.0.0** lands (`size_class`, fail-closed
+  thresholds, collect-then-fail). Scheduled rescan uses digest-pinned `3.0.0`.
 - **`latest` on schedule:** `container-publish.yml` uses `github.ref_name == main` plus
   event name (`push`/`schedule`/`workflow_dispatch`). Do not reintroduce the event
   default-branch field in reusable tag logic — it is empty on `schedule`. Callers pass
@@ -146,13 +153,17 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Suggested next work
 
-1. Callers re-pin reusable workflows to tag **3.1.0** with matching `scripts_ref`.
-2. CDO-PIN-001 — re-pin `docs/guardrails` to annotated tag `1.6.0` and remediate gates.
-3. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
-4. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship rebuilt images.
+1. Callers re-pin reusable workflows to tag **4.0.0** with matching `scripts_ref`
+   and `size_class: ci_toolchain` for CI toolchain images.
+2. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
+3. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship rebuilt images.
 
 ## Recent history
 
+- 2026-09-14: CDO-PIN-001 — guardrails `1.6.0` + scaffold `1.5.0`; `size_class`
+  (DOCKER-PERF-002) retires image-size deviations; fail-closed threshold reader
+  (CI-022); collect-then-fail; compose gates; digest-pinned rescan; Dependabot
+  codeql-action 4.37.9 + setup-qemu 4.3.0.
 - 2026-09-12: Tagged **3.1.0** + GitHub Release. issues-sync closed CDO-WF-003/004, CDO-IMG-003, CDO-DOC-001; created CDO-PIN-001 (#111).
 - 2026-09-11: Wave E on `feature-wave-e-workflows` — commondevops `4.1.0`
   (`dcd9ca1c4eb8…`) lockstep `uses:`/`scripts_ref` (CI-034; do not merge PR #82's
@@ -188,4 +199,4 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-09-11*
+*Last updated: 2026-09-14*

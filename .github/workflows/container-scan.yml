@@ -143,16 +143,37 @@ jobs:
           INSTALL_ONLY: trivy,syft,grype
         run: bash _containerdevops/scripts/install-container-tools.sh
 
+      - name: Resolve vuln_fail_on_severity
+        id: thr
+        run: |
+          set -euo pipefail
+          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
+          if [[ ! -f "$FILE" ]]; then
+            echo "missing vendored thresholds at $FILE" >&2
+            exit 1
+          fi
+          SEV="$(bash _containerdevops/scripts/read-thresholds.sh vuln_fail_on_severity "$FILE")"
+          SEV_UP="$(printf '%s' "${SEV}" | tr '[:lower:]' '[:upper:]')"
+          SEV_LO="$(printf '%s' "${SEV}" | tr '[:upper:]' '[:lower:]')"
+          {
+            echo "sev_up=${SEV_UP}"
+            echo "sev_lo=${SEV_LO}"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Trivy image scan
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        id: trivy
+        continue-on-error: true
         env:
           PKG_TYPES: ${{ inputs.pkg_types }}
           IMAGE: ${{ inputs.image }}
           IGNOREFILE: ${{ inputs.ignorefile }}
+          SEV: ${{ steps.thr.outputs.sev_up }}
         run: |
-          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
-          [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
-          SEV="$(bash _containerdevops/scripts/read-thresholds.sh vuln_fail_on_severity "$FILE" | tr '[:lower:]' '[:upper:]')"
+          set -euo pipefail
+          if [[ -z "${SEV}" ]]; then
+            echo "empty vuln_fail_on_severity" >&2
+            exit 1
+          fi
           mkdir -p scan-results
           CFG=()
           [[ -f trivy.yaml ]] && CFG=(--config trivy.yaml)
@@ -178,14 +199,15 @@ jobs:
             --exit-code 1 "${CFG[@]}" "${IGNORE[@]}" "${IMAGE}"
 
       - name: Syft SBOM
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        id: syft
+        continue-on-error: true
         env:
           PKG_TYPES: ${{ inputs.pkg_types }}
           IMAGE: ${{ inputs.image }}
         run: |
+          set -euo pipefail
           mkdir -p scan-results
           SELECT=()
-          # Align SBOM with Trivy pkg_types=library (skip OS catalogers for DHI noise).
           if [[ "${PKG_TYPES}" == "library" ]]; then
             SELECT=(--select-catalogers python)
           fi
@@ -194,15 +216,15 @@ jobs:
             -o spdx-json=scan-results/sbom.spdx.json
 
       - name: Grype (SBOM)
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        id: grype
+        continue-on-error: true
         env:
           IMAGE: ${{ inputs.image }}
+          SEV: ${{ steps.thr.outputs.sev_lo }}
         run: |
-          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
-          [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
-          SEV="$(bash _containerdevops/scripts/read-thresholds.sh vuln_fail_on_severity "$FILE" | tr '[:upper:]' '[:lower:]')"
+          set -euo pipefail
           if [[ -z "${SEV}" ]]; then
-            echo "empty vuln_fail_on_severity from $FILE" >&2
+            echo "empty vuln_fail_on_severity" >&2
             exit 1
           fi
           CFG=()
@@ -214,6 +236,18 @@ jobs:
             grype "${IMAGE}" "${CFG[@]}" --fail-on "${SEV}" \
               -o json=scan-results/grype.json
           fi
+
+      - name: Gate — scan
+        if: always()
+        env:
+          ADVISORY: ${{ env.ADVISORY }}
+          TRIVY: ${{ steps.trivy.outcome }}
+          SYFT: ${{ steps.syft.outcome }}
+          GRYPE: ${{ steps.grype.outcome }}
+        run: |
+          set -euo pipefail
+          bash _containerdevops/scripts/gate-aggregate.sh \
+            trivy="${TRIVY}" syft="${SYFT}" grype="${GRYPE}"
 
       - name: Upload scan results
         if: always()
@@ -227,7 +261,7 @@ jobs:
       - name: Upload Trivy SARIF
         if: always() && hashFiles('scan-results/trivy.sarif') != ''
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         with:
           sarif_file: scan-results/trivy.sarif
           category: ${{ inputs.sarif_category }}

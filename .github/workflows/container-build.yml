@@ -45,10 +45,15 @@ on:
         type: string
         default: ""
       image_max_size_mb:
-        description: Override DOCKER-PERF-001 image_max_size_mb (empty = vendored threshold)
+        description: Override size floor in MB (empty = vendored threshold for size_class)
         required: false
         type: string
         default: ""
+      size_class:
+        description: "application (image_max_size_mb) or ci_toolchain (ci_image_max_size_mb / DOCKER-PERF-002)"
+        required: false
+        type: string
+        default: application
       image_title:
         description: OCI title label (defaults to image_name)
         required: false
@@ -169,17 +174,61 @@ jobs:
           INSTALL_ONLY: container-structure-test,dive
         run: bash _containerdevops/scripts/install-container-tools.sh
 
-      - name: Base image age gate (DOCKER-BUILD-006)
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+      - name: Require scripts_ref for cross-repo callers (CI-034)
         env:
-          DOCKERFILE: ${{ inputs.dockerfile }}
+          SCRIPTS_REF: ${{ inputs.scripts_ref }}
+          REPO: ${{ github.repository }}
         run: |
+          set -euo pipefail
+          if [[ "${REPO}" != "pirlruc/containerdevops" && -z "${SCRIPTS_REF}" ]]; then
+            echo "CI-034: cross-repo callers must pass scripts_ref matching the uses: pin" >&2
+            exit 1
+          fi
+
+      - name: Resolve docker thresholds
+        id: thr
+        env:
+          IMAGE_MAX_SIZE_MB_OVERRIDE: ${{ inputs.image_max_size_mb }}
+          SIZE_CLASS: ${{ inputs.size_class }}
+        run: |
+          set -euo pipefail
           FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
           if [[ ! -f "$FILE" ]]; then
             echo "missing vendored thresholds at $FILE" >&2
             exit 1
           fi
-          MAX="$(bash _containerdevops/scripts/read-thresholds.sh base_image_max_age_days "$FILE")"
+          AGE="$(bash _containerdevops/scripts/read-thresholds.sh base_image_max_age_days "$FILE")"
+          MIN="$(bash _containerdevops/scripts/read-thresholds.sh min_image_efficiency_percent "$FILE")"
+          SIZE_CLASS="${SIZE_CLASS:-application}"
+          if [[ -n "${IMAGE_MAX_SIZE_MB_OVERRIDE}" ]]; then
+            MAX="${IMAGE_MAX_SIZE_MB_OVERRIDE}"
+            echo "Using caller image_max_size_mb override=${MAX}"
+          else
+            case "${SIZE_CLASS}" in
+              application) KEY=image_max_size_mb ;;
+              ci_toolchain) KEY=ci_image_max_size_mb ;;
+              *)
+                echo "unknown size_class '${SIZE_CLASS}' (application|ci_toolchain)" >&2
+                exit 1
+                ;;
+            esac
+            MAX="$(bash _containerdevops/scripts/read-thresholds.sh "${KEY}" "$FILE")"
+            echo "size_class=${SIZE_CLASS} key=${KEY} max=${MAX}"
+          fi
+          {
+            echo "age=${AGE}"
+            echo "min_eff=${MIN}"
+            echo "max_mb=${MAX}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Base image age gate (DOCKER-BUILD-006)
+        id: age
+        continue-on-error: true
+        env:
+          DOCKERFILE: ${{ inputs.dockerfile }}
+          MAX: ${{ steps.thr.outputs.age }}
+        run: |
+          set -euo pipefail
           bash _containerdevops/scripts/check-base-image-age.sh \
             "${DOCKERFILE}" "${MAX}"
 
@@ -204,58 +253,65 @@ jobs:
             org.opencontainers.image.description=${{ inputs.image_description != '' && inputs.image_description || inputs.image_name }}
 
       - name: container-structure-test
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        id: cst
+        continue-on-error: true
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
           STRUCTURE_TEST_CONFIG: ${{ inputs.structure_test_config }}
         run: |
+          set -euo pipefail
           if [[ -z "${STRUCTURE_TEST_CONFIG}" ]]; then
             echo "structure_test_config empty — skipping"
             exit 0
           fi
           if [[ ! -f "${STRUCTURE_TEST_CONFIG}" ]]; then
-            echo "structure_test_config not found: ${STRUCTURE_TEST_CONFIG} — skipping"
-            exit 0
+            echo "structure_test_config not found: ${STRUCTURE_TEST_CONFIG}" >&2
+            exit 1
           fi
           container-structure-test test \
             --image "${IMAGE_NAME}" \
             --config "${STRUCTURE_TEST_CONFIG}"
 
       - name: Image size gate
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        id: size
+        continue-on-error: true
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
-          IMAGE_MAX_SIZE_MB_OVERRIDE: ${{ inputs.image_max_size_mb }}
+          MAX: ${{ steps.thr.outputs.max_mb }}
         run: |
-          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
-          [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
-          if [[ -n "${IMAGE_MAX_SIZE_MB_OVERRIDE}" ]]; then
-            MAX="${IMAGE_MAX_SIZE_MB_OVERRIDE}"
-            echo "Using caller image_max_size_mb override=${MAX}"
-          else
-            MAX="$(bash _containerdevops/scripts/read-thresholds.sh image_max_size_mb "$FILE")"
-          fi
+          set -euo pipefail
           bash _containerdevops/scripts/check-image-size.sh "${IMAGE_NAME}" "${MAX}"
 
       - name: Dive efficiency
-        continue-on-error: ${{ env.ADVISORY == 'true' }}
+        id: dive
+        continue-on-error: true
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
+          MIN: ${{ steps.thr.outputs.min_eff }}
         run: |
-          FILE="_containerdevops/scripts/docker.profile.thresholds.yml"
-          [[ -f "$FILE" ]] || FILE="docs/guardrails/docker/profile.thresholds.yml"
-          MIN="$(bash _containerdevops/scripts/read-thresholds.sh min_image_efficiency_percent "$FILE")"
+          set -euo pipefail
           set +e
           dive --ci --json dive-report.json "${IMAGE_NAME}"
           dive_rc=$?
           set -e
           if [[ ! -f dive-report.json ]]; then
-            echo "dive failed without JSON (exit ${dive_rc}) — not an efficiency miss"
-            [[ "${ADVISORY}" == "true" ]] || exit "${dive_rc}"
-          else
-            # dive --ci may exit non-zero on its own thresholds; org floor is enforced here.
-            bash _containerdevops/scripts/check-image-efficiency.sh "${MIN}" dive-report.json
+            echo "dive failed without JSON (exit ${dive_rc}) — not an efficiency miss" >&2
+            exit "${dive_rc}"
           fi
+          bash _containerdevops/scripts/check-image-efficiency.sh "${MIN}" dive-report.json
+
+      - name: Gate — build
+        if: always()
+        env:
+          ADVISORY: ${{ env.ADVISORY }}
+          AGE: ${{ steps.age.outcome }}
+          CST: ${{ steps.cst.outcome }}
+          SIZE: ${{ steps.size.outcome }}
+          DIVE: ${{ steps.dive.outcome }}
+        run: |
+          set -euo pipefail
+          bash _containerdevops/scripts/gate-aggregate.sh \
+            age="${AGE}" cst="${CST}" size="${SIZE}" dive="${DIVE}"
 
       - name: Save image tarball
         if: always()
