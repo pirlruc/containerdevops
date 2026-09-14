@@ -346,7 +346,9 @@ jobs:
 
       - name: Push ephemeral GHCR handoff
         id: handoff
-        if: always() && steps.build.outcome == 'success'
+        # Do not use `if: always()` — reusable-workflow job outputs from always()
+        # steps are empty for the caller (needs.*.outputs.image_ref).
+        if: steps.build.outcome == 'success'
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
           ARTIFACT_NAME: ${{ inputs.artifact_name }}
@@ -369,19 +371,22 @@ jobs:
           dest="ghcr.io/${OWNER}/${pkg}:${tag}"
           docker tag "${IMAGE_NAME}" "${dest}"
           docker push "${dest}"
-          ref="$(docker image inspect "${dest}" --format '{{index .RepoDigests 0}}')"
-          if [[ -z "${ref}" || "${ref}" == "<no value>" ]]; then
-            echo "push succeeded but RepoDigests empty" >&2
+          # Always emit a ghcr.io digest ref. RepoDigests[0] can omit the registry
+          # prefix, which skips GHCR login in container-scan.yml.
+          digest="$(docker image inspect "${dest}" --format '{{range .RepoDigests}}{{println .}}{{end}}' \
+            | awk -F@ -v p="ghcr.io/${OWNER}/${pkg}@" '$0 ~ p {print $2; exit}')"
+          if [[ -z "${digest}" || "${digest}" != sha256:* ]]; then
+            echo "push succeeded but GHCR digest missing" >&2
             exit 1
           fi
-          digest="${ref#*@}"
+          image_ref="ghcr.io/${OWNER}/${pkg}@${digest}"
           {
-            echo "image_ref=${ref}"
+            echo "image_ref=${image_ref}"
             echo "digest=${digest}"
             echo "handoff_tag=${tag}"
             echo "handoff_package=${pkg}"
           } >> "$GITHUB_OUTPUT"
-          echo "handoff ${ref}"
+          echo "handoff ${image_ref}"
 
       - name: Save image tarball (legacy)
         if: always() && inputs.upload_image_artifact
