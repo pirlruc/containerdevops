@@ -13,13 +13,14 @@ Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails
 | Workflow | Purpose |
 |----------|---------|
 | `container-lint.yml` | hadolint, shellcheck; optional nested commondevops infra/secrets |
-| `container-build.yml` | buildx (no push), structure-test, dive, size gate (`du -sxm /`) |
+| `container-build.yml` | buildx, structure-test, dive, size gate; GHCR digest handoff (`image_ref`) |
 | `container-scan.yml` | Trivy + Syft SBOM + Grype on the **built image** |
 | `container-published-rescan.yml` | GHCR probe + `container-scan.yml` for a published registry tag |
 | `container-publish.yml` | Multi-arch push to GHCR and Docker Hub; optional cosign + provenance |
 | `container-iac.yml` | KICS + `docker compose config` + DOCKER-COMPOSE measurable gates |
 | `container-devcontainer.yml` | Devcontainer Dockerfile lint (structure-test stub) |
-| `ci-container-image.yml` | Publish `ghcr.io/pirlruc/ci-container` |
+| `container-handoff-cleanup.yml` | PR-only delete of `ci-run-*` GHCR versions |
+| `artifact-sweep.yml` | Scheduled delete of leftover `container-image*` artifacts |
 
 All workflows accept `blocking` (default `false`) using the advisory pattern, and
 are callable via `workflow_call` or manual `workflow_dispatch`.
@@ -53,7 +54,7 @@ jobs:
   build:
     permissions:
       contents: read
-      packages: read
+      packages: write
     uses: pirlruc/containerdevops/.github/workflows/container-build.yml@<sha>
     with:
       context: .
@@ -62,13 +63,27 @@ jobs:
       blocking: ${{ inputs.blocking }}
     secrets:
       scripts_token: ${{ secrets.CONTAINERDEVOPS_READ_TOKEN }}
+  scan:
+    needs: build
+    permissions:
+      contents: read
+      security-events: write
+      packages: read
+    uses: pirlruc/containerdevops/.github/workflows/container-scan.yml@<sha>
+    with:
+      image: ${{ needs.build.outputs.image_ref }}
+      scripts_ref: <sha>
+      blocking: ${{ inputs.blocking }}
+    secrets:
+      scripts_token: ${{ secrets.CONTAINERDEVOPS_READ_TOKEN }}
 ```
 
-Publish workflows need `packages: write`, `id-token: write`, and Docker Hub
-credentials (`DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`) when pushing to Docker Hub.
-Signing (`sign: true`) is intended for public repositories; private repos should
-record `DOCKER-SEC-003` / `DOCKER-SEC-004` deviations until they go public or move
-to Enterprise Cloud.
+Build jobs need `packages: write` so the ephemeral `ci-run-*` handoff can push
+to GHCR. Scan jobs need `packages: read` and `image: ${{ needs.build.outputs.image_ref }}`.
+Publish workflows need `packages: write`, `id-token: write`, `source_image` from
+the scanned digest, and Docker Hub credentials (`DOCKERHUB_USERNAME` /
+`DOCKERHUB_TOKEN`) when pushing to Docker Hub. Signing (`sign: true`) is intended
+for public repositories; this private repo records `SC-SIGN-001` / `SC-PROV-001`.
 
 ## Local parity
 
@@ -110,3 +125,4 @@ Consumer docs:
 | `templates/` | hadolint, trivy, grype, syft, structure-test, kics, thin caller |
 | `docs/guardrails/` | Pinned submodule |
 | `.github/scaffold/` | Pinned submodule |
+| `CHANGELOG.md` | Keep a Changelog (REL-CHG-001) |

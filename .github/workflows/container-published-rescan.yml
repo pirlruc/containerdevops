@@ -97,12 +97,18 @@ jobs:
       - id: probe
         env:
           IMAGE: ${{ inputs.image }}
+          BLOCKING: ${{ inputs.blocking }}
         run: |
+          set -euo pipefail
           if docker pull "${IMAGE}"; then
             echo "present=true" >> "$GITHUB_OUTPUT"
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
             echo "${IMAGE} not pullable yet; rescan will skip"
+            if [[ "${BLOCKING}" == "true" ]]; then
+              echo "::error::${IMAGE} not pullable (blocking rescan)"
+              exit 1
+            fi
           fi
 
   scan:

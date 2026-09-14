@@ -207,11 +207,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p scan-results
-          SELECT=()
-          if [[ "${PKG_TYPES}" == "library" ]]; then
-            SELECT=(--select-catalogers python)
-          fi
-          syft "${IMAGE}" "${SELECT[@]}" \
+          syft "${IMAGE}" \
             -o cyclonedx-json=scan-results/sbom.cdx.json \
             -o spdx-json=scan-results/sbom.spdx.json
 
@@ -256,7 +252,7 @@ jobs:
           name: ${{ inputs.results_artifact }}
           path: scan-results/
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 1
 
       - name: Upload Trivy SARIF
         if: always() && hashFiles('scan-results/trivy.sarif') != ''

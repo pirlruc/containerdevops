@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `common/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `main` tag **4.0.0** |
+| **Branch** | `feature-ghcr-handoff-5.0.0` → tag **5.0.0** |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -26,9 +26,9 @@ Shared infra/secrets/supply-chain forward to
 |----------------------|-----|
 | `docs/guardrails` | tag **1.6.0** → `77cf16eb…` |
 | `.github/scaffold` | tag **1.5.0** → `9e04ed53…` |
-| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `3.0.0` → `sha256:9374acb5…` |
-| `ghcr.io/pirlruc/ci-container` (debian) | `3.0.0-debian` → `sha256:2345c107…` |
-| commondevops `uses:` / `scripts_ref` | tag `4.1.0` → `dcd9ca1c4eb8faedba170fef5dbecc61d7b284b3` (CI-034 lockstep) |
+| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `5.0.0` (digest after Release publish) |
+| `ghcr.io/pirlruc/ci-container` (debian) | `5.0.0-debian` (digest after Release publish) |
+| commondevops `uses:` / `scripts_ref` | tag `5.0.0` → `bcddb5db4ba5d291aa7f434d447e43175f14136c` (CI-034 lockstep) |
 | `CI_BASE` (ci-lint debian) | `4.0.0-debian` digest `sha256:ed619755…` |
 | `CI_BASE` (ci-lint alpine) | `4.0.0` digest `sha256:0a4691ba…` |
 | `docker/setup-buildx-action` | `4.3.0` → `37fe6310…` |
@@ -36,8 +36,8 @@ Shared infra/secrets/supply-chain forward to
 | `docker/setup-qemu-action` | `4.3.0` → `1f40c722…` |
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
-| Release (reusables callers pin) | **4.0.0** → `a29ebe54d321e25e639ff34b704da1a0ddd45655` |
-| Release (ci-container image) | `3.0.0` (Alpine owns unsuffixed) |
+| Release (reusables callers pin) | **5.0.0** (SHA after merge) |
+| Release (ci-container image) | `5.0.0` (Alpine owns unsuffixed; `flavor: latest=false`) |
 
 ## Delivery status
 
@@ -93,8 +93,9 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Size class:** CI toolchain images pass `size_class: ci_toolchain` so
   `container-build.yml` reads `ci_image_max_size_mb` (2000, DOCKER-PERF-002).
   Do not re-record DOCKER-PERF-001 deviations for ci-container.
-- **Caller permissions:** document in `docs/workflows.md` (CI-031). Missing `packages: read`
-  on a container-build caller → **startup_failure**.
+- **Caller permissions:** document in `docs/workflows.md` (CI-031). Build callers
+  need `packages: write` (ephemeral GHCR handoff). Missing that → **startup_failure**.
+  Scan callers still need `packages: read` and `image: ${{ needs.build.outputs.image_ref }}`.
 - **Size gate** uses `du -sxm /` (store-independent). Do not use `docker inspect .Size`.
 - **ignorefile contract:** empty falls back to caller `.trivyignore.yaml`; set
   `ignorefile: none` (or `--no-ignorefile` locally) for unfiltered posture scans.
@@ -132,14 +133,21 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Local vs Actions:** nested `workflow_call` composition cannot be exercised with
   `act` (not installed). Prefer `actionlint` + `zizmor` + disposable-container
   install tests before push; composition is verified by the PR run.
+  Host dive fallback writes `dive-report.json` in the repo (gitignored); do not
+  mount `/tmp` for the JSON on Docker Desktop.
 - **Size deviation:** retired. ci-container uses `ci_image_max_size_mb` (2000).
-  REL-CHG-001 records no root CHANGELOG (GitHub Releases; GR-CHG-001).
+  REL-CHG-001 is closed by root `CHANGELOG.md`. Unsigned private publish is
+  recorded as SC-SIGN-001 / SC-PROV-001.
+- **GHCR handoff:** do **not** delete published GHCR/Packages versions. PR
+  cleanup may delete a version only when its tags are solely `ci-run-*`. After
+  publish retag the same digest carries `5.0.0`/`latest` — never sweep it.
 - **Reusable pin vs image tag:** callers of `container-{lint,build,scan,publish}.yml`
-  pin **4.0.0** (`a29ebe54…`). Scheduled rescan uses digest-pinned `3.0.0`.
-- **`latest` on schedule:** `container-publish.yml` uses `github.ref_name == main` plus
-  event name (`push`/`schedule`/`workflow_dispatch`). Do not reintroduce the event
-  default-branch field in reusable tag logic — it is empty on `schedule`. Callers pass
-  `tag_latest` only on non-prerelease **release** events.
+  pin **5.0.0**. Scheduled rescan still uses the last published alpine digest
+  until the 5.0.0 digest is written back.
+- **`latest` on schedule:** `flavor: latest=false` plus explicit
+  `type=raw,value=latest`. Alpine (`tag_alias_unsuffixed: true`) owns unsuffixed
+  `latest`. Do not reintroduce metadata-action's default `latest=auto`. Callers
+  pass `tag_latest` only on non-prerelease **release** events.
 - **KICS digest:** `KICS_IMAGE` in `container-iac.yml` is a workflow env pin. Dependabot
   docker watches `/docker/ci-container` only and cannot bump env-var digests. Refresh
   manually (CDO-WF-004-T3). GitHub `checkmarx/kics` `v2.1.21` (2026-07-30) has no Hub
@@ -152,13 +160,17 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Suggested next work
 
-1. Callers re-pin reusable workflows to tag **4.0.0** with matching `scripts_ref`
-   and `size_class: ci_toolchain` for CI toolchain images.
-2. Confirm the next monthly Dependabot `all-dependencies` PR (Insights).
+1. After the 5.0.0 GitHub Release, write alpine/debian digests into
+   `containerdevops-security.yml` and this pins table.
+2. commondevops / cppdevops re-pin `uses:` + `scripts_ref` to this 5.0.0 SHA
+   and drop `image_artifact` (pass `image_ref`; grant `packages: write` on build).
 3. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship rebuilt images.
 
 ## Recent history
 
+- 2026-09-14: **5.0.0** — GHCR digest handoff (no default image tar),
+  `flavor: latest=false`, CHANGELOG, SC-SIGN-001 / SC-PROV-001, 1-day scan
+  artifacts, PR-only `ci-run-*` cleanup, artifact sweep.
 - 2026-09-14: Tagged **4.0.0** + GitHub Release (`a29ebe54…`, #114). Callers pin
   `size_class: ci_toolchain` and matching `scripts_ref`.
 - 2026-09-14: CDO-PIN-001 — guardrails `1.6.0` + scaffold `1.5.0`; `size_class`

@@ -65,10 +65,33 @@ on:
         type: string
         default: ""
       artifact_name:
-        description: Upload artifact name for image.tar (unique when multiple builds share a run)
+        description: Cache scope and ephemeral GHCR tag suffix (unique when multiple builds share a run)
         required: false
         type: string
         default: container-image
+      upload_image_artifact:
+        description: Also upload image.tar (legacy handoff). Default false — scan should pull image_ref.
+        required: false
+        type: boolean
+        default: false
+      handoff_package:
+        description: "GHCR package name for the ephemeral push (default: image_name before colon)"
+        required: false
+        type: string
+        default: ""
+    outputs:
+      image_ref:
+        description: "GHCR digest ref (ghcr.io/owner/pkg@sha256:…) for scan/publish"
+        value: ${{ jobs.build.outputs.image_ref }}
+      digest:
+        description: "Image digest (sha256:…)"
+        value: ${{ jobs.build.outputs.digest }}
+      handoff_tag:
+        description: Ephemeral ci-run-* tag (delete after PR scan; do not delete after publish retag)
+        value: ${{ jobs.build.outputs.handoff_tag }}
+      handoff_package:
+        description: GHCR package name that received the ephemeral tag
+        value: ${{ jobs.build.outputs.handoff_package }}
     secrets:
       # Optional — required when Dockerfile FROM lines pull from dhi.io (Community DHI).
       DOCKERHUB_USERNAME:
@@ -123,6 +146,8 @@ permissions: {}
 
 env:
   ADVISORY: ${{ inputs.blocking == false }}
+  DOCKER_BUILD_SUMMARY: "false"
+  DOCKER_BUILD_RECORD_RETENTION_DAYS: "0"
 
 jobs:
   build:
@@ -131,7 +156,12 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: read
-      packages: read
+      packages: write
+    outputs:
+      image_ref: ${{ steps.handoff.outputs.image_ref }}
+      digest: ${{ steps.handoff.outputs.digest }}
+      handoff_tag: ${{ steps.handoff.outputs.handoff_tag }}
+      handoff_package: ${{ steps.handoff.outputs.handoff_package }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -245,7 +275,7 @@ jobs:
           build-args: ${{ inputs.build_args }}
           # Per-variant scope so parallel debian/alpine builds do not thrash one cache.
           cache-from: type=gha,scope=${{ inputs.artifact_name }}
-          cache-to: type=gha,mode=max,scope=${{ inputs.artifact_name }}
+          cache-to: type=gha,mode=min,scope=${{ inputs.artifact_name }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -304,6 +334,7 @@ jobs:
         if: always()
         env:
           ADVISORY: ${{ env.ADVISORY }}
+          BUILD: ${{ steps.build.outcome }}
           AGE: ${{ steps.age.outcome }}
           CST: ${{ steps.cst.outcome }}
           SIZE: ${{ steps.size.outcome }}
@@ -311,10 +342,49 @@ jobs:
         run: |
           set -euo pipefail
           bash _containerdevops/scripts/gate-aggregate.sh \
-            age="${AGE}" cst="${CST}" size="${SIZE}" dive="${DIVE}"
+            build="${BUILD}" age="${AGE}" cst="${CST}" size="${SIZE}" dive="${DIVE}"
 
-      - name: Save image tarball
-        if: always()
+      - name: Push ephemeral GHCR handoff
+        id: handoff
+        if: always() && steps.build.outcome == 'success'
+        env:
+          IMAGE_NAME: ${{ inputs.image_name }}
+          ARTIFACT_NAME: ${{ inputs.artifact_name }}
+          HANDOFF_PACKAGE: ${{ inputs.handoff_package }}
+          OWNER: ${{ github.repository_owner }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          pkg="${HANDOFF_PACKAGE}"
+          if [[ -z "${pkg}" ]]; then
+            pkg="${IMAGE_NAME%%:*}"
+          fi
+          suffix="${ARTIFACT_NAME}"
+          suffix="${suffix#container-image-}"
+          suffix="${suffix#container-image}"
+          if [[ -z "${suffix}" ]]; then
+            suffix="default"
+          fi
+          tag="ci-run-${RUN_ID}-${suffix}"
+          dest="ghcr.io/${OWNER}/${pkg}:${tag}"
+          docker tag "${IMAGE_NAME}" "${dest}"
+          docker push "${dest}"
+          ref="$(docker image inspect "${dest}" --format '{{index .RepoDigests 0}}')"
+          if [[ -z "${ref}" || "${ref}" == "<no value>" ]]; then
+            echo "push succeeded but RepoDigests empty" >&2
+            exit 1
+          fi
+          digest="${ref#*@}"
+          {
+            echo "image_ref=${ref}"
+            echo "digest=${digest}"
+            echo "handoff_tag=${tag}"
+            echo "handoff_package=${pkg}"
+          } >> "$GITHUB_OUTPUT"
+          echo "handoff ${ref}"
+
+      - name: Save image tarball (legacy)
+        if: always() && inputs.upload_image_artifact
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
         run: |
@@ -325,8 +395,8 @@ jobs:
           docker save "${IMAGE_NAME}" -o image.tar
           docker image inspect "${IMAGE_NAME}" --format '{{.Id}}' > image-id.txt
 
-      - name: Upload image artifact
-        if: always()
+      - name: Upload image artifact (legacy)
+        if: always() && inputs.upload_image_artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ inputs.artifact_name }}
@@ -335,4 +405,4 @@ jobs:
             image-id.txt
             dive-report.json
           if-no-files-found: ignore
-          retention-days: 3
+          retention-days: 1

@@ -9,13 +9,22 @@ deviations:
   # DOCKER-PERF-001 image_max_size_mb deviations retired: ci-container is a CI
   # toolchain image and uses ci_image_max_size_mb (2000) via size_class=ci_toolchain
   # (DOCKER-PERF-002 / CDO-PIN-001).
-  - id: REL-CHG-001
-    key: changelog_required
-    org_default: true
-    repo_value: false
+  - id: SC-SIGN-001
     why: >-
-      Release-notes-only ops repo; GitHub Releases carry the notes. Guardrails
-      GR-CHG-001 is open to clarify changelog_required for this case.
+      Private Free-plan repository; Sigstore keyless signing is unavailable.
+      Publish sets sign=false until the repo is public or a signing key is
+      provisioned. Documented Free-plan pattern in guardrails 1.6.0
+      supply-chain/guardrails.md.
+    epic: CDO-PIN-001
+    owner: pirlruc
+    approved_by: Engineering Lead
+    review: 2026-12-31
+  - id: SC-PROV-001
+    why: >-
+      Private Free-plan repository; provenance attestation is unavailable.
+      container-publish.yml keeps provenance: false / sbom: false on
+      build-push-action; actions/attest-build-provenance runs only when sign
+      is true (public repos).
     epic: CDO-PIN-001
     owner: pirlruc
     approved_by: Engineering Lead

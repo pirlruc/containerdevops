@@ -1,0 +1,60 @@
+name: Container handoff cleanup (reusable)
+
+# Deletes a GHCR package *version* whose only remaining tag is the ephemeral
+# ci-run-* handoff tag. Do not call this after publish retag — that digest also
+# carries version/latest tags and deleting the version would unpublish.
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        description: GHCR package name (e.g. ci-container)
+        required: true
+        type: string
+      tag:
+        description: Ephemeral tag to delete (e.g. ci-run-123-debian)
+        required: true
+        type: string
+      owner:
+        description: Package owner (default github.repository_owner)
+        required: false
+        type: string
+        default: ""
+
+permissions: {}
+
+jobs:
+  cleanup:
+    if: inputs.package != '' && inputs.tag != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      packages: write
+    steps:
+      - name: Delete ephemeral GHCR tag version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ inputs.owner != '' && inputs.owner || github.repository_owner }}
+          PKG: ${{ inputs.package }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          enc="$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=""))' "${PKG}")"
+          ids="$(gh api --paginate "/users/${OWNER}/packages/container/${enc}/versions" \
+            --jq ".[] | select(.metadata.container.tags[]? == \"${TAG}\") | .id" || true)"
+          if [[ -z "${ids}" ]]; then
+            echo "no version found for ${OWNER}/${PKG}:${TAG}"
+            exit 0
+          fi
+          while IFS= read -r id; do
+            [[ -z "${id}" ]] && continue
+            tags="$(gh api "/users/${OWNER}/packages/container/${enc}/versions/${id}" \
+              --jq '[.metadata.container.tags[]?] | join(",")')"
+            extra="$(printf '%s' "${tags}" | tr ',' '\n' | grep -v -e "^${TAG}$" -e '^$' || true)"
+            if [[ -n "${extra}" ]]; then
+              echo "refusing to delete version ${id} — also tagged: ${extra}"
+              continue
+            fi
+            echo "deleting ${OWNER}/${PKG} version ${id} (tag ${TAG})"
+            gh api -X DELETE "/users/${OWNER}/packages/container/${enc}/versions/${id}"
+          done <<< "${ids}"

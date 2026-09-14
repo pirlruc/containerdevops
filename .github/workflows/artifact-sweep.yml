@@ -1,0 +1,38 @@
+name: Artifact sweep (container-image*)
+
+# Safety net for leftover image-tar artifacts from pre-5.0.0 runs.
+# Does not delete GHCR packages, container-scan-*, or common-supply-chain-results.
+
+on:
+  schedule:
+    - cron: "12 4 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  sweep:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: write
+    steps:
+      - name: Delete container-image* artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # Collect IDs first so pagination is not invalidated by deletes.
+          mapfile -t rows < <(gh api --paginate "/repos/${REPO}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.expired|not) | select(.name|startswith("container-image")) | [.id,.name] | @tsv')
+          deleted=0
+          for row in "${rows[@]}"; do
+            [[ -z "${row}" ]] && continue
+            id="${row%%$'\t'*}"
+            name="${row#*$'\t'}"
+            echo "deleting ${name} (${id})"
+            gh api -X DELETE "/repos/${REPO}/actions/artifacts/${id}"
+            deleted=$((deleted + 1))
+          done
+          echo "deleted ${deleted} container-image* artifacts"

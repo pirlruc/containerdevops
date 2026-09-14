@@ -125,6 +125,18 @@ on:
         required: false
         type: boolean
         default: true
+      source_image:
+        description: >-
+          Scanned digest ref (ghcr.io/owner/name@sha256:…). When set, publish retags
+          that digest instead of rebuilding. Empty keeps the Dockerfile rebuild path.
+        required: false
+        type: string
+        default: ""
+      rebuild:
+        description: Force Dockerfile rebuild even when source_image is set
+        required: false
+        type: boolean
+        default: false
     secrets:
       DOCKERHUB_USERNAME:
         required: false
@@ -213,6 +225,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Set up QEMU
+        if: inputs.source_image == '' || inputs.rebuild
         uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
 
       - name: Set up Docker Buildx
@@ -236,6 +249,7 @@ jobs:
           password: ${{ secrets.ghcr_token || github.token }}
 
       - name: Prefetch CI_BASE from build_args
+        if: inputs.source_image == '' || inputs.rebuild
         env:
           BUILD_ARGS: ${{ inputs.build_args }}
         run: |
@@ -289,6 +303,8 @@ jobs:
           # fails with "index annotations not supported for single platform export".
           DOCKER_METADATA_ANNOTATIONS_LEVELS: ${{ contains(inputs.platforms, ',') && 'index,manifest' || 'manifest' }}
         with:
+          flavor: |
+            latest=false
           images: ${{ steps.owner.outputs.images }}
           tags: |
             type=semver,pattern={{version}},suffix=${{ inputs.tag_suffix }}
@@ -318,9 +334,13 @@ jobs:
             ${{ inputs.image_vendor != '' && format('org.opencontainers.image.vendor={0}', inputs.image_vendor) || '' }}
 
       - name: Build and push
-        id: build
+        id: rebuild
+        if: inputs.source_image == '' || inputs.rebuild
         continue-on-error: ${{ env.ADVISORY == 'true' }}
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        env:
+          DOCKER_BUILD_SUMMARY: "false"
+          DOCKER_BUILD_RECORD_RETENTION_DAYS: "0"
         with:
           context: ${{ inputs.context }}
           file: ${{ inputs.dockerfile }}
@@ -332,9 +352,45 @@ jobs:
           provenance: false
           sbom: false
           build-args: ${{ inputs.build_args }}
-          # Per-variant scope so parallel debian/alpine builds do not thrash one cache.
           cache-from: type=gha,scope=publish-${{ inputs.image_name }}${{ inputs.tag_suffix }}
-          cache-to: type=gha,mode=max,scope=publish-${{ inputs.image_name }}${{ inputs.tag_suffix }}
+          cache-to: type=gha,mode=min,scope=publish-${{ inputs.image_name }}${{ inputs.tag_suffix }}
+
+      - name: Retag scanned digest
+        id: retag
+        if: inputs.source_image != '' && inputs.rebuild == false
+        env:
+          SOURCE: ${{ inputs.source_image }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          if [[ "${SOURCE}" != *@sha256:* ]]; then
+            echo "source_image must be a digest ref (got ${SOURCE})" >&2
+            exit 1
+          fi
+          digest="${SOURCE#*@}"
+          while IFS= read -r tag; do
+            [[ -z "${tag}" ]] && continue
+            docker buildx imagetools create --tag "${tag}" "${SOURCE}"
+          done <<< "${TAGS}"
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+
+      - name: Record publish digest
+        id: build
+        env:
+          REBUILD_DIGEST: ${{ steps.rebuild.outputs.digest }}
+          RETAG_DIGEST: ${{ steps.retag.outputs.digest }}
+          SOURCE: ${{ inputs.source_image }}
+          REBUILD: ${{ inputs.rebuild }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${RETAG_DIGEST}" ]]; then
+            echo "digest=${RETAG_DIGEST}" >> "$GITHUB_OUTPUT"
+          elif [[ -n "${REBUILD_DIGEST}" ]]; then
+            echo "digest=${REBUILD_DIGEST}" >> "$GITHUB_OUTPUT"
+          else
+            echo "no publish digest" >&2
+            exit 1
+          fi
 
       - name: Docker Hub Overview
         # Only the variant that owns unsuffixed tags (or a legacy single-variant

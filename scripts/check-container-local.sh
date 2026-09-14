@@ -122,18 +122,18 @@ echo "==> image size"
 bash "${ROOT}/scripts/check-image-size.sh" "${IMAGE}" "${MAX_MB}"
 
 echo "==> dive efficiency (min ${MIN_EFF}%)"
-DIVE_DIR="$(mktemp -d)"
-DIVE_JSON="${DIVE_DIR}/dive.json"
-trap 'rm -rf "${DIVE_DIR}"' EXIT
+DIVE_JSON="${ROOT}/dive-report.json"
+rm -f "${DIVE_JSON}"
 set +e
 if command -v dive >/dev/null 2>&1; then
   dive --ci --json "${DIVE_JSON}" "${IMAGE}"
   dive_rc=$?
 else
+  # Mount the repo (not /tmp) so Docker Desktop file-sharing includes the JSON path.
   docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-    -v "${DIVE_DIR}:/out" \
+    -v "${ROOT}:/work" -w /work \
     wagoodman/dive:v0.13.1@sha256:f1886e6c32c094fc41a623c1989f5cb3e48aa766da5f0be233f911fc1d85ce10 \
-    --ci --json /out/dive.json "${IMAGE}"
+    --ci --json /work/dive-report.json "${IMAGE}"
   dive_rc=$?
 fi
 set -e

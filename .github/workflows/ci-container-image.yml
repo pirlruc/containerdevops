@@ -98,7 +98,7 @@ jobs:
       scripts_ref: ${{ github.sha }}
       runner_image: ""
       run_infra_lint: false
-      run_secrets_scan: false
+      run_secrets_scan: true
       blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
@@ -112,13 +112,14 @@ jobs:
        github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
       contents: read
-      packages: read
+      packages: write
     uses: ./.github/workflows/container-build.yml
     with:
       context: docker/ci-container
       dockerfile: docker/ci-container/Dockerfile
       image_name: ci-container:ci-debian
       artifact_name: container-image-debian
+      handoff_package: ci-container
       structure_test_config: docker/ci-container/container-structure-test.yml
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
@@ -142,13 +143,14 @@ jobs:
        github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
       contents: read
-      packages: read
+      packages: write
     uses: ./.github/workflows/container-build.yml
     with:
       context: docker/ci-container
       dockerfile: docker/ci-container/Dockerfile.alpine
       image_name: ci-container:ci-alpine
       artifact_name: container-image-alpine
+      handoff_package: ci-container
       structure_test_config: docker/ci-container/container-structure-test.yml
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
@@ -176,8 +178,7 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-scan.yml
     with:
-      image: ci-container:ci-debian
-      image_artifact: container-image-debian
+      image: ${{ needs.build.outputs.image_ref }}
       results_artifact: container-scan-results-debian
       sarif_category: trivy-image-debian
       scripts_ref: ${{ github.sha }}
@@ -197,8 +198,7 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-scan.yml
     with:
-      image: ci-container:ci-alpine
-      image_artifact: container-image-alpine
+      image: ${{ needs.build-alpine.outputs.image_ref }}
       results_artifact: container-scan-results-alpine
       sarif_category: trivy-image-alpine
       scripts_ref: ${{ github.sha }}
@@ -248,6 +248,7 @@ jobs:
       tag_latest: ${{ github.event_name == 'release' && github.event.release.prerelease == false }}
       verify_platforms: true
       verify_command: /bin/true
+      source_image: ${{ needs.build.outputs.image_ref }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -296,7 +297,30 @@ jobs:
       tag_latest: ${{ github.event_name == 'release' && github.event.release.prerelease == false }}
       verify_platforms: true
       verify_command: /bin/true
+      source_image: ${{ needs.build-alpine.outputs.image_ref }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       ghcr_token: ${{ secrets.GHCR_READ_TOKEN }}
+
+  # PR-only: the ci-run-* version is not also a release tag. After publish retag,
+  # the same digest carries version/latest — never delete that version.
+  cleanup:
+    needs: [build, scan]
+    if: always() && github.event_name == 'pull_request' && needs.build.outputs.handoff_tag != ''
+    permissions:
+      packages: write
+    uses: ./.github/workflows/container-handoff-cleanup.yml
+    with:
+      package: ${{ needs.build.outputs.handoff_package }}
+      tag: ${{ needs.build.outputs.handoff_tag }}
+
+  cleanup-alpine:
+    needs: [build-alpine, scan-alpine]
+    if: always() && github.event_name == 'pull_request' && needs.build-alpine.outputs.handoff_tag != ''
+    permissions:
+      packages: write
+    uses: ./.github/workflows/container-handoff-cleanup.yml
+    with:
+      package: ${{ needs.build-alpine.outputs.handoff_package }}
+      tag: ${{ needs.build-alpine.outputs.handoff_tag }}
