@@ -110,6 +110,9 @@ python3 .github/scaffold/scripts/issues-sync.py \
   Hub Overview sync runs only for the unsuffixed-owning variant.
 - **GHA cache scope:** build uses `scope=<artifact_name>`; publish uses
   `scope=publish-<image_name><tag_suffix>` so parallel variants do not thrash.
+  `cache-to` is `type=gha,mode=min` (not `mode=max`). Leftover `container-image-*`
+  Actions artifacts were deleted 2026-09-15. Do **not** delete published GHCR/Hub
+  tags.
 - **verify_command** must be a simple argv (no shell metacharacters); runs via
   `--entrypoint`, not `bash -lc`.
 - **OCI labels:** `docker/metadata-action` defaults to repo name/description. Pass
@@ -167,12 +170,12 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 1. After the 5.0.2 GitHub Release, write alpine/debian digests into
    `containerdevops-security.yml` and this pins table.
-2. commondevops / cppdevops re-pin `uses:` + `scripts_ref` to this 5.0.2 SHA
-   and compose scan `image` from `handoff_package` + `digest`.
-3. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship rebuilt images.
+2. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship rebuilt images.
 
 ## Recent history
 
+- 2026-09-15: Quota sweep — leftover `container-image-*` artifacts deleted.
+  BuildKit GHA cache stays `mode=min`. No published GHCR/Hub tag delete.
 - 2026-09-15: **5.0.2** — compose GHCR scan/publish refs from `handoff_package`
   + `digest`. `image_ref` with the owner is secret-masked when Hub username
   equals `github.repository_owner`.
@@ -222,4 +225,4 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-09-14*
+*Last updated: 2026-09-15*
