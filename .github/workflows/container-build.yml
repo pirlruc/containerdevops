@@ -381,8 +381,8 @@ jobs:
           # Do not put repository_owner into image_ref. If a job secret
           # (DOCKERHUB_USERNAME) equals the owner, Actions drops that output
           # ("Skip output since it may contain secret") and callers scan "".
-          # Callers compose:
-          #   ghcr.io/${{ github.repository_owner }}/${{ needs.build.outputs.handoff_package }}@${{ needs.build.outputs.digest }}
+          # Callers compose: ghcr.io/<owner>/<handoff_package>@<digest>
+          # (do not put the owner into this output — secret masking).
           image_ref="${pkg}@${digest}"
           {
             echo "image_ref=${image_ref}"
