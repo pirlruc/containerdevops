@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `common/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `feature-digest-5.0.3` → tag **5.0.3** |
+| **Branch** | `feature-digest-5.0.4` → tag **5.0.4** |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -26,8 +26,8 @@ Shared infra/secrets/supply-chain forward to
 |----------------------|-----|
 | `docs/guardrails` | tag **1.6.0** → `77cf16eb…` |
 | `.github/scaffold` | tag **1.5.0** → `9e04ed53…` |
-| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `5.0.0` `sha256:0d4328a0b6051a87df5baa70b19edeaa521ee479462268fe7b2be619209a42d4` (5.0.3 digest after Release) |
-| `ghcr.io/pirlruc/ci-container` (debian) | `5.0.0-debian` `sha256:a4d6a2dd0c9ea1d6e09c78962e7fc918e42607e3461489bf17c1118308582c86` |
+| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `5.0.3` `sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00` (`latest` == alpine) |
+| `ghcr.io/pirlruc/ci-container` (debian) | `5.0.3-debian` `sha256:14f26db2831086123bf79caa3aac39e337edcc565d41ea894a376f463d850ef7` |
 | commondevops `uses:` / `scripts_ref` | tag `5.1.2` → `b3c462bed0de4f6475e6be7875c4ababd831acc6` (CI-034 lockstep) |
 | `CI_BASE` (ci-lint debian) | `5.1.1-debian` digest `sha256:6834b69583a9f67ac21bd06167672e793ce2cba1c14e646a98108e0fc9512dcd` |
 | `CI_BASE` (ci-lint alpine) | `5.1.1` digest `sha256:35a82a43839e0969dc7c44d63c36b5c97cdefb20c6d3112255f52c09444042a1` |
@@ -36,7 +36,7 @@ Shared infra/secrets/supply-chain forward to
 | `docker/setup-qemu-action` | `4.3.0` → `1f40c722…` |
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
-| Release (reusables callers pin) | **5.0.3** (SHA after merge) |
+| Release (reusables callers pin) | **5.0.4** (SHA after merge; no GitHub Release) |
 | Release (ci-container image) | `5.0.3` (Alpine owns unsuffixed; `flavor: latest=false`) |
 
 ## Delivery status
@@ -168,13 +168,12 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Suggested next work
 
-1. After the 5.0.3 GitHub Release, write alpine/debian digests into
-   `containerdevops-security.yml`, Hub/Packages, and this pins table
-   (tag-only **5.0.4** — no GitHub Release).
-2. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship rebuilt images.
+1. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship rebuilt images.
 
 ## Recent history
 
+- 2026-09-15: **5.0.4** (tag-only) — write 5.0.3 alpine/debian Hub digests
+  (`3aeed654…` / `14f26db2…`). Hub `latest` == `5.0.3` alpine.
 - 2026-09-15: **5.0.3** — re-pin commondevops 5.1.2, CI_BASE ci-lint 5.1.1,
   scheduled rescan off `ci-container:3.0.0` onto 5.0.0 Hub alpine digest.
 - 2026-09-15: Quota sweep — leftover `container-image-*` artifacts deleted.
