@@ -64,7 +64,7 @@ or the run fails at startup before any step runs.
 | `blocking` | `false` |
 
 Nested commondevops pin: keep `uses:` and `scripts_ref` in lockstep (currently
-tag `5.0.0` → `bcddb5db4ba5d291aa7f434d447e43175f14136c`).
+tag `5.1.2` → `b3c462bed0de4f6475e6be7875c4ababd831acc6`).
 
 ## container-build.yml
 
@@ -194,7 +194,7 @@ Secrets: `ghcr_token`, `scripts_token` (both optional; forwarded to
 `container-scan.yml`). Caller job must grant `packages: read`.
 
 `containerdevops-security.yml` uses this reusable for digest-pinned
-`ghcr.io/pirlruc/ci-container:5.0.0@sha256:…` after this release (CI-026; do not
+`ghcr.io/pirlruc/ci-container:5.0.0@sha256:0d4328a0b6051a87df5baa70b19edeaa521ee479462268fe7b2be619209a42d4` after this release (CI-026; do not
 float `:latest`). Callers pin a released SHA of this file.
 
 ## container-publish.yml
