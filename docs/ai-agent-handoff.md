@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `common/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `feature-ghcr-handoff-5.0.0` → tag **5.0.0** |
+| **Branch** | `feature-handoff-secret-mask-5.0.2` → tag **5.0.2** |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -36,7 +36,7 @@ Shared infra/secrets/supply-chain forward to
 | `docker/setup-qemu-action` | `4.3.0` → `1f40c722…` |
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
-| Release (reusables callers pin) | **5.0.0** (SHA after merge) |
+| Release (reusables callers pin) | **5.0.2** (SHA after merge) |
 | Release (ci-container image) | `5.0.0` (Alpine owns unsuffixed; `flavor: latest=false`) |
 
 ## Delivery status
@@ -95,7 +95,9 @@ python3 .github/scaffold/scripts/issues-sync.py \
   Do not re-record DOCKER-PERF-001 deviations for ci-container.
 - **Caller permissions:** document in `docs/workflows.md` (CI-031). Build callers
   need `packages: write` (ephemeral GHCR handoff). Missing that → **startup_failure**.
-  Scan callers still need `packages: read` and `image: ${{ needs.build.outputs.image_ref }}`.
+  Scan callers still need `packages: read` and a composed GHCR ref
+  `ghcr.io/<owner>/<handoff_package>@<digest>`. Do not pass `image_ref` as a
+  docker ref: Actions strips outputs that contain `DOCKERHUB_USERNAME`.
 - **Size gate** uses `du -sxm /` (store-independent). Do not use `docker inspect .Size`.
 - **ignorefile contract:** empty falls back to caller `.trivyignore.yaml`; set
   `ignorefile: none` (or `--no-ignorefile` locally) for unfiltered posture scans.
@@ -141,6 +143,9 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **GHCR handoff:** do **not** delete published GHCR/Packages versions. PR
   cleanup may delete a version only when its tags are solely `ci-run-*`. After
   publish retag the same digest carries `5.0.0`/`latest` — never sweep it.
+  Compose scan/publish refs from `handoff_package` + `digest`. A full
+  `ghcr.io/<owner>/…` `image_ref` is secret-masked when `DOCKERHUB_USERNAME`
+  equals the owner (5.0.1 left callers with an empty `image`).
 - **Reusable pin vs image tag:** callers of `container-{lint,build,scan,publish}.yml`
   pin **5.0.0**. Scheduled rescan still uses the last published alpine digest
   until the 5.0.0 digest is written back.
@@ -160,14 +165,19 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Suggested next work
 
-1. After the 5.0.0 GitHub Release, write alpine/debian digests into
+1. After the 5.0.2 GitHub Release, write alpine/debian digests into
    `containerdevops-security.yml` and this pins table.
-2. commondevops / cppdevops re-pin `uses:` + `scripts_ref` to this 5.0.0 SHA
-   and drop `image_artifact` (pass `image_ref`; grant `packages: write` on build).
+2. commondevops / cppdevops re-pin `uses:` + `scripts_ref` to this 5.0.2 SHA
+   and compose scan `image` from `handoff_package` + `digest`.
 3. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship rebuilt images.
 
 ## Recent history
 
+- 2026-09-15: **5.0.2** — compose GHCR scan/publish refs from `handoff_package`
+  + `digest`. `image_ref` with the owner is secret-masked when Hub username
+  equals `github.repository_owner`.
+- 2026-09-14: **5.0.1** — reusable-workflow handoff without `if: always()`
+  (still insufficient: owner in `image_ref` is secret-masked).
 - 2026-09-14: **5.0.0** — GHCR digest handoff (no default image tar),
   `flavor: latest=false`, CHANGELOG, SC-SIGN-001 / SC-PROV-001, 1-day scan
   artifacts, PR-only `ci-run-*` cleanup, artifact sweep.

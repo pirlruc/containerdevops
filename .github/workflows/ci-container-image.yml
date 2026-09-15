@@ -3,7 +3,7 @@
 # Debian and Alpine variants; Alpine owns unsuffixed tags (follows ci-lint 4.0.0).
 # Pins to this repo's reusable workflows at the same commit (scripts_ref in lockstep).
 # CI_BASE digests are centralised in env below — update once per commondevops release.
-# 5.0.1: container-build image_ref outputs (do not use if: always() on handoff).
+# 5.0.2: compose GHCR ref from handoff_package + digest (image_ref is secret-masked).
 name: CI Container Image
 
 on:
@@ -179,7 +179,7 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-scan.yml
     with:
-      image: ${{ needs.build.outputs.image_ref }}
+      image: ${{ format('ghcr.io/{0}/{1}@{2}', github.repository_owner, needs.build.outputs.handoff_package, needs.build.outputs.digest) }}
       results_artifact: container-scan-results-debian
       sarif_category: trivy-image-debian
       scripts_ref: ${{ github.sha }}
@@ -199,7 +199,7 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-scan.yml
     with:
-      image: ${{ needs.build-alpine.outputs.image_ref }}
+      image: ${{ format('ghcr.io/{0}/{1}@{2}', github.repository_owner, needs.build-alpine.outputs.handoff_package, needs.build-alpine.outputs.digest) }}
       results_artifact: container-scan-results-alpine
       sarif_category: trivy-image-alpine
       scripts_ref: ${{ github.sha }}
@@ -249,7 +249,7 @@ jobs:
       tag_latest: ${{ github.event_name == 'release' && github.event.release.prerelease == false }}
       verify_platforms: true
       verify_command: /bin/true
-      source_image: ${{ needs.build.outputs.image_ref }}
+      source_image: ${{ format('ghcr.io/{0}/{1}@{2}', github.repository_owner, needs.build.outputs.handoff_package, needs.build.outputs.digest) }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -298,7 +298,7 @@ jobs:
       tag_latest: ${{ github.event_name == 'release' && github.event.release.prerelease == false }}
       verify_platforms: true
       verify_command: /bin/true
-      source_image: ${{ needs.build-alpine.outputs.image_ref }}
+      source_image: ${{ format('ghcr.io/{0}/{1}@{2}', github.repository_owner, needs.build-alpine.outputs.handoff_package, needs.build-alpine.outputs.digest) }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

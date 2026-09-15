@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [5.0.2] - 2026-09-15
+
+### Fixed
+
+- Actions skips reusable-workflow outputs that contain a secret substring.
+  `image_ref=ghcr.io/<owner>/pkg@sha256:…` was dropped when `DOCKERHUB_USERNAME`
+  equalled the owner, so cross-repo scan got an empty `image`. Callers must
+  compose `ghcr.io/${{ github.repository_owner }}/<handoff_package>@<digest>`.
+  `image_ref` is now `<pkg>@sha256:…` (no owner).
+
 ## [5.0.1] - 2026-09-14
 
 ### Fixed
