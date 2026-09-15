@@ -16,8 +16,10 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 
 | Tag | Meaning |
 |-----|---------|
-| `5.0.0` / `5.0.0-alpine` | Immutable Alpine release (default unsuffixed = Alpine) |
-| `5.0.0-debian` | Immutable Debian 13 release |
+| `5.0.3` / `5.0.3-alpine` | Immutable Alpine release (default unsuffixed = Alpine; digest after this Release) |
+| `5.0.3-debian` | Immutable Debian 13 release (digest after this Release) |
+| `5.0.0` / `5.0.0-alpine` | Previous Alpine `sha256:0d4328a0b6051a87df5baa70b19edeaa521ee479462268fe7b2be619209a42d4` |
+| `5.0.0-debian` | Previous Debian `sha256:a4d6a2dd0c9ea1d6e09c78962e7fc918e42607e3461489bf17c1118308582c86` |
 | `latest` / `latest-alpine` | Latest non-prerelease Alpine publish |
 | `latest-debian` | Latest non-prerelease Debian publish |
 | `sha-<git>` / `sha-<git>-alpine` / `sha-<git>-debian` | Exact git SHA of the published commit |
@@ -25,26 +27,28 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 Alpine owns the unsuffixed tags to match `ci-lint` (lower OS vulnerability
 posture). Prefer an explicit `-alpine` / `-debian` suffix when the libc matters;
 prefer a digest in production.
+`latest` equals `latest-alpine` (`flavor: latest=false`). A monthly rebuild may
+move `latest` off the SemVer tag — pin the digest, not `latest`.
 
 ```bash
-docker pull pirlruc/ci-container:5.0.0
+docker pull pirlruc/ci-container:5.0.3
 # or
-docker pull pirlruc/ci-container:5.0.0-debian
-# or
-docker pull pirlruc/ci-container@sha256:<digest>
+docker pull pirlruc/ci-container:5.0.3-debian
+# previous Alpine (known digest until 5.0.4 writeback)
+docker pull pirlruc/ci-container@sha256:0d4328a0b6051a87df5baa70b19edeaa521ee479462268fe7b2be619209a42d4
 ```
 
 ## Quick start
 
 ```bash
 docker run --rm -v "$PWD:/workspace:ro" -w /workspace \
-  pirlruc/ci-container:5.0.0 \
+  pirlruc/ci-container:5.0.3 \
   hadolint Dockerfile
 ```
 
 ```bash
 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-  pirlruc/ci-container:5.0.0 \
+  pirlruc/ci-container:5.0.3 \
   dive --ci my-app:local
 ```
 
@@ -57,7 +61,7 @@ docker run --rm \
   --security-opt no-new-privileges \
   --tmpfs /tmp:rw,noexec,nosuid,size=256m \
   -v "$PWD:/workspace:ro" -w /workspace \
-  pirlruc/ci-container:5.0.0 \
+  pirlruc/ci-container:5.0.3 \
   hadolint Dockerfile
 ```
 

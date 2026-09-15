@@ -26,11 +26,11 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@bcddb5db4ba5d291aa7f434d447e43175f14136c
+    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@b3c462bed0de4f6475e6be7875c4ababd831acc6
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
-      scripts_ref: bcddb5db4ba5d291aa7f434d447e43175f14136c
+      scripts_ref: b3c462bed0de4f6475e6be7875c4ababd831acc6
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
@@ -39,11 +39,11 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: pirlruc/commondevops/.github/workflows/common-supply-chain.yml@bcddb5db4ba5d291aa7f434d447e43175f14136c
+    uses: pirlruc/commondevops/.github/workflows/common-supply-chain.yml@b3c462bed0de4f6475e6be7875c4ababd831acc6
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
-      scripts_ref: bcddb5db4ba5d291aa7f434d447e43175f14136c
+      scripts_ref: b3c462bed0de4f6475e6be7875c4ababd831acc6
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
@@ -66,7 +66,7 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-published-rescan.yml
     with:
-      image: ghcr.io/pirlruc/ci-container:3.0.0@sha256:9374acb5caed2cf9482a86eb9689a76d7afb3ac2bb1f97973c1a2a423c137365
+      image: ghcr.io/pirlruc/ci-container:5.0.0@sha256:0d4328a0b6051a87df5baa70b19edeaa521ee479462268fe7b2be619209a42d4
       scripts_ref: ${{ github.sha }}
       pkg_types: library
       ignorefile: docker/ci-container/.trivyignore.yaml

@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [5.0.3] - 2026-09-15
+
+### Changed
+
+- Nested [commondevops](https://github.com/pirlruc/commondevops) pin is **5.1.2**
+  (`b3c462bed0de4f6475e6be7875c4ababd831acc6`).
+- `CI_BASE` is ci-lint **5.1.1** alpine/debian Hub digests.
+- Scheduled rescan pins `ci-container:5.0.0@sha256:0d4328a0…` (was 3.0.0).
+  Hub / Packages target **5.0.3**; 5.0.4 writes the republished digests.
+
 ## [5.0.2] - 2026-09-15
 
 ### Fixed
