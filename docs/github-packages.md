@@ -16,8 +16,8 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 
 | Tag | Meaning |
 |-----|---------|
-| `5.0.3` / `5.0.3-alpine` | Immutable Alpine release (default unsuffixed = Alpine; digest after this Release) |
-| `5.0.3-debian` | Immutable Debian 13 release (digest after this Release) |
+| `5.0.3` / `5.0.3-alpine` | Immutable Alpine `sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00` |
+| `5.0.3-debian` | Immutable Debian `sha256:14f26db2831086123bf79caa3aac39e337edcc565d41ea894a376f463d850ef7` |
 | `5.0.0` / `5.0.0-alpine` | Previous Alpine `sha256:0d4328a0b6051a87df5baa70b19edeaa521ee479462268fe7b2be619209a42d4` |
 | `5.0.0-debian` | Previous Debian `sha256:a4d6a2dd0c9ea1d6e09c78962e7fc918e42607e3461489bf17c1118308582c86` |
 | `latest` / `latest-alpine` | Latest non-prerelease Alpine publish |
@@ -43,7 +43,7 @@ If the package is private, authenticate with a PAT that has `read:packages`:
 echo "$CR_PAT" | docker login ghcr.io -u USERNAME --password-stdin
 docker pull ghcr.io/pirlruc/ci-container:5.0.3
 # or
-docker pull ghcr.io/pirlruc/ci-container@sha256:0d4328a0b6051a87df5baa70b19edeaa521ee479462268fe7b2be619209a42d4
+docker pull ghcr.io/pirlruc/ci-container@sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00
 ```
 
 ## Use as a GitHub Actions job container
@@ -101,12 +101,12 @@ plain runner).
 ## Verify a publish
 
 ```bash
-docker pull ghcr.io/pirlruc/ci-container@sha256:0d4328a0b6051a87df5baa70b19edeaa521ee479462268fe7b2be619209a42d4
+docker pull ghcr.io/pirlruc/ci-container@sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00
 
 cosign verify \
   --certificate-identity-regexp 'https://github.com/pirlruc/containerdevops/.github/workflows/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  ghcr.io/pirlruc/ci-container@sha256:<digest>
+  ghcr.io/pirlruc/ci-container@sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00
 ```
 
 Signing runs only when the source repository is public (`sign: true`).

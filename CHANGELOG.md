@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [5.0.4] - 2026-09-15
+
+### Changed
+
+- Write 5.0.3 alpine/debian Hub digests into published rescan, Hub/Packages,
+  and handoff. No GitHub Release (does not republish images).
+
 ## [5.0.3] - 2026-09-15
 
 ### Changed
