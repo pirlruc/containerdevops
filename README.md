@@ -71,7 +71,7 @@ jobs:
       packages: read
     uses: pirlruc/containerdevops/.github/workflows/container-scan.yml@<sha>
     with:
-      image: ${{ needs.build.outputs.image_ref }}
+      image: ${{ format('ghcr.io/{0}/{1}@{2}', github.repository_owner, needs.build.outputs.handoff_package, needs.build.outputs.digest) }}
       scripts_ref: <sha>
       blocking: ${{ inputs.blocking }}
     secrets:
@@ -79,11 +79,13 @@ jobs:
 ```
 
 Build jobs need `packages: write` so the ephemeral `ci-run-*` handoff can push
-to GHCR. Scan jobs need `packages: read` and `image: ${{ needs.build.outputs.image_ref }}`.
-Publish workflows need `packages: write`, `id-token: write`, `source_image` from
-the scanned digest, and Docker Hub credentials (`DOCKERHUB_USERNAME` /
-`DOCKERHUB_TOKEN`) when pushing to Docker Hub. Signing (`sign: true`) is intended
-for public repositories; this private repo records `SC-SIGN-001` / `SC-PROV-001`.
+to GHCR. Scan jobs need `packages: read` and a composed GHCR digest ref
+(`handoff_package` + `digest` — do not pass `image_ref` when a job secret
+equals the repository owner). Publish workflows need `packages: write`,
+`id-token: write`, `source_image` from the same composed ref, and Docker Hub
+credentials (`DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`) when pushing to Docker Hub.
+Signing (`sign: true`) is intended for public repositories; this private repo
+records `SC-SIGN-001` / `SC-PROV-001`.
 
 ## Local parity
 

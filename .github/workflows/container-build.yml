@@ -81,7 +81,7 @@ on:
         default: ""
     outputs:
       image_ref:
-        description: "GHCR digest ref (ghcr.io/owner/pkg@sha256:…) for scan/publish"
+        description: "pkg@sha256:… without registry/owner; callers prepend ghcr.io/<owner>/"
         value: ${{ jobs.build.outputs.image_ref }}
       digest:
         description: "Image digest (sha256:…)"
@@ -371,22 +371,26 @@ jobs:
           dest="ghcr.io/${OWNER}/${pkg}:${tag}"
           docker tag "${IMAGE_NAME}" "${dest}"
           docker push "${dest}"
-          # Always emit a ghcr.io digest ref. RepoDigests[0] can omit the registry
-          # prefix, which skips GHCR login in container-scan.yml.
+          # Always emit a digest. RepoDigests[0] can omit the registry prefix.
           digest="$(docker image inspect "${dest}" --format '{{range .RepoDigests}}{{println .}}{{end}}' \
             | awk -F@ -v p="ghcr.io/${OWNER}/${pkg}@" '$0 ~ p {print $2; exit}')"
           if [[ -z "${digest}" || "${digest}" != sha256:* ]]; then
             echo "push succeeded but GHCR digest missing" >&2
             exit 1
           fi
-          image_ref="ghcr.io/${OWNER}/${pkg}@${digest}"
+          # Do not put repository_owner into image_ref. If a job secret
+          # (DOCKERHUB_USERNAME) equals the owner, Actions drops that output
+          # ("Skip output since it may contain secret") and callers scan "".
+          # Callers compose:
+          #   ghcr.io/${{ github.repository_owner }}/${{ needs.build.outputs.handoff_package }}@${{ needs.build.outputs.digest }}
+          image_ref="${pkg}@${digest}"
           {
             echo "image_ref=${image_ref}"
             echo "digest=${digest}"
             echo "handoff_tag=${tag}"
             echo "handoff_package=${pkg}"
           } >> "$GITHUB_OUTPUT"
-          echo "handoff ${image_ref}"
+          echo "handoff ${image_ref} (compose ghcr.io/${OWNER}/${image_ref})"
 
       - name: Save image tarball (legacy)
         if: always() && inputs.upload_image_artifact

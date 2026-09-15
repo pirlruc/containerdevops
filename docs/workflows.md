@@ -83,14 +83,21 @@ tag `5.0.0` → `bcddb5db4ba5d291aa7f434d447e43175f14136c`).
 | `size_class` | `application` |
 | `image_max_size_mb` | `""` (override; empty reads the vendored key for `size_class`) |
 
-Outputs: `image_ref` (`ghcr.io/owner/pkg@sha256:…`), `digest`, `handoff_tag`,
-`handoff_package`.
+Outputs: `digest` (`sha256:…`), `handoff_tag`, `handoff_package`, and
+`image_ref` (`<pkg>@sha256:…` — **no** registry/owner).
 
 After local load + CST/size/dive, the job pushes
 `ghcr.io/<owner>/<handoff_package>:ci-run-<run_id>-<suffix>` and exports
-`image_ref`. Callers pass that into `container-scan.yml` (`image`) and
-`container-publish.yml` (`source_image`). Do **not** pass long-lived
-`image_artifact` unless `upload_image_artifact: true`.
+those outputs. **Do not pass `needs.build.outputs.image_ref` as a docker
+ref.** If `DOCKERHUB_USERNAME` equals `github.repository_owner`, Actions
+drops any output that contains the owner (`Skip output since it may
+contain secret`) and scan receives `""`. Compose on the caller:
+
+```yaml
+image: ${{ format('ghcr.io/{0}/{1}@{2}', github.repository_owner, needs.build.outputs.handoff_package, needs.build.outputs.digest) }}
+```
+
+Do **not** pass long-lived `image_artifact` unless `upload_image_artifact: true`.
 
 `size_class` selects the size floor (DOCKER-PERF-002): `application` reads
 `image_max_size_mb` (300); `ci_toolchain` reads `ci_image_max_size_mb` (2000).
@@ -133,9 +140,9 @@ Tune `image_max_size_mb` / `ci_image_max_size_mb` against this measurement.
 | `results_artifact` | `container-scan-results` |
 | `sarif_category` | `trivy-image` |
 
-Callers should pass `image: ${{ needs.build.outputs.image_ref }}` (GHCR digest)
-and leave `image_artifact` empty. The optional tarball path is legacy
-(`upload_image_artifact: true` on build).
+Callers should compose the GHCR digest ref from `handoff_package` + `digest`
+(see container-build.yml above) and leave `image_artifact` empty. The optional
+tarball path is legacy (`upload_image_artifact: true` on build).
 
 A missing `vuln_fail_on_severity` key fails closed (CI-022) before Trivy/Grype
 run — it does not degrade to CRITICAL-only.

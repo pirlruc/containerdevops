@@ -128,7 +128,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "${IMAGE}" ]]; then
-            echo "empty image ref — caller must pass needs.build.outputs.image_ref" >&2
+            echo "empty image ref — caller must compose ghcr.io/<owner>/<handoff_package>@<digest> (do not use image_ref: Actions strips it when DOCKERHUB_USERNAME equals the owner)" >&2
             exit 1
           fi
 
@@ -147,7 +147,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "${IMAGE}" ]]; then
-            echo "empty image ref — caller must pass needs.build.outputs.image_ref" >&2
+            echo "empty image ref — caller must compose ghcr.io/<owner>/<handoff_package>@<digest> (do not use image_ref: Actions strips it when DOCKERHUB_USERNAME equals the owner)" >&2
             exit 1
           fi
           docker pull "${IMAGE}"

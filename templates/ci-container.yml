@@ -50,7 +50,7 @@ jobs:
       packages: read
     uses: pirlruc/containerdevops/.github/workflows/container-scan.yml@PLACEHOLDER_SHA
     with:
-      image: ${{ needs.build.outputs.image_ref }}
+      image: ${{ format('ghcr.io/{0}/{1}@{2}', github.repository_owner, needs.build.outputs.handoff_package, needs.build.outputs.digest) }}
       scripts_ref: PLACEHOLDER_SHA
       blocking: ${{ inputs.blocking }}
     secrets:
