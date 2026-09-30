@@ -1,7 +1,7 @@
 # Recorded departures from the guardrails pinned at docs/guardrails/.
 #
 # Field definitions: https://github.com/pirlruc/guardrails#deviation-rule
-# Approval flow:     https://github.com/pirlruc/methodologies/blob/1.5.0/github-issue-adr/docs/process/guardrail-compliance.md
+# Approval flow:     https://github.com/pirlruc/methodologies/blob/1.6.0/github-issue-adr/docs/process/guardrail-compliance.md
 #
 # Being stricter than the org default is always allowed and needs no entry here.
 
@@ -13,7 +13,7 @@ deviations:
     why: >-
       Private Free-plan repository; Sigstore keyless signing is unavailable.
       Publish sets sign=false until the repo is public or a signing key is
-      provisioned. Documented Free-plan pattern in guardrails 1.6.0
+      provisioned. Documented Free-plan pattern in guardrails 1.8.0
       supply-chain/guardrails.md.
     epic: CDO-PIN-001
     owner: pirlruc
