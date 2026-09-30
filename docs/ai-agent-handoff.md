@@ -29,9 +29,9 @@ Shared infra/secrets/supply-chain forward to
 | methodologies (links only; not a submodule) | tag **1.8.0** |
 | `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `5.0.3` `sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00` (`latest` == alpine) |
 | `ghcr.io/pirlruc/ci-container` (debian) | `5.0.3-debian` `sha256:14f26db2831086123bf79caa3aac39e337edcc565d41ea894a376f463d850ef7` |
-| commondevops `uses:` / `scripts_ref` | tag `5.1.2` → `b3c462bed0de4f6475e6be7875c4ababd831acc6` (CI-034 lockstep) |
-| `CI_BASE` (ci-lint debian) | `5.1.1-debian` digest `sha256:6834b69583a9f67ac21bd06167672e793ce2cba1c14e646a98108e0fc9512dcd` |
-| `CI_BASE` (ci-lint alpine) | `5.1.1` digest `sha256:35a82a43839e0969dc7c44d63c36b5c97cdefb20c6d3112255f52c09444042a1` |
+| commondevops `uses:` / `scripts_ref` | tag `5.2.0` → `202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3` (CI-034 lockstep) |
+| `CI_BASE` (ci-lint debian) | `5.2.0-debian` digest `sha256:543043009f3359db03457ead5ff866920c857933855a415d22e3aa354dbd46a8` |
+| `CI_BASE` (ci-lint alpine) | `5.2.0` digest `sha256:33dbcc7be28ffef2a6cf3cf4b611cf862a8f246c6d6932c4055772d73d697674` |
 | `docker/setup-buildx-action` | `4.4.1` → `f87e5991…` |
 | `docker/build-push-action` | `7.4.0` → `c3c9e263…` |
 | `github/codeql-action/upload-sarif` | `4.38.1` → `1c5b6756…` |

@@ -38,7 +38,7 @@ jobs:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
       contents: read
-    uses: pirlruc/commondevops/.github/workflows/common-doc-verify.yml@b3c462bed0de4f6475e6be7875c4ababd831acc6
+    uses: pirlruc/commondevops/.github/workflows/common-doc-verify.yml@202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       shell_scripts: scripts/*.sh
@@ -46,7 +46,7 @@ jobs:
       yaml_files: docs/issues.yml docs/guardrail-deviations.yml .github/dependabot.yml
       yaml_globs: .github/workflows/*.yml
       run_link_lint: true
-      scripts_ref: b3c462bed0de4f6475e6be7875c4ababd831acc6
+      scripts_ref: 202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
@@ -54,10 +54,10 @@ jobs:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
       contents: read
-    uses: pirlruc/commondevops/.github/workflows/common-scaffold-verify.yml@b3c462bed0de4f6475e6be7875c4ababd831acc6
+    uses: pirlruc/commondevops/.github/workflows/common-scaffold-verify.yml@202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
-      scripts_ref: b3c462bed0de4f6475e6be7875c4ababd831acc6
+      scripts_ref: 202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3
 
   lint:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
@@ -105,7 +105,7 @@ jobs:
       - name: zizmor
         run: |
           docker run --rm -v "${PWD}:/src" -w /src \
-            pirlruc/ci-lint@sha256:35a82a43839e0969dc7c44d63c36b5c97cdefb20c6d3112255f52c09444042a1 \
+            pirlruc/ci-lint@sha256:33dbcc7be28ffef2a6cf3cf4b611cf862a8f246c6d6932c4055772d73d697674 \
             zizmor --min-severity=low .github/workflows
 
   iac:
