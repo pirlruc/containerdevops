@@ -16,8 +16,8 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 
 | Tag | Meaning |
 |-----|---------|
-| `6.0.1` / `6.0.1-alpine` | Alpine `sha256:3f6f4e7aebdd671c3e8c96eed406bd868146dfa8072adecb1605022407bde83c` |
-| `6.0.1-debian` | Debian `sha256:f3896178dc0f34973e86cd3b129bd6705a3e6da997235a17f7632dce9f811644` |
+| `6.0.2` / `6.0.2-alpine` | Alpine `sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a` |
+| `6.0.2-debian` | Debian `sha256:6e0df10282985ac503cee69f869f1784789735713c9c5e5f2d52070280792cd4` |
 | `6.0.0` / `6.0.0-alpine` | Previous Alpine `sha256:10f60eae5efd277c78f8f9c7e27e5376e8f4b1ed299eae7756a5c332c0b48f05` |
 | `6.0.0-debian` | Previous Debian `sha256:80ee93aa0a702374c6072d637f4ae46b0f1302ca5da610b62dc5f1511133025e` |
 | `5.0.3` / `5.0.3-alpine` | Previous Alpine `sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00` |
