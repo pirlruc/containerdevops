@@ -26,6 +26,10 @@ LABEL org.opencontainers.image.title="ci-container" \
 
 USER root
 
+# ci-lint 5.1.1 still vendors PyJWT 2.13.0 and urllib3 2.7.0. Override until
+# that base is rebuilt. Exact pins (DOCKER-BUILD-004).
+RUN pip install --no-cache-dir 'PyJWT==2.14.0' 'urllib3==2.8.0'
+
 # wagoodman/dive:v0.13.1 — digest pinned (CI-026). Re-confirmed 2026-09-11:
 # no newer tag; latest still this digest (CDO-IMG-003).
 COPY --from=wagoodman/dive:v0.13.1@sha256:f1886e6c32c094fc41a623c1989f5cb3e48aa766da5f0be233f911fc1d85ce10 \
