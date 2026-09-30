@@ -20,12 +20,13 @@ Owns `.github/workflows/container-{lint,build,scan,publish,iac,devcontainer}.yml
 Shared infra/secrets/supply-chain forward to
 [pirlruc/commondevops](https://github.com/pirlruc/commondevops).
 
-## Pins (2026-09-14)
+## Pins (2026-09-30)
 
 | Submodule / artifact | Pin |
 |----------------------|-----|
-| `docs/guardrails` | tag **1.6.0** → `77cf16eb…` |
-| `.github/scaffold` | tag **1.5.0** → `9e04ed53…` |
+| `docs/guardrails` | tag **1.8.0** → `aa5184ce…` |
+| `.github/scaffold` | tag **1.7.0** → `e76bb3fd…` |
+| methodologies (links only; not a submodule) | tag **1.6.0** |
 | `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `5.0.3` `sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00` (`latest` == alpine) |
 | `ghcr.io/pirlruc/ci-container` (debian) | `5.0.3-debian` `sha256:14f26db2831086123bf79caa3aac39e337edcc565d41ea894a376f463d850ef7` |
 | commondevops `uses:` / `scripts_ref` | tag `5.1.2` → `b3c462bed0de4f6475e6be7875c4ababd831acc6` (CI-034 lockstep) |
@@ -162,7 +163,8 @@ python3 .github/scaffold/scripts/issues-sync.py \
   image tag as of 2026-09-11; stay on `v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…`.
 - **Donor ignorefile:** dive `v0.13.1` and CST `1.22.1` digests re-confirmed 2026-09-11;
   no newer tags, so `.trivyignore.yaml` entries were not dropped. Next review 2026-11-11.
-- **Dependabot PRs skip CI (CI-024)** — replace with a human branch so checks run.
+- **Dependabot PRs (CI-024):** secret-backed jobs skip. The token-free `pins`
+  job still runs and is the merge signal. Do not grant Dependabot the org PAT.
   Do not merge Dependabot PR #82: it pins commondevops `4.0.0` (`e4e902e`) and does not
   update matching `scripts_ref` (CI-034 split). Wave E re-pins `4.1.0` instead.
 
@@ -172,6 +174,9 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Recent history
 
+- 2026-09-30: guardrails **1.8.0** / scaffold **1.7.0**. Methodology decision
+  links cite **1.6.0** (no methodologies submodule). Synced scaffold templates.
+  Dependabot still gets the token-free `pins` job (CI-024).
 - 2026-09-15: **5.0.4** (tag-only) — write 5.0.3 alpine/debian Hub digests
   (`3aeed654…` / `14f26db2…`). Hub `latest` == `5.0.3` alpine.
 - 2026-09-15: **5.0.3** — re-pin commondevops 5.1.2, CI_BASE ci-lint 5.1.1,
@@ -227,4 +232,4 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-09-15*
+*Last updated: 2026-09-30*

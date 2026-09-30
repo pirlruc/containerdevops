@@ -5,8 +5,8 @@ images — hadolint, buildx, container-structure-test, Trivy/Syft/Grype, SBOM,
 signing, GHCR and Docker Hub publishing, plus KICS, Compose Spec validation,
 and the `ci-container` toolchain image.
 
-Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails/tree/1.6.0/docker)
-(`DOCKER-*`), pinned at `docs/guardrails/` tag `1.6.0`. Pin this repo by commit SHA (`CI-018`).
+Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails/tree/1.8.0/docker)
+(`DOCKER-*`), pinned at `docs/guardrails/` tag `1.8.0`. Pin this repo by commit SHA (`CI-018`).
 
 ## Workflows
 
