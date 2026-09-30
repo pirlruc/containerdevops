@@ -2,13 +2,16 @@
 # DOCKER-BUILD-006 — fail when any final-stage FROM base image is older than max_age_days.
 #
 # Usage: check-base-image-age.sh <Dockerfile> <max_age_days>
+# Env:   BUILD_ARGS  newline-separated KEY=value overlay (same shape as build-args).
 # Requires: docker.
 # Only FROM lines are checked (not COPY --from donors — those are tool pins, not bases).
+# ${ARG} bases are resolved from ARG defaults, then BUILD_ARGS. Unresolved refs fail closed.
 # Compatible with mawk (Ubuntu) and gawk — avoid IGNORECASE and [/] char classes.
 set -euo pipefail
 
 DOCKERFILE="${1:?Dockerfile path required}"
 MAX_DAYS="${2:?max age days required}"
+BUILD_ARGS="${BUILD_ARGS:-}"
 
 if [[ ! -f "${DOCKERFILE}" ]]; then
   echo "error: Dockerfile not found: ${DOCKERFILE}" >&2
@@ -23,7 +26,47 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 2
 fi
 
-mapfile -t REFS < <(
+declare -A ARGV=()
+while IFS= read -r raw || [[ -n "${raw}" ]]; do
+  line="${raw%%#*}"
+  line="${line#"${line%%[![:space:]]*}"}"
+  [[ "${line}" =~ ^[Aa][Rr][Gg][[:space:]]+([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]] || continue
+  ARGV["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+done < "${DOCKERFILE}"
+
+if [[ -n "${BUILD_ARGS}" ]]; then
+  while IFS= read -r raw || [[ -n "${raw}" ]]; do
+    line="${raw#"${raw%%[![:space:]]*}"}"
+    [[ -z "${line}" || "${line}" == \#* || "${line}" != *=* ]] && continue
+    ARGV["${line%%=*}"]="${line#*=}"
+  done <<< "${BUILD_ARGS}"
+fi
+
+resolve_ref() {
+  local ref="$1"
+  local name val
+  if [[ "${ref}" =~ ^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$ ]]; then
+    name="${BASH_REMATCH[1]}"
+    val="${ARGV[${name}]:-}"
+    if [[ -z "${val}" ]]; then
+      echo "error: FROM ${ref} has no ARG default or BUILD_ARGS value" >&2
+      return 1
+    fi
+    if [[ "${val}" =~ \$\{ ]]; then
+      echo "error: FROM ${ref} resolved to another substitution '${val}'" >&2
+      return 1
+    fi
+    printf '%s' "${val}"
+    return 0
+  fi
+  if [[ "${ref}" == \$* ]]; then
+    echo "error: unsupported FROM substitution '${ref}'" >&2
+    return 1
+  fi
+  printf '%s' "${ref}"
+}
+
+mapfile -t RAW_REFS < <(
   awk '
     /^[Ff][Rr][Oo][Mm][[:space:]]/ {
       line=$0
@@ -31,15 +74,22 @@ mapfile -t REFS < <(
       sub(/[[:space:]]+[Aa][Ss][[:space:]].*$/, "", line)
       split(line, a, /[[:space:]]+/)
       ref=a[1]
-      if (ref != "" && ref != "scratch" && ref !~ /^\$\{/) print ref
+      if (ref != "" && ref != "scratch") print ref
     }
   ' "${DOCKERFILE}" | sort -u
 )
 
-if [[ ${#REFS[@]} -eq 0 ]]; then
+if [[ ${#RAW_REFS[@]} -eq 0 ]]; then
   echo "No base image refs found in ${DOCKERFILE}; nothing to age-check"
   exit 0
 fi
+
+REFS=()
+for raw in "${RAW_REFS[@]}"; do
+  resolved="$(resolve_ref "${raw}")" || exit 1
+  echo "FROM ${raw} -> ${resolved}"
+  REFS+=("${resolved}")
+done
 
 NOW_EPOCH="$(date -u +%s)"
 MAX_SECONDS=$((MAX_DAYS * 86400))

@@ -1,7 +1,9 @@
 name: Container Scan (reusable)
 
-# Stays on the host runner: image_artifact uses `docker load` (needs the daemon).
-# ci-container has scanners but not a Docker socket — see handoff.
+# Stays on the host runner: `docker pull` / a local tag needs the daemon.
+# 6.0.0 dropped the image.tar artifact. A non-ghcr.io ref is a local tag
+# already present on this runner (see container-build scan_local for the
+# same-job path that does not push).
 
 on:
   workflow_call:
@@ -10,11 +12,11 @@ on:
         description: Image ref to scan (local tag or registry)
         required: true
         type: string
-      image_artifact:
-        description: Optional artifact name containing image.tar to load first
+      scanners:
+        description: Trivy --scanners (DOCKER-SEC-005 default includes secret)
         required: false
         type: string
-        default: ""
+        default: vuln,secret
       blocking:
         required: false
         type: boolean
@@ -56,9 +58,9 @@ on:
       image:
         type: string
         required: true
-      image_artifact:
+      scanners:
         type: string
-        default: ""
+        default: vuln,secret
       blocking:
         type: boolean
         default: false
@@ -87,7 +89,7 @@ env:
 jobs:
   scan:
     # CI-024: SARIF upload needs security-events
-    if: github.actor != 'dependabot[bot]'
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -111,17 +113,6 @@ jobs:
             scripts
           sparse-checkout-cone-mode: false
 
-      - name: Download image artifact
-        if: inputs.image_artifact != ''
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: ${{ inputs.image_artifact }}
-          path: image-artifact
-
-      - name: Load image tarball
-        if: inputs.image_artifact != ''
-        run: docker load -i image-artifact/image.tar
-
       - name: Require image ref
         env:
           IMAGE: ${{ inputs.image }}
@@ -133,7 +124,7 @@ jobs:
           fi
 
       - name: Log in to GHCR
-        if: startsWith(inputs.image, 'ghcr.io/') && inputs.image_artifact == ''
+        if: startsWith(inputs.image, 'ghcr.io/')
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
@@ -141,7 +132,7 @@ jobs:
           password: ${{ secrets.ghcr_token || github.token }}
 
       - name: Pull GHCR image
-        if: startsWith(inputs.image, 'ghcr.io/') && inputs.image_artifact == ''
+        if: startsWith(inputs.image, 'ghcr.io/')
         env:
           IMAGE: ${{ inputs.image }}
         run: |
@@ -181,6 +172,7 @@ jobs:
           PKG_TYPES: ${{ inputs.pkg_types }}
           IMAGE: ${{ inputs.image }}
           IGNOREFILE: ${{ inputs.ignorefile }}
+          SCANNERS: ${{ inputs.scanners }}
           SEV: ${{ steps.thr.outputs.sev_up }}
         run: |
           set -euo pipefail
@@ -188,29 +180,7 @@ jobs:
             echo "empty vuln_fail_on_severity" >&2
             exit 1
           fi
-          mkdir -p scan-results
-          CFG=()
-          [[ -f trivy.yaml ]] && CFG=(--config trivy.yaml)
-          IGNORE=()
-          if [[ "${IGNOREFILE}" == "none" ]]; then
-            echo "ignorefile=none — skipping Trivy ignorefiles"
-          elif [[ -n "${IGNOREFILE}" && -f "${IGNOREFILE}" ]]; then
-            IGNORE=(--ignorefile "${IGNOREFILE}")
-          elif [[ -n "${IGNOREFILE}" ]]; then
-            echo "error: ignorefile path not found: ${IGNOREFILE}" >&2
-            exit 1
-          elif [[ -f .trivyignore.yaml ]]; then
-            IGNORE=(--ignorefile .trivyignore.yaml)
-          elif [[ -f .trivyignore ]]; then
-            IGNORE=(--ignorefile .trivyignore)
-          fi
-          trivy image --scanners vuln --pkg-types "${PKG_TYPES}" \
-            --severity "CRITICAL,${SEV}" \
-            --format sarif --output scan-results/trivy.sarif \
-            "${CFG[@]}" "${IGNORE[@]}" "${IMAGE}"
-          trivy image --scanners vuln --pkg-types "${PKG_TYPES}" \
-            --severity "CRITICAL,${SEV}" \
-            --exit-code 1 "${CFG[@]}" "${IGNORE[@]}" "${IMAGE}"
+          bash _containerdevops/scripts/scan-image.sh trivy
 
       - name: Syft SBOM
         id: syft
@@ -218,18 +188,7 @@ jobs:
         env:
           PKG_TYPES: ${{ inputs.pkg_types }}
           IMAGE: ${{ inputs.image }}
-        run: |
-          set -euo pipefail
-          mkdir -p scan-results
-          SELECT=()
-          if [[ "${PKG_TYPES}" == "library" ]]; then
-            # Language catalogs, not python-only. Omit golang/binary so Grype
-            # does not fail on vendor-static Go donors already in .trivyignore.yaml.
-            SELECT=(--select-catalogers "python,javascript,java,dotnet,ruby,php,rust,dart,swift")
-          fi
-          syft "${IMAGE}" "${SELECT[@]}" \
-            -o cyclonedx-json=scan-results/sbom.cdx.json \
-            -o spdx-json=scan-results/sbom.spdx.json
+        run: bash _containerdevops/scripts/scan-image.sh syft
 
       - name: Grype (SBOM)
         id: grype
@@ -243,15 +202,7 @@ jobs:
             echo "empty vuln_fail_on_severity" >&2
             exit 1
           fi
-          CFG=()
-          [[ -f .grype.yaml ]] && CFG=(--config .grype.yaml)
-          if [[ -f scan-results/sbom.cdx.json ]]; then
-            grype "sbom:scan-results/sbom.cdx.json" "${CFG[@]}" --fail-on "${SEV}" \
-              -o json=scan-results/grype.json
-          else
-            grype "${IMAGE}" "${CFG[@]}" --fail-on "${SEV}" \
-              -o json=scan-results/grype.json
-          fi
+          bash _containerdevops/scripts/scan-image.sh grype
 
       - name: Gate — scan
         if: always()

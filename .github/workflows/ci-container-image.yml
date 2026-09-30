@@ -47,7 +47,7 @@ jobs:
   # Centralise CI_BASE digests once (reusable-workflow `with:` cannot use env).
   # Update these two lines when commondevops publishes a new ci-lint.
   bases:
-    if: github.actor != 'dependabot[bot]'
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     permissions:
@@ -66,7 +66,7 @@ jobs:
 
   lint:
     if: >-
-      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
       (github.event_name != 'pull_request' ||
        github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
@@ -86,7 +86,7 @@ jobs:
 
   lint-alpine:
     if: >-
-      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
       (github.event_name != 'pull_request' ||
        github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
@@ -108,7 +108,7 @@ jobs:
   build:
     needs: [lint, lint-alpine, bases]
     if: >-
-      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
       (github.event_name != 'pull_request' ||
        github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
@@ -139,7 +139,7 @@ jobs:
   build-alpine:
     needs: [lint, lint-alpine, bases]
     if: >-
-      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
       (github.event_name != 'pull_request' ||
        github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
@@ -170,7 +170,7 @@ jobs:
   scan:
     needs: build
     if: >-
-      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
       (github.event_name != 'pull_request' ||
        github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
@@ -190,7 +190,7 @@ jobs:
   scan-alpine:
     needs: build-alpine
     if: >-
-      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
       (github.event_name != 'pull_request' ||
        github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
@@ -210,7 +210,7 @@ jobs:
   publish:
     needs: [build, scan, bases]
     if: >-
-      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
       (github.event_name == 'release' ||
        github.event_name == 'schedule' ||
        (github.event_name == 'workflow_dispatch' && inputs.publish))
@@ -258,7 +258,7 @@ jobs:
   publish-alpine:
     needs: [build-alpine, scan-alpine, bases]
     if: >-
-      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
       (github.event_name == 'release' ||
        github.event_name == 'schedule' ||
        (github.event_name == 'workflow_dispatch' && inputs.publish))
@@ -304,11 +304,11 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       ghcr_token: ${{ secrets.GHCR_READ_TOKEN }}
 
-  # PR-only: the ci-run-* version is not also a release tag. After publish retag,
+  # Delete the ephemeral tag when this run did not publish. After publish retag
   # the same digest carries version/latest — never delete that version.
   cleanup:
-    needs: [build, scan]
-    if: always() && github.event_name == 'pull_request' && needs.build.outputs.handoff_tag != ''
+    needs: [build, scan, publish]
+    if: always() && needs.build.outputs.handoff_tag != '' && needs.publish.result != 'success'
     permissions:
       packages: write
     uses: ./.github/workflows/container-handoff-cleanup.yml
@@ -317,8 +317,8 @@ jobs:
       tag: ${{ needs.build.outputs.handoff_tag }}
 
   cleanup-alpine:
-    needs: [build-alpine, scan-alpine]
-    if: always() && github.event_name == 'pull_request' && needs.build-alpine.outputs.handoff_tag != ''
+    needs: [build-alpine, scan-alpine, publish-alpine]
+    if: always() && needs.build-alpine.outputs.handoff_tag != '' && needs.publish-alpine.result != 'success'
     permissions:
       packages: write
     uses: ./.github/workflows/container-handoff-cleanup.yml

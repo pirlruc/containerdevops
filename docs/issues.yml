@@ -1,7 +1,7 @@
 # Authored backlog for containerdevops.
 #
 # Schema: https://github.com/pirlruc/github-scaffold/blob/main/docs/issues-schema.md
-# Methodology: https://github.com/pirlruc/methodologies/tree/1.6.0/github-issue-adr
+# Methodology: https://github.com/pirlruc/methodologies/tree/1.8.0/github-issue-adr
 
 milestones:
   - name: Phase 1 — Image lifecycle
@@ -1237,3 +1237,183 @@ milestones:
               - git -C docs/guardrails describe --tags --exact-match
             guardrail_refs:
               - SC-DEP-004
+
+      - id: CDO-PIN-018
+        status: done
+        title: Pin guardrails 1.8.0 and scaffold 1.7.0
+        overview:
+          problem: Gitlinks were still guardrails 1.6.0 and scaffold 1.5.0 after those tags moved.
+          goal: Both gitlinks match the annotated tags that were current before 1.9.0.
+        decision: >-
+          In the context of the org pins moving to guardrails 1.8.0 and scaffold 1.7.0,
+          facing stale gitlinks, we decided to bump both submodules, to achieve SC-DEP-004,
+          accepting that 6.0.0 moves the pins again to 1.9.0 and 1.8.0.
+        architecture:
+          target: submodule gitlinks
+          modules:
+            - docs/guardrails
+            - .github/scaffold
+        acceptance_criteria:
+          - The 1.8.0 and 1.7.0 gitlinks landed before the 6.0.0 bump
+        guardrail_refs:
+          - SC-DEP-004
+        tasks:
+          - id: CDO-PIN-018-T1
+            status: done
+            title: Bump the guardrails and scaffold gitlinks
+            instructions:
+              files:
+                - docs/guardrails
+                - .github/scaffold
+            verification:
+              - git -C docs/guardrails describe --tags --exact-match
+            guardrail_refs:
+              - SC-DEP-004
+
+      - id: CDO-PIN-002
+        status: rejected
+        title: Re-pin guardrails 1.8.0 and github-scaffold 1.7.0
+        resolution: >-
+          Duplicate of CDO-PIN-018. The same gitlinks landed in the pin bump
+          that preceded 6.0.0. This id is not a second piece of work.
+        overview:
+          problem: A second epic asked for the same 1.8.0 and 1.7.0 pins.
+          goal: One pin epic, not two.
+        decision: >-
+          In the context of two epics for one pin bump, facing duplicate tracker
+          entries, we decided to keep CDO-PIN-018 and reject this id, to achieve
+          a single decision record, accepting that the GitHub issue closes as not planned.
+        architecture:
+          target: docs/issues.yml
+          modules:
+            - docs/issues.yml
+        acceptance_criteria:
+          - This id is rejected with a resolution naming CDO-PIN-018
+        guardrail_refs:
+          - SC-DEP-004
+
+      - id: CDO-PIN-019
+        status: done
+        title: Record Free-plan CI-032 and REL-PUB-004 deviations
+        overview:
+          problem: >-
+            Guardrails 1.9.0 requires branch protection and tag-restricted publish
+            Environments. A user-owned private Free-plan repository cannot use either,
+            and this repository is going private again.
+          goal: Record both deviations instead of applying settings that will not survive.
+        decision: >-
+          In the context of a repository that returns to private on the Free plan,
+          facing CI-032 and REL-PUB-004, we decided to record deviations and keep
+          SHA pins plus repository secrets, to achieve a private-compatible setup,
+          accepting that publish tokens stay readable by jobs in this repository.
+        architecture:
+          target: docs/guardrail-deviations.yml
+          modules:
+            - docs/guardrail-deviations.yml
+        acceptance_criteria:
+          - CI-032 and REL-PUB-004 are recorded with a future review date
+          - No ruleset or Environment is created
+        guardrail_refs:
+          - CI-032
+          - REL-PUB-004
+        tasks:
+          - id: CDO-PIN-019-T1
+            status: done
+            title: Add the Free-plan deviations
+            instructions:
+              files:
+                - docs/guardrail-deviations.yml
+            verification:
+              - grep -q CI-032 docs/guardrail-deviations.yml
+              - grep -q REL-PUB-004 docs/guardrail-deviations.yml
+            guardrail_refs:
+              - CI-032
+              - REL-PUB-004
+
+      - id: CDO-LOCAL-001
+        status: done
+        title: Allow a local image scan that does not push to GHCR
+        overview:
+          problem: >-
+            container-build and container-scan handed off by GHCR digest only.
+            A product repo that builds a local tag and does not publish could not
+            scan it. Tag 5.0.4 has no GitHub Release.
+          goal: >-
+            An opt-in local scan that does not push, and docs that call 5.0.4 tag-only.
+        decision: >-
+          In the context of unpublished product images, facing a scan path that
+          always pushed, we decided scan_local plus push_handoff false, to achieve
+          DOCKER-SEC-001 without a registry write, accepting that published images
+          keep the digest handoff and the image tar stays removed.
+        out_of_scope:
+          - Deleting published GHCR tags
+          - Restoring the image.tar artifact
+        architecture:
+          target: container-build and container-scan
+          modules:
+            - .github/workflows/container-build.yml
+            - .github/workflows/container-scan.yml
+            - scripts/scan-image.sh
+            - docs/workflows.md
+        acceptance_criteria:
+          - container-build can scan a loaded image when push_handoff is false
+          - The default remains the GHCR digest handoff
+          - workflows.md names KICS 698ed579 as the one-shot healthcheck query
+          - Docs call 5.0.4 tag-only instead of citing a missing Release
+        guardrail_refs:
+          - DOCKER-SEC-001
+          - DOCKER-DELIV-004
+          - DOCKER-COMPOSE-002
+          - REL-PUB-001
+        tasks:
+          - id: CDO-LOCAL-001-T1
+            status: done
+            title: Add the local scan path and the KICS one-shot note
+            instructions:
+              files:
+                - .github/workflows/container-build.yml
+                - scripts/scan-image.sh
+                - docs/workflows.md
+            verification:
+              - grep -q scan_local .github/workflows/container-build.yml
+              - grep -q 698ed579 docs/workflows.md
+            guardrail_refs:
+              - DOCKER-SEC-001
+              - DOCKER-COMPOSE-002
+
+      - id: CDO-LINT-001
+        status: done
+        title: Lint a list of unpublished Dockerfiles
+        overview:
+          problem: >-
+            container-lint and container-devcontainer each took one Dockerfile.
+            Molecule and devcontainer fixtures need hadolint without a build or publish.
+          goal: A newline-separated dockerfiles input runs hadolint at the docker threshold.
+        decision: >-
+          In the context of fixture Dockerfiles, facing a single-file input, we decided
+          a dockerfiles list on the existing lint workflows, to achieve DOCKER-LINT-001
+          without a product-image build, accepting that callers still cannot use a
+          private workflow from a public repository once this repo is private again.
+        architecture:
+          target: container-lint and container-devcontainer
+          modules:
+            - .github/workflows/container-lint.yml
+            - .github/workflows/container-devcontainer.yml
+            - scripts/lint-dockerfiles.sh
+        acceptance_criteria:
+          - dockerfiles replaces dockerfile when set
+          - hadolint uses hadolint_failure_threshold
+        guardrail_refs:
+          - DOCKER-LINT-001
+        tasks:
+          - id: CDO-LINT-001-T1
+            status: done
+            title: Accept a newline-separated Dockerfile list
+            instructions:
+              files:
+                - .github/workflows/container-lint.yml
+                - scripts/lint-dockerfiles.sh
+            verification:
+              - grep -q dockerfiles .github/workflows/container-lint.yml
+            guardrail_refs:
+              - DOCKER-LINT-001

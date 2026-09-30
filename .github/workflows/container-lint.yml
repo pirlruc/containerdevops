@@ -13,10 +13,15 @@ on:
   workflow_call:
     inputs:
       dockerfile:
-        description: Path to Dockerfile
+        description: Path to Dockerfile (used when dockerfiles is empty)
         required: false
         type: string
         default: Dockerfile
+      dockerfiles:
+        description: Newline-separated Dockerfiles. When set, replaces dockerfile. Lint and digest pins only — not a build.
+        required: false
+        type: string
+        default: ""
       working_directory:
         description: Repo subdirectory containing the Dockerfile
         required: false
@@ -64,6 +69,9 @@ on:
       dockerfile:
         type: string
         default: Dockerfile
+      dockerfiles:
+        type: string
+        default: ""
       working_directory:
         type: string
         default: .
@@ -101,7 +109,7 @@ jobs:
           persist-credentials: false
 
       - name: Checkout containerdevops scripts
-        if: github.actor != 'dependabot[bot]'
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: pirlruc/containerdevops
@@ -140,9 +148,8 @@ jobs:
         env:
           HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
           DOCKERFILE: ${{ inputs.dockerfile }}
-        run: |
-          hadolint --failure-threshold "${HADOLINT_THRESHOLD}" \
-            "${DOCKERFILE}"
+          DOCKERFILES: ${{ inputs.dockerfiles }}
+        run: bash "${GITHUB_WORKSPACE}/_containerdevops/scripts/lint-dockerfiles.sh"
 
       - name: hadolint (runner_image)
         id: hadolint_image
@@ -154,11 +161,8 @@ jobs:
           RUNNER_IMAGE: ${{ inputs.runner_image }}
           HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
           DOCKERFILE: ${{ inputs.dockerfile }}
-        run: |
-          docker run --rm -v "${WORKSPACE}:/work:ro" -w "/work/${WORKING_DIRECTORY}" \
-            "${RUNNER_IMAGE}" \
-            hadolint --failure-threshold "${HADOLINT_THRESHOLD}" \
-            "${DOCKERFILE}"
+          DOCKERFILES: ${{ inputs.dockerfiles }}
+        run: bash "${WORKSPACE}/_containerdevops/scripts/lint-dockerfiles.sh"
 
       - name: shellcheck entrypoints (host)
         id: shellcheck_host
@@ -205,7 +209,7 @@ jobs:
 
   infra:
     # Nested commondevops pin — keep uses: and scripts_ref in lockstep (@b3c462be… = tag 5.1.2).
-    if: github.actor != 'dependabot[bot]' && inputs.run_infra_lint != false
+    if: github.event.pull_request.user.login != 'dependabot[bot]' && inputs.run_infra_lint != false
     permissions:
       contents: read
     uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@b3c462bed0de4f6475e6be7875c4ababd831acc6
@@ -220,7 +224,7 @@ jobs:
 
   secrets:
     # CI-024 / DOCKER-SEC-005
-    if: github.actor != 'dependabot[bot]' && inputs.run_secrets_scan != false
+    if: github.event.pull_request.user.login != 'dependabot[bot]' && inputs.run_secrets_scan != false
     permissions:
       contents: read
       security-events: write
