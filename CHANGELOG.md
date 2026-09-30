@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.0.2] - 2026-09-30
+
+### Changed
+
+- `CI_BASE` is ci-lint **5.2.0** alpine and debian digests.
+- Nested commondevops pin is **5.2.0**
+  (`202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3`).
+
 ## [6.0.1] - 2026-09-30
 
 ### Fixed

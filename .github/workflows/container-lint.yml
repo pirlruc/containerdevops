@@ -3,7 +3,7 @@ name: Container Lint (reusable)
 # Hadolint with docker profile thresholds (host install or docker run of runner_image).
 # actionlint / shellcheck / zizmor → commondevops common-infra-lint.
 # Secrets (DOCKER-SEC-005) → commondevops common-secrets-sast.
-# commondevops pin: keep uses: and scripts_ref in lockstep (@b3c462be… = tag 5.1.2).
+# commondevops pin: keep uses: and scripts_ref in lockstep (@202582e7… = tag 5.2.0).
 #
 # runner_image: empty → install tools on the bare runner (bootstrap / publish caller).
 # Non-empty → docker run that image for hadolint/shellcheck (avoids job-level container:
@@ -208,17 +208,17 @@ jobs:
           bash _containerdevops/scripts/gate-aggregate.sh "${args[@]}"
 
   infra:
-    # Nested commondevops pin — keep uses: and scripts_ref in lockstep (@b3c462be… = tag 5.1.2).
+    # Nested commondevops pin — keep uses: and scripts_ref in lockstep (@202582e7… = tag 5.2.0).
     if: github.event.pull_request.user.login != 'dependabot[bot]' && inputs.run_infra_lint != false
     permissions:
       contents: read
-    uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@b3c462bed0de4f6475e6be7875c4ababd831acc6
+    uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3
     with:
       blocking: ${{ inputs.blocking }}
       working_directory: ${{ inputs.working_directory }}
       shell_scripts: ${{ inputs.shell_scripts }}
       dockerfiles: ${{ inputs.dockerfile }}
-      scripts_ref: b3c462bed0de4f6475e6be7875c4ababd831acc6
+      scripts_ref: 202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3
     secrets:
       checkout_token: ${{ secrets.checkout_token }}
 
@@ -228,10 +228,10 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@b3c462bed0de4f6475e6be7875c4ababd831acc6
+    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3
     with:
       blocking: ${{ inputs.blocking }}
       working_directory: ${{ inputs.working_directory }}
-      scripts_ref: b3c462bed0de4f6475e6be7875c4ababd831acc6
+      scripts_ref: 202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3
     secrets:
       checkout_token: ${{ secrets.checkout_token }}

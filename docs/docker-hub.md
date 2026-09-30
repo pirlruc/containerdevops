@@ -16,8 +16,10 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 
 | Tag | Meaning |
 |-----|---------|
-| `6.0.0` / `6.0.0-alpine` | Alpine publish from workflow tag 6.0.0. Digest is written back after that publish; until then pin `5.0.3`. |
-| `6.0.0-debian` | Debian publish from the same tag. Digest is written back after publish. |
+| `6.0.1` / `6.0.1-alpine` | Alpine `sha256:3f6f4e7aebdd671c3e8c96eed406bd868146dfa8072adecb1605022407bde83c` |
+| `6.0.1-debian` | Debian `sha256:f3896178dc0f34973e86cd3b129bd6705a3e6da997235a17f7632dce9f811644` |
+| `6.0.0` / `6.0.0-alpine` | Previous Alpine `sha256:10f60eae5efd277c78f8f9c7e27e5376e8f4b1ed299eae7756a5c332c0b48f05` |
+| `6.0.0-debian` | Previous Debian `sha256:80ee93aa0a702374c6072d637f4ae46b0f1302ca5da610b62dc5f1511133025e` |
 | `5.0.3` / `5.0.3-alpine` | Previous Alpine `sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00` |
 | `5.0.3-debian` | Immutable Debian `sha256:14f26db2831086123bf79caa3aac39e337edcc565d41ea894a376f463d850ef7` |
 | `5.0.0` / `5.0.0-alpine` | Previous Alpine `sha256:0d4328a0b6051a87df5baa70b19edeaa521ee479462268fe7b2be619209a42d4` |
