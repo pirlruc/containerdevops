@@ -30,8 +30,8 @@ Shared infra/secrets/supply-chain forward to
 | `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.0.2` `sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a` (`latest` == alpine) |
 | `ghcr.io/pirlruc/ci-container` (debian) | `6.0.2-debian` `sha256:6e0df10282985ac503cee69f869f1784789735713c9c5e5f2d52070280792cd4` |
 | commondevops `uses:` / `scripts_ref` | tag `5.2.0` → `202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3` (CI-034 lockstep) |
-| `CI_BASE` (ci-lint debian) | `5.2.0-debian` digest `sha256:543043009f3359db03457ead5ff866920c857933855a415d22e3aa354dbd46a8` |
-| `CI_BASE` (ci-lint alpine) | `5.2.0` digest `sha256:33dbcc7be28ffef2a6cf3cf4b611cf862a8f246c6d6932c4055772d73d697674` |
+| `CI_BASE` (ci-lint debian) | `5.2.2-debian` digest `sha256:2cb20ba2d39f55ccc4195acc162013162682cb3bcccc31c300261965ca9b30c1` |
+| `CI_BASE` (ci-lint alpine) | `5.2.2` digest `sha256:fd24e836c677e044163aab19e1e7d49d92ce34576deb7970b1ae16ea52b36d1b` |
 | `docker/setup-buildx-action` | `4.4.1` → `f87e5991…` |
 | `docker/build-push-action` | `7.4.0` → `c3c9e263…` |
 | `github/codeql-action/upload-sarif` | `4.38.1` → `1c5b6756…` |
@@ -179,7 +179,7 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Recent history
 
-- 2026-09-30: **6.0.2** — CI_BASE is ci-lint 5.2.0. Alpine
+- 2026-09-30: **6.0.2** — CI_BASE is ci-lint 5.2.2. Alpine
   `sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a`,
   debian `sha256:6e0df10282985ac503cee69f869f1784789735713c9c5e5f2d52070280792cd4`.
   **6.0.1** fixed provenance (`attestations: write`). **6.0.3** is tag-only digests.
