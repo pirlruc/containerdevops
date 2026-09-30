@@ -5,12 +5,36 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.0.0] - 2026-09-30
+
+### Breaking
+
+- Removed `upload_image_artifact` and `image_artifact`. Scan a GHCR digest, or
+  set `push_handoff: false` and `scan_local: true` on `container-build` to scan
+  a local tag without a registry write (CDO-LOCAL-001).
+
+### Added
+
+- `container-lint` and `container-devcontainer` accept a newline-separated
+  `dockerfiles` list. Hadolint still uses `hadolint_failure_threshold`.
+- `container-scan` input `scanners` defaults to `vuln,secret` (DOCKER-SEC-005).
+- Token-free `lint-dependabot` job (actionlint, shellcheck, hadolint, zizmor)
+  so a Dependabot pull request is not only the `pins` job.
+- Deviations CI-032 and REL-PUB-004 (CDO-PIN-019). The repository is going
+  private again; branch protection and tag Environments are not available then.
+
 ### Changed
 
-- `docs/guardrails` tag **1.8.0** (`aa5184ce…`); `.github/scaffold` tag **1.7.0**
-  (`e76bb3fd…`). Synced issue templates, Cursor rules, `AGENTS.md`, `SKILLS.md`,
-  and `CLAUDE.md`. Decision links cite methodologies **1.6.0** (not a submodule
-  in this repo).
+- `docs/guardrails` tag **1.9.0** (`16a2c95c…`); `.github/scaffold` tag **1.8.0**
+  (`ac9059fd…`). Decision links cite methodologies **1.8.0**.
+- CI-024 skips use `github.event.pull_request.user.login`, not `github.actor`.
+  `push` stays on `main` (not `dependabot/**`).
+- `FROM ${ARG}` bases are age-checked. `BUILD_ARGS` overrides the Dockerfile default.
+- Handoff cleanup fails on API errors other than 404. `ci-run-*` tags are
+  deleted on any run that did not publish, not only pull requests.
+- Build-record retention is 1 day. The artifact sweep also deletes `*.dockerbuild`.
+- Dependabot action bumps: setup-buildx 4.4.1, build-push 7.4.0, setup-qemu 4.4.0,
+  codeql-action upload-sarif 4.38.1.
 
 ## [5.0.4] - 2026-09-15
 

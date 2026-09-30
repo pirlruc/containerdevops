@@ -54,7 +54,8 @@ or the run fails at startup before any step runs.
 
 | Input | Default |
 |-------|---------|
-| `dockerfile` | `Dockerfile` |
+| `dockerfile` | `Dockerfile` (used when `dockerfiles` is empty) |
+| `dockerfiles` | `""` (newline-separated list; replaces `dockerfile`) |
 | `working_directory` | `.` |
 | `shell_scripts` | `""` |
 | `scripts_ref` | `""` |
@@ -78,7 +79,9 @@ tag `5.1.2` → `b3c462bed0de4f6475e6be7875c4ababd831acc6`).
 | `scripts_ref` | `""` |
 | `blocking` | `false` |
 | `artifact_name` | `container-image` (cache scope + ephemeral tag suffix) |
-| `upload_image_artifact` | `false` |
+| `push_handoff` | `true` (set `false` to skip the GHCR `ci-run-*` push) |
+| `scan_local` | `false` (scan the loaded image in this job; no registry write) |
+| `scanners` | `vuln,secret` (only when `scan_local` is true) |
 | `handoff_package` | `""` (GHCR name; default is `image_name` before colon) |
 | `size_class` | `application` |
 | `image_max_size_mb` | `""` (override; empty reads the vendored key for `size_class`) |
@@ -97,7 +100,10 @@ contain secret`) and scan receives `""`. Compose on the caller:
 image: ${{ format('ghcr.io/{0}/{1}@{2}', github.repository_owner, needs.build.outputs.handoff_package, needs.build.outputs.digest) }}
 ```
 
-Do **not** pass long-lived `image_artifact` unless `upload_image_artifact: true`.
+**6.0.0 removed** `upload_image_artifact` and `image_artifact`. There is no image tar.
+Unpublished images set `push_handoff: false` and `scan_local: true` on this
+workflow. `container-scan` still accepts a local tag, but only when that tag
+is already loaded on the same runner.
 
 `size_class` selects the size floor (DOCKER-PERF-002): `application` reads
 `image_max_size_mb` (300); `ci_toolchain` reads `ci_image_max_size_mb` (2000).
@@ -131,8 +137,8 @@ Tune `image_max_size_mb` / `ci_image_max_size_mb` against this measurement.
 
 | Input | Default |
 |-------|---------|
-| `image` | required |
-| `image_artifact` | `""` (optional tarball load) |
+| `image` | required (GHCR ref is pulled; any other ref is a local tag) |
+| `scanners` | `vuln,secret` (DOCKER-SEC-005) |
 | `pkg_types` | `os,library` |
 | `ignorefile` | `""` |
 | `blocking` | `false` |
@@ -141,8 +147,8 @@ Tune `image_max_size_mb` / `ci_image_max_size_mb` against this measurement.
 | `sarif_category` | `trivy-image` |
 
 Callers should compose the GHCR digest ref from `handoff_package` + `digest`
-(see container-build.yml above) and leave `image_artifact` empty. The optional
-tarball path is legacy (`upload_image_artifact: true` on build).
+(see container-build.yml above). A ref that does not start with `ghcr.io/` is
+scanned as a local tag and is not pulled. `image_artifact` was removed in 6.0.0.
 
 A missing `vuln_fail_on_severity` key fails closed (CI-022) before Trivy/Grype
 run — it does not degrade to CRITICAL-only.
@@ -151,7 +157,7 @@ Callers scanning a **registry** ref (`ghcr.io/...`) must grant `packages: read`.
 The scan job logs in to GHCR and `docker pull`s on the same runner — a preceding
 probe job's login does not carry over. Optional secret `ghcr_token` (PAT with
 `read:packages`) when `github.token` cannot pull; otherwise `github.token`.
-Artifact-loaded local tags skip login.
+Local tags skip login.
 
 `ignorefile` contract:
 
@@ -256,7 +262,7 @@ not branch refs). Date tags (`YYYYMMDD`) still require the explicit input.
 
 Secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` when Hub enabled **or** when
 the Dockerfile pulls from `dhi.io`. Optional `ghcr_token` for private GHCR
-pulls. The publish job logs in to `dhi.io` when those Hub secrets are present
+pulls. The publish job logs in to `dhi.io` only when `dhi_login` is true
 (in addition to GHCR / Hub push logins). Permissions: `packages: write`,
 `id-token: write` (provenance via `actions/attest-build-provenance` when
 `sign: true`; no separate `attestations: write` grant is required on Free plan
@@ -280,6 +286,16 @@ is always advisory so image publish still succeeds.
 KICS `exclude-queries` IDs and why each is suppressed (not fixed) are recorded in
 [`docs/kics-exclusions.md`](kics-exclusions.md) (DOCKER-LINT-002).
 
+Guardrails 1.9.0 names two KICS queries that may be ignored **per service**, not
+per file, when the matching compose rule already holds:
+
+| Query | When a per-service ignore is enough |
+|-------|--------------------------------------|
+| `698ed579` | One-shot service (`restart: "no"`, dependents use `service_completed_successfully`) — DOCKER-COMPOSE-002 |
+| `ce76b7d0` | `cap_drop: [ALL]` is already set — DOCKER-COMPOSE-005 |
+
+Do not put those IDs in a file-wide `exclude-queries` list.
+
 When `compose_files` is set, `scripts/check-compose-gates.sh` also enforces
 measurable DOCKER-COMPOSE rules (digest-pinned images, healthcheck, privileged
 cap, port bind, memory limits). Unmeasurable rules (bind-mount comments, volume
@@ -295,7 +311,8 @@ ecosystem watches `/docker/ci-container` only). Refresh the pin in
 
 | Input | Default |
 |-------|---------|
-| `dockerfile` | `.devcontainer/Dockerfile` |
+| `dockerfile` | `.devcontainer/Dockerfile` (used when `dockerfiles` is empty) |
+| `dockerfiles` | `""` (newline-separated; devcontainer and Molecule fixtures) |
 | `working_directory` | `.` |
 | `structure_test_config` | `""` (skip when empty) |
 | `scripts_ref` | `""` |
@@ -308,10 +325,12 @@ container-structure-test when `structure_test_config` is set.
 ## container-handoff-cleanup.yml
 
 Deletes a GHCR package **version** only when its tags are solely the ephemeral
-`ci-run-*` tag. Call from PR jobs after scan. **Never** call after publish
-retag — that digest also carries `{{version}}` / `latest`.
+`ci-run-*` tag. Call it when the run did not publish. **Never** call after a
+successful publish retag — that digest also carries `{{version}}` / `latest`.
+A 404 (package never created) is success. Any other API error fails the job.
 
 ## artifact-sweep.yml
 
 Scheduled / `workflow_dispatch` job that deletes leftover `container-image*`
-Actions artifacts. Does not delete GHCR packages or scan-result artifacts.
+Actions artifacts and `docker/build-push-action` build records (`*.dockerbuild`).
+Does not delete GHCR packages or scan-result artifacts.

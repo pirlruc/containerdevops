@@ -22,7 +22,7 @@ permissions: {}
 
 jobs:
   secrets-sast:
-    if: github.actor != 'dependabot[bot]'
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
       contents: read
       security-events: write
@@ -35,7 +35,7 @@ jobs:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
   supply-chain:
-    if: github.actor != 'dependabot[bot]'
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
       contents: read
       security-events: write
@@ -48,7 +48,7 @@ jobs:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
   iac:
-    if: github.actor != 'dependabot[bot]'
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
       contents: read
       security-events: write
@@ -59,7 +59,7 @@ jobs:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
 
   published-image-rescan:
-    if: github.actor != 'dependabot[bot]'
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
       contents: read
       security-events: write

@@ -160,7 +160,7 @@ if (( SKIP_SCAN == 0 )); then
   fi
   set +e
   if command -v trivy >/dev/null 2>&1; then
-    trivy image --severity "CRITICAL,${SEV_UP}" --pkg-types library --exit-code 1 "${IGNORE[@]}" "${IMAGE}"
+    trivy image --scanners vuln,secret --severity "CRITICAL,${SEV_UP}" --pkg-types library --exit-code 1 "${IGNORE[@]}" "${IMAGE}"
   else
     # Resolve ignorefile paths inside the container mount at /work
     DIGNORE=()
@@ -175,7 +175,7 @@ if (( SKIP_SCAN == 0 )); then
     fi
     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
       -v "${PWD}:/work:ro" -w /work \
-      aquasec/trivy:0.73.0@sha256:7cced7cae583819fc7806d4cbc0dbbc7cad18b99f7d3e235192e6da8c091045c image --severity "CRITICAL,${SEV_UP}" --pkg-types library --exit-code 1 \
+      aquasec/trivy:0.73.0@sha256:7cced7cae583819fc7806d4cbc0dbbc7cad18b99f7d3e235192e6da8c091045c image --scanners vuln,secret --severity "CRITICAL,${SEV_UP}" --pkg-types library --exit-code 1 \
       "${DIGNORE[@]}" "${IMAGE}"
   fi
   trc=$?

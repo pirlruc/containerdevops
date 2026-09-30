@@ -40,8 +40,20 @@ jobs:
         run: |
           set -euo pipefail
           enc="$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=""))' "${PKG}")"
+          set +e
           ids="$(gh api --paginate "/users/${OWNER}/packages/container/${enc}/versions" \
-            --jq ".[] | select(.metadata.container.tags[]? == \"${TAG}\") | .id" || true)"
+            --jq ".[] | select(.metadata.container.tags[]? == \"${TAG}\") | .id" 2>versions.err)"
+          rc=$?
+          set -e
+          if [[ "${rc}" -ne 0 ]]; then
+            if grep -q 'HTTP 404' versions.err; then
+              echo "no package ${OWNER}/${PKG} — nothing to delete"
+              exit 0
+            fi
+            cat versions.err >&2
+            echo "error: listing ${OWNER}/${PKG} versions failed" >&2
+            exit 1
+          fi
           if [[ -z "${ids}" ]]; then
             echo "no version found for ${OWNER}/${PKG}:${TAG}"
             exit 0

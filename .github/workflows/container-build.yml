@@ -69,11 +69,31 @@ on:
         required: false
         type: string
         default: container-image
-      upload_image_artifact:
-        description: Also upload image.tar (legacy handoff). Default false — scan should pull image_ref.
+      push_handoff:
+        description: Push the ephemeral GHCR ci-run-* digest (DOCKER-DELIV-004). Set false for a local-only build.
+        required: false
+        type: boolean
+        default: true
+      scan_local:
+        description: Scan the loaded image in this job (no registry pull). Use with push_handoff false for unpublished images.
         required: false
         type: boolean
         default: false
+      scanners:
+        description: Trivy --scanners when scan_local is true (DOCKER-SEC-005)
+        required: false
+        type: string
+        default: vuln,secret
+      pkg_types:
+        description: Trivy --pkg-types when scan_local is true
+        required: false
+        type: string
+        default: os,library
+      ignorefile:
+        description: Trivy ignorefile when scan_local is true; none disables ignores
+        required: false
+        type: string
+        default: ""
       handoff_package:
         description: "GHCR package name for the ephemeral push (default: image_name before colon)"
         required: false
@@ -147,7 +167,8 @@ permissions: {}
 env:
   ADVISORY: ${{ inputs.blocking == false }}
   DOCKER_BUILD_SUMMARY: "false"
-  DOCKER_BUILD_RECORD_RETENTION_DAYS: "0"
+  # Build records are tiny but numerous. One day, then the sweeper is the backstop.
+  DOCKER_BUILD_RECORD_RETENTION_DAYS: "1"
 
 jobs:
   build:
@@ -192,7 +213,7 @@ jobs:
 
       - name: Log in to dhi.io
         # CI-024: Dependabot cannot use Actions secrets
-        if: inputs.dhi_login && github.actor != 'dependabot[bot]'
+        if: inputs.dhi_login && github.event.pull_request.user.login != 'dependabot[bot]'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: dhi.io
@@ -202,6 +223,12 @@ jobs:
       - name: Install tooling
         env:
           INSTALL_ONLY: container-structure-test,dive
+        run: bash _containerdevops/scripts/install-container-tools.sh
+
+      - name: Install scanners
+        if: inputs.scan_local
+        env:
+          INSTALL_ONLY: trivy,syft,grype
         run: bash _containerdevops/scripts/install-container-tools.sh
 
       - name: Require scripts_ref for cross-repo callers (CI-034)
@@ -229,6 +256,7 @@ jobs:
           fi
           AGE="$(bash _containerdevops/scripts/read-thresholds.sh base_image_max_age_days "$FILE")"
           MIN="$(bash _containerdevops/scripts/read-thresholds.sh min_image_efficiency_percent "$FILE")"
+          SEV="$(bash _containerdevops/scripts/read-thresholds.sh vuln_fail_on_severity "$FILE")"
           SIZE_CLASS="${SIZE_CLASS:-application}"
           if [[ -n "${IMAGE_MAX_SIZE_MB_OVERRIDE}" ]]; then
             MAX="${IMAGE_MAX_SIZE_MB_OVERRIDE}"
@@ -249,6 +277,8 @@ jobs:
             echo "age=${AGE}"
             echo "min_eff=${MIN}"
             echo "max_mb=${MAX}"
+            echo "sev_up=$(printf '%s' "${SEV}" | tr '[:lower:]' '[:upper:]')"
+            echo "sev_lo=$(printf '%s' "${SEV}" | tr '[:upper:]' '[:lower:]')"
           } >> "$GITHUB_OUTPUT"
 
       - name: Base image age gate (DOCKER-BUILD-006)
@@ -257,6 +287,7 @@ jobs:
         env:
           DOCKERFILE: ${{ inputs.dockerfile }}
           MAX: ${{ steps.thr.outputs.age }}
+          BUILD_ARGS: ${{ inputs.build_args }}
         run: |
           set -euo pipefail
           bash _containerdevops/scripts/check-base-image-age.sh \
@@ -330,6 +361,27 @@ jobs:
           fi
           bash _containerdevops/scripts/check-image-efficiency.sh "${MIN}" dive-report.json
 
+      - name: Scan loaded image
+        id: scan
+        if: inputs.scan_local && steps.build.outcome == 'success'
+        continue-on-error: true
+        env:
+          IMAGE: ${{ inputs.image_name }}
+          PKG_TYPES: ${{ inputs.pkg_types }}
+          IGNOREFILE: ${{ inputs.ignorefile }}
+          SCANNERS: ${{ inputs.scanners }}
+          SEV_UP: ${{ steps.thr.outputs.sev_up }}
+          SEV_LO: ${{ steps.thr.outputs.sev_lo }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${SEV_UP}" || -z "${SEV_LO}" ]]; then
+            echo "empty vuln_fail_on_severity" >&2
+            exit 1
+          fi
+          SEV="${SEV_UP}" bash _containerdevops/scripts/scan-image.sh trivy
+          bash _containerdevops/scripts/scan-image.sh syft
+          SEV="${SEV_LO}" bash _containerdevops/scripts/scan-image.sh grype
+
       - name: Gate — build
         if: always()
         env:
@@ -339,16 +391,18 @@ jobs:
           CST: ${{ steps.cst.outcome }}
           SIZE: ${{ steps.size.outcome }}
           DIVE: ${{ steps.dive.outcome }}
+          SCAN: ${{ steps.scan.outcome }}
         run: |
           set -euo pipefail
           bash _containerdevops/scripts/gate-aggregate.sh \
-            build="${BUILD}" age="${AGE}" cst="${CST}" size="${SIZE}" dive="${DIVE}"
+            build="${BUILD}" age="${AGE}" cst="${CST}" size="${SIZE}" dive="${DIVE}" scan="${SCAN}"
 
       - name: Push ephemeral GHCR handoff
         id: handoff
         # Do not use `if: always()` — reusable-workflow job outputs from always()
         # steps are empty for the caller (needs.*.outputs.image_ref).
-        if: steps.build.outcome == 'success'
+        # Missing input (workflow_dispatch, which cannot list this boolean) stays on.
+        if: inputs.push_handoff != false && steps.build.outcome == 'success'
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
           ARTIFACT_NAME: ${{ inputs.artifact_name }}
@@ -391,27 +445,3 @@ jobs:
             echo "handoff_package=${pkg}"
           } >> "$GITHUB_OUTPUT"
           echo "handoff ${image_ref} (compose ghcr.io/${OWNER}/${image_ref})"
-
-      - name: Save image tarball (legacy)
-        if: always() && inputs.upload_image_artifact
-        env:
-          IMAGE_NAME: ${{ inputs.image_name }}
-        run: |
-          if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
-            echo "No image ${IMAGE_NAME} to save"
-            exit 0
-          fi
-          docker save "${IMAGE_NAME}" -o image.tar
-          docker image inspect "${IMAGE_NAME}" --format '{{.Id}}' > image-id.txt
-
-      - name: Upload image artifact (legacy)
-        if: always() && inputs.upload_image_artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: ${{ inputs.artifact_name }}
-          path: |
-            image.tar
-            image-id.txt
-            dive-report.json
-          if-no-files-found: ignore
-          retention-days: 1

@@ -133,7 +133,7 @@ Provenance after human merge+sync uses these prefixes and the PR description; do
 
 | Area | Intent |
 |------|--------|
-| `.github/workflows/` | Reusable `container-*` workflows (GHCR digest handoff, not image tars) + self CI + ci-container caller |
+| `.github/workflows/` | Reusable `container-*` workflows (GHCR digest handoff or `scan_local` without a push; no image tars) + self CI + ci-container caller |
 | `scripts/` | Install, local parity, threshold readers, size gate (`du -sxm /`) |
 | `docker/ci-container/` | Container CI tooling image (extends ci-lint) |
 | `docs/` | Handoff, this prompt, authored `issues.yml`, deviations, Docker Hub and GitHub Packages pages |

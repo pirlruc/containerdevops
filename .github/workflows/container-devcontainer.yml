@@ -7,10 +7,15 @@ on:
   workflow_call:
     inputs:
       dockerfile:
-        description: Path to devcontainer Dockerfile
+        description: Path to devcontainer Dockerfile (used when dockerfiles is empty)
         required: false
         type: string
         default: .devcontainer/Dockerfile
+      dockerfiles:
+        description: Newline-separated Dockerfiles (devcontainer and Molecule fixtures). When set, replaces dockerfile.
+        required: false
+        type: string
+        default: ""
       working_directory:
         required: false
         type: string
@@ -42,6 +47,9 @@ on:
       dockerfile:
         type: string
         default: .devcontainer/Dockerfile
+      dockerfiles:
+        type: string
+        default: ""
       working_directory:
         type: string
         default: .
@@ -73,7 +81,7 @@ jobs:
           persist-credentials: false
 
       - name: Checkout containerdevops scripts
-        if: github.actor != 'dependabot[bot]'
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: pirlruc/containerdevops
@@ -96,8 +104,11 @@ jobs:
         id: have_df
         env:
           DOCKERFILE: ${{ inputs.dockerfile }}
+          DOCKERFILES: ${{ inputs.dockerfiles }}
         run: |
-          if [[ ! -f "${DOCKERFILE}" ]]; then
+          if [[ -n "${DOCKERFILES}" ]]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          elif [[ ! -f "${DOCKERFILE}" ]]; then
             echo "present=false" >> "$GITHUB_OUTPUT"
             echo "No ${DOCKERFILE} — nothing to verify"
           else
@@ -125,14 +136,14 @@ jobs:
         env:
           HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
           DOCKERFILE: ${{ inputs.dockerfile }}
+          DOCKERFILES: ${{ inputs.dockerfiles }}
         run: |
           set -euo pipefail
           if [[ -z "${HADOLINT_THRESHOLD}" ]]; then
             echo "empty hadolint_failure_threshold" >&2
             exit 1
           fi
-          hadolint --failure-threshold "${HADOLINT_THRESHOLD}" \
-            "${DOCKERFILE}"
+          bash "${GITHUB_WORKSPACE}/_containerdevops/scripts/lint-dockerfiles.sh"
 
       - name: hadolint (runner_image)
         id: hadolint_image
@@ -144,16 +155,14 @@ jobs:
           RUNNER_IMAGE: ${{ inputs.runner_image }}
           HADOLINT_THRESHOLD: ${{ steps.thr.outputs.hadolint }}
           DOCKERFILE: ${{ inputs.dockerfile }}
+          DOCKERFILES: ${{ inputs.dockerfiles }}
         run: |
           set -euo pipefail
           if [[ -z "${HADOLINT_THRESHOLD}" ]]; then
             echo "empty hadolint_failure_threshold" >&2
             exit 1
           fi
-          docker run --rm -v "${WORKSPACE}:/work:ro" -w "/work/${WORKING_DIRECTORY}" \
-            "${RUNNER_IMAGE}" \
-            hadolint --failure-threshold "${HADOLINT_THRESHOLD}" \
-            "${DOCKERFILE}"
+          bash "${WORKSPACE}/_containerdevops/scripts/lint-dockerfiles.sh"
 
       - name: structure-test stub
         id: cst_stub
