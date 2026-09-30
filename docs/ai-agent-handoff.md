@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `feature-guardrails-1.9.0` → tag **6.0.0** |
+| **Branch** | `main` → tag **6.0.2** (image), **6.0.3** tag-only digests |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -38,7 +38,7 @@ Shared infra/secrets/supply-chain forward to
 | `docker/setup-qemu-action` | `4.4.0` → `99012661…` |
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
-| Release (reusables callers pin) | **6.0.0** (breaking: no image tar; SHA after merge) |
+| Release (reusables callers pin) | **6.0.2** → `dedddba0782f46d645a36199fcbd74e522f7b698` |
 | Release (ci-container image) | `5.0.3` (Alpine owns unsuffixed; `flavor: latest=false`) |
 
 ## Delivery status
@@ -174,11 +174,15 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Suggested next work
 
-1. After commondevops publishes ci-lint 5.2.0, bump `CI_BASE` and the nested commondevops SHA, then cut 6.0.1.
+1. Callers that still pass `image_artifact` must move to 6.0.2. gitlab-mcp is the known one.
 2. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship rebuilt images.
 
 ## Recent history
 
+- 2026-09-30: **6.0.2** — CI_BASE is ci-lint 5.2.0. Alpine
+  `sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a`,
+  debian `sha256:6e0df10282985ac503cee69f869f1784789735713c9c5e5f2d52070280792cd4`.
+  **6.0.1** fixed provenance (`attestations: write`). **6.0.3** is tag-only digests.
 - 2026-09-30: **6.0.0** — guardrails **1.9.0** / scaffold **1.8.0** / methodologies
   links **1.8.0**. Removed the image-tar handoff. `scan_local` + `push_handoff: false`
   scans without a GHCR write. Trivy scanners default `vuln,secret`. CI-024 uses
