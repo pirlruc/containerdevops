@@ -35,23 +35,23 @@ prefer a digest in production.
 move `latest` off the SemVer tag — pin the digest, not `latest`.
 
 ```bash
-docker pull pirlruc/ci-container:5.0.3
+docker pull pirlruc/ci-container:6.0.2
 # or
-docker pull pirlruc/ci-container:5.0.3-debian
-docker pull pirlruc/ci-container@sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00
+docker pull pirlruc/ci-container:6.0.2-debian
+docker pull pirlruc/ci-container@sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a
 ```
 
 ## Quick start
 
 ```bash
 docker run --rm -v "$PWD:/workspace:ro" -w /workspace \
-  pirlruc/ci-container:5.0.3 \
+  pirlruc/ci-container:6.0.2 \
   hadolint Dockerfile
 ```
 
 ```bash
 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-  pirlruc/ci-container:5.0.3 \
+  pirlruc/ci-container:6.0.2 \
   dive --ci my-app:local
 ```
 
@@ -64,7 +64,7 @@ docker run --rm \
   --security-opt no-new-privileges \
   --tmpfs /tmp:rw,noexec,nosuid,size=256m \
   -v "$PWD:/workspace:ro" -w /workspace \
-  pirlruc/ci-container:5.0.3 \
+  pirlruc/ci-container:6.0.2 \
   hadolint Dockerfile
 ```
 
@@ -84,13 +84,13 @@ plain runner).
 
 ```bash
 # Prefer digest pins
-docker pull pirlruc/ci-container@sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00
+docker pull pirlruc/ci-container@sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a
 
 # Cosign keyless verify (when the image was signed on a public repo)
 cosign verify \
   --certificate-identity-regexp 'https://github.com/pirlruc/containerdevops/.github/workflows/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  pirlruc/ci-container@sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00
+  pirlruc/ci-container@sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a
 ```
 
 ## Vulnerabilities

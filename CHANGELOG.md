@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.0.4] - 2026-09-30
+
+### Changed
+
+- Hub, Packages, and workflow examples cite ci-container 6.0.2. Tag only.
+  No GitHub Release, so the image is not republished.
+
 ## [6.0.3] - 2026-09-30
 
 ### Changed

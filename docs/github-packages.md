@@ -38,16 +38,16 @@ move `latest` off the SemVer tag — pin the digest, not `latest`.
 If the package is public, anonymous pulls work:
 
 ```bash
-docker pull ghcr.io/pirlruc/ci-container:5.0.3
+docker pull ghcr.io/pirlruc/ci-container:6.0.2
 ```
 
 If the package is private, authenticate with a PAT that has `read:packages`:
 
 ```bash
 echo "$CR_PAT" | docker login ghcr.io -u USERNAME --password-stdin
-docker pull ghcr.io/pirlruc/ci-container:5.0.3
+docker pull ghcr.io/pirlruc/ci-container:6.0.2
 # or
-docker pull ghcr.io/pirlruc/ci-container@sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00
+docker pull ghcr.io/pirlruc/ci-container@sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a
 ```
 
 ## Use as a GitHub Actions job container
@@ -57,7 +57,7 @@ jobs:
   lint:
     runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/pirlruc/ci-container:5.0.3
+      image: ghcr.io/pirlruc/ci-container:6.0.2
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -73,7 +73,7 @@ Grant the package **Actions** Read access for the calling repository when using
 
 ```bash
 docker run --rm -v "$PWD:/workspace:ro" -w /workspace \
-  ghcr.io/pirlruc/ci-container:5.0.3 \
+  ghcr.io/pirlruc/ci-container:6.0.2 \
   hadolint Dockerfile
 ```
 
@@ -86,7 +86,7 @@ docker run --rm \
   --security-opt no-new-privileges \
   --tmpfs /tmp:rw,noexec,nosuid,size=256m \
   -v "$PWD:/workspace:ro" -w /workspace \
-  ghcr.io/pirlruc/ci-container:5.0.3 \
+  ghcr.io/pirlruc/ci-container:6.0.2 \
   hadolint Dockerfile
 ```
 
@@ -105,12 +105,12 @@ plain runner).
 ## Verify a publish
 
 ```bash
-docker pull ghcr.io/pirlruc/ci-container@sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00
+docker pull ghcr.io/pirlruc/ci-container@sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a
 
 cosign verify \
   --certificate-identity-regexp 'https://github.com/pirlruc/containerdevops/.github/workflows/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  ghcr.io/pirlruc/ci-container@sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00
+  ghcr.io/pirlruc/ci-container@sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a
 ```
 
 Signing runs only when the source repository is public (`sign: true`).

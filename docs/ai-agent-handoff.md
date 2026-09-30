@@ -27,8 +27,8 @@ Shared infra/secrets/supply-chain forward to
 | `docs/guardrails` | tag **1.9.0** → `16a2c95c…` |
 | `.github/scaffold` | tag **1.8.0** → `ac9059fd…` |
 | methodologies (links only; not a submodule) | tag **1.8.0** |
-| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `5.0.3` `sha256:3aeed6541a875ff4b4c0954cb838a1414800c0f3231970acbb7e2bbef9783d00` (`latest` == alpine) |
-| `ghcr.io/pirlruc/ci-container` (debian) | `5.0.3-debian` `sha256:14f26db2831086123bf79caa3aac39e337edcc565d41ea894a376f463d850ef7` |
+| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.0.2` `sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a` (`latest` == alpine) |
+| `ghcr.io/pirlruc/ci-container` (debian) | `6.0.2-debian` `sha256:6e0df10282985ac503cee69f869f1784789735713c9c5e5f2d52070280792cd4` |
 | commondevops `uses:` / `scripts_ref` | tag `5.2.0` → `202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3` (CI-034 lockstep) |
 | `CI_BASE` (ci-lint debian) | `5.2.0-debian` digest `sha256:543043009f3359db03457ead5ff866920c857933855a415d22e3aa354dbd46a8` |
 | `CI_BASE` (ci-lint alpine) | `5.2.0` digest `sha256:33dbcc7be28ffef2a6cf3cf4b611cf862a8f246c6d6932c4055772d73d697674` |
@@ -39,7 +39,7 @@ Shared infra/secrets/supply-chain forward to
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
 | Release (reusables callers pin) | **6.0.2** → `dedddba0782f46d645a36199fcbd74e522f7b698` |
-| Release (ci-container image) | `5.0.3` (Alpine owns unsuffixed; `flavor: latest=false`) |
+| Release (ci-container image) | `6.0.2` (Alpine owns unsuffixed; `flavor: latest=false`) |
 
 ## Delivery status
 
