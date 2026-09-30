@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.0.1] - 2026-09-30
+
+### Fixed
+
+- Publish requests `attestations: write`. The 6.0.0 release push reached the
+  registry and then failed to persist the public-repo provenance attestation.
+
 ## [6.0.0] - 2026-09-30
 
 ### Breaking
