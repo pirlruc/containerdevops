@@ -218,6 +218,7 @@ jobs:
       contents: read
       packages: write
       id-token: write
+      attestations: write
     uses: ./.github/workflows/container-publish.yml
     with:
       context: docker/ci-container
@@ -266,6 +267,7 @@ jobs:
       contents: read
       packages: write
       id-token: write
+      attestations: write
     uses: ./.github/workflows/container-publish.yml
     with:
       context: docker/ci-container

@@ -264,9 +264,9 @@ Secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` when Hub enabled **or** when
 the Dockerfile pulls from `dhi.io`. Optional `ghcr_token` for private GHCR
 pulls. The publish job logs in to `dhi.io` only when `dhi_login` is true
 (in addition to GHCR / Hub push logins). Permissions: `packages: write`,
-`id-token: write` (provenance via `actions/attest-build-provenance` when
-`sign: true`; no separate `attestations: write` grant is required on Free plan
-private repos — keep `sign: false` there).
+`id-token: write` and `attestations: write` (provenance via
+`actions/attest-build-provenance` when `sign: true`). Keep `sign: false` on
+private Free-plan repos, where that API is unavailable.
 
 When `dockerhub_image` and `dockerhub_readme` are both set (and the variant
 owns unsuffixed tags), the job pushes the readme as the Docker Hub Overview
