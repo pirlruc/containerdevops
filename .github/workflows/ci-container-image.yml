@@ -58,10 +58,10 @@ jobs:
     steps:
       - id: set
         run: |
-          # commondevops ci-lint 5.2.0 — Alpine owns unsuffixed tags (CI-026)
+          # commondevops ci-lint 5.2.2 — Alpine owns unsuffixed tags (CI-026)
           {
-            echo "debian=ghcr.io/pirlruc/ci-lint@sha256:543043009f3359db03457ead5ff866920c857933855a415d22e3aa354dbd46a8"
-            echo "alpine=ghcr.io/pirlruc/ci-lint@sha256:33dbcc7be28ffef2a6cf3cf4b611cf862a8f246c6d6932c4055772d73d697674"
+            echo "debian=ghcr.io/pirlruc/ci-lint@sha256:2cb20ba2d39f55ccc4195acc162013162682cb3bcccc31c300261965ca9b30c1"
+            echo "alpine=ghcr.io/pirlruc/ci-lint@sha256:fd24e836c677e044163aab19e1e7d49d92ce34576deb7970b1ae16ea52b36d1b"
           } >> "$GITHUB_OUTPUT"
 
   lint:

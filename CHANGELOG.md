@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.0.5] - 2026-09-30
+
+### Changed
+
+- `CI_BASE` is ci-lint **5.2.2**. The Alpine base has no HIGH or CRITICAL OS
+  findings. Debian openssl HIGH remains in the newest DHI digest.
+
+
 ## [6.0.4] - 2026-09-30
 
 ### Changed
