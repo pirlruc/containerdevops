@@ -126,6 +126,8 @@ do not pass the repository description.
 
 **BuildKit GHA cache:** `cache-from` / `cache-to` use `type=gha,mode=min` with
 `scope=<artifact_name>` so parallel variant builds do not thrash a shared cache.
+`cache-to` is written only when the run ref is the default branch. Pull request
+and tag runs restore that cache and do not create a per-ref copy (CI-004).
 
 **Size gate:** `scripts/check-image-size.sh` measures the image rootfs via
 `du -sxm /` inside a disposable container. This is store-independent (unlike

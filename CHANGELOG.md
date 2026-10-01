@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.1.0] - 2026-10-01
+
+### Changed
+
+- Build and publish write the BuildKit GHA cache only on the default branch.
+  Pull request and tag runs still restore that cache (CI-004).
+- The artifact sweep also deletes Actions caches on pull-request and tag refs.
+  It still does not delete GHCR packages, `container-scan-*`, or
+  `common-supply-chain-results`. Tag only. No GitHub Release, so the image is
+  not republished.
+
 ## [6.0.9] - 2026-10-01
 
 ### Changed
