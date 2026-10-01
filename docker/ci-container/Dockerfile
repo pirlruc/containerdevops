@@ -26,8 +26,8 @@ LABEL org.opencontainers.image.title="ci-container" \
 
 USER root
 
-# ci-lint 5.1.1 still vendors PyJWT 2.13.0 and urllib3 2.7.0. Override until
-# that base is rebuilt. Exact pins (DOCKER-BUILD-004).
+# Exact pins (DOCKER-BUILD-004). ci-lint 5.2.x already installs PyJWT 2.14.0
+# and urllib3 2.8.0; this line keeps a local :local base on the same floors.
 RUN pip install --no-cache-dir 'PyJWT==2.14.0' 'urllib3==2.8.0'
 
 # wagoodman/dive:v0.13.1 — digest pinned (CI-026). Re-confirmed 2026-09-11:

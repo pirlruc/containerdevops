@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Changed
+
+- The ci-container Dockerfiles no longer say ci-lint 5.1.1 still vendors
+  PyJWT 2.13.0. ci-lint 5.2.x already installs PyJWT 2.14.0 and urllib3 2.8.0.
+
 ## [6.0.6] - 2026-09-30
 
 ### Changed

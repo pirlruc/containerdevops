@@ -1,6 +1,6 @@
 ---
 # Thin caller — publishes ghcr.io/pirlruc/ci-container (CI-026).
-# Debian and Alpine variants; Alpine owns unsuffixed tags (follows ci-lint 5.1.1).
+# Debian and Alpine variants; Alpine owns unsuffixed tags (follows ci-lint).
 # Pins to this repo's reusable workflows at the same commit (scripts_ref in lockstep).
 # CI_BASE digests are centralised in env below — update once per commondevops release.
 # 5.0.2: compose GHCR ref from handoff_package + digest (image_ref is secret-masked).
@@ -104,7 +104,7 @@ jobs:
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
-  # Build/scan on PR once CI_BASE resolves from GHCR (ci-lint 5.1.1 published).
+  # Build/scan on PR once CI_BASE resolves from GHCR.
   build:
     needs: [lint, lint-alpine, bases]
     if: >-
