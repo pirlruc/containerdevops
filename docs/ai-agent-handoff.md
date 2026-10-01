@@ -34,7 +34,7 @@ Shared infra/secrets/supply-chain forward to
 | `CI_BASE` (ci-lint alpine) | `5.2.4` digest `sha256:e0a51c64b004c6f4e4ca1672f3bb865aaf03d91bd8a2e228e0fa39be1174dfb4` |
 | `docker/setup-buildx-action` | `4.4.1` → `f87e5991…` |
 | `docker/build-push-action` | `7.4.0` → `c3c9e263…` |
-| `github/codeql-action/upload-sarif` | `4.38.1` → `1c5b6756…` |
+| `github/codeql-action/upload-sarif` | `4.38.2` → `2892aa5e…` |
 | `docker/setup-qemu-action` | `4.4.0` → `99012661…` |
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
@@ -244,4 +244,4 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-01 (ci-container 6.0.7 digests)*
+*Last updated: 2026-10-01 (codeql-action upload-sarif 4.38.2)*

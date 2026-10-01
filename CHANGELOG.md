@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.0.9] - 2026-10-01
+
+### Changed
+
+- Pin `github/codeql-action/upload-sarif` to 4.38.2. Tag only. No GitHub
+  Release, so the image is not republished.
+
 ## [6.0.8] - 2026-10-01
 
 ### Changed
