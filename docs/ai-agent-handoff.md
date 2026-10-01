@@ -27,8 +27,8 @@ Shared infra/secrets/supply-chain forward to
 | `docs/guardrails` | tag **1.9.0** → `16a2c95c…` |
 | `.github/scaffold` | tag **1.8.0** → `ac9059fd…` |
 | methodologies (links only; not a submodule) | tag **1.8.0** |
-| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.0.5` `sha256:09b97b6c4dfdde9f43113c1000bbae2f80aaae194725ffe1e8f1ccc8ff3204e0` (`latest` == alpine) |
-| `ghcr.io/pirlruc/ci-container` (debian) | `6.0.5-debian` `sha256:38fb1ced38c9e128036a4dfdbf719ca633d6a926384f7f1d78b8d13eb628afed` |
+| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.0.7` `sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9` (`latest` == alpine) |
+| `ghcr.io/pirlruc/ci-container` (debian) | `6.0.7-debian` `sha256:dc0c7444fa56183064e8de599fa9ac94affca67c77aa403720192d232548ac0f` |
 | commondevops `uses:` / `scripts_ref` | tag `5.2.0` → `202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3` (CI-034 lockstep) |
 | `CI_BASE` (ci-lint debian) | `5.2.4-debian` digest `sha256:618b469a95b60097eb709830cbe3ee079a78f614ad0bf74b5643d4c8c0895cec` |
 | `CI_BASE` (ci-lint alpine) | `5.2.4` digest `sha256:e0a51c64b004c6f4e4ca1672f3bb865aaf03d91bd8a2e228e0fa39be1174dfb4` |
@@ -244,4 +244,4 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-01 (CI_BASE ci-lint 5.2.4)*
+*Last updated: 2026-10-01 (ci-container 6.0.7 digests)*

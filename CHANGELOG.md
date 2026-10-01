@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.0.8] - 2026-10-01
+
+### Changed
+
+- Write 6.0.7 alpine and debian digests into Hub and Packages pages. Tag only.
+  No GitHub Release, so the image is not republished.
+
 ## [6.0.7] - 2026-10-01
 
 ### Changed

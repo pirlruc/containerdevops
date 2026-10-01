@@ -16,8 +16,10 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 
 | Tag | Meaning |
 |-----|---------|
-| `6.0.5` / `6.0.5-alpine` | Alpine `sha256:09b97b6c4dfdde9f43113c1000bbae2f80aaae194725ffe1e8f1ccc8ff3204e0` |
-| `6.0.5-debian` | Debian `sha256:38fb1ced38c9e128036a4dfdbf719ca633d6a926384f7f1d78b8d13eb628afed` |
+| `6.0.7` / `6.0.7-alpine` | Alpine `sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9` |
+| `6.0.7-debian` | Debian `sha256:dc0c7444fa56183064e8de599fa9ac94affca67c77aa403720192d232548ac0f` |
+| `6.0.5` / `6.0.5-alpine` | Previous Alpine `sha256:09b97b6c4dfdde9f43113c1000bbae2f80aaae194725ffe1e8f1ccc8ff3204e0` |
+| `6.0.5-debian` | Previous Debian `sha256:38fb1ced38c9e128036a4dfdbf719ca633d6a926384f7f1d78b8d13eb628afed` |
 | `6.0.2` / `6.0.2-alpine` | Previous Alpine `sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a` |
 | `6.0.2-debian` | Previous Debian `sha256:6e0df10282985ac503cee69f869f1784789735713c9c5e5f2d52070280792cd4` |
 | `6.0.0` / `6.0.0-alpine` | Previous Alpine `sha256:10f60eae5efd277c78f8f9c7e27e5376e8f4b1ed299eae7756a5c332c0b48f05` |
@@ -40,16 +42,16 @@ move `latest` off the SemVer tag — pin the digest, not `latest`.
 If the package is public, anonymous pulls work:
 
 ```bash
-docker pull ghcr.io/pirlruc/ci-container:6.0.5
+docker pull ghcr.io/pirlruc/ci-container:6.0.7
 ```
 
 If the package is private, authenticate with a PAT that has `read:packages`:
 
 ```bash
 echo "$CR_PAT" | docker login ghcr.io -u USERNAME --password-stdin
-docker pull ghcr.io/pirlruc/ci-container:6.0.5
+docker pull ghcr.io/pirlruc/ci-container:6.0.7
 # or
-docker pull ghcr.io/pirlruc/ci-container@sha256:09b97b6c4dfdde9f43113c1000bbae2f80aaae194725ffe1e8f1ccc8ff3204e0
+docker pull ghcr.io/pirlruc/ci-container@sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9
 ```
 
 ## Use as a GitHub Actions job container
@@ -59,7 +61,7 @@ jobs:
   lint:
     runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/pirlruc/ci-container:6.0.5
+      image: ghcr.io/pirlruc/ci-container:6.0.7
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -75,7 +77,7 @@ Grant the package **Actions** Read access for the calling repository when using
 
 ```bash
 docker run --rm -v "$PWD:/workspace:ro" -w /workspace \
-  ghcr.io/pirlruc/ci-container:6.0.5 \
+  ghcr.io/pirlruc/ci-container:6.0.7 \
   hadolint Dockerfile
 ```
 
@@ -88,7 +90,7 @@ docker run --rm \
   --security-opt no-new-privileges \
   --tmpfs /tmp:rw,noexec,nosuid,size=256m \
   -v "$PWD:/workspace:ro" -w /workspace \
-  ghcr.io/pirlruc/ci-container:6.0.5 \
+  ghcr.io/pirlruc/ci-container:6.0.7 \
   hadolint Dockerfile
 ```
 
@@ -107,12 +109,12 @@ plain runner).
 ## Verify a publish
 
 ```bash
-docker pull ghcr.io/pirlruc/ci-container@sha256:09b97b6c4dfdde9f43113c1000bbae2f80aaae194725ffe1e8f1ccc8ff3204e0
+docker pull ghcr.io/pirlruc/ci-container@sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9
 
 cosign verify \
   --certificate-identity-regexp 'https://github.com/pirlruc/containerdevops/.github/workflows/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  ghcr.io/pirlruc/ci-container@sha256:09b97b6c4dfdde9f43113c1000bbae2f80aaae194725ffe1e8f1ccc8ff3204e0
+  ghcr.io/pirlruc/ci-container@sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9
 ```
 
 Signing runs only when the source repository is public (`sign: true`).
