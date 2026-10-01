@@ -305,8 +305,11 @@ jobs:
           platforms: ${{ inputs.platforms }}
           build-args: ${{ inputs.build_args }}
           # Per-variant scope so parallel debian/alpine builds do not thrash one cache.
+          # Write only from the default branch. PR and tag runs restore that cache
+          # (GHA exposes the default-branch cache) and must not create a scope that
+          # nothing else can reuse (CI-004).
           cache-from: type=gha,scope=${{ inputs.artifact_name }}
-          cache-to: type=gha,mode=min,scope=${{ inputs.artifact_name }}
+          cache-to: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && format('type=gha,mode=min,scope={0}', inputs.artifact_name) || '' }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}

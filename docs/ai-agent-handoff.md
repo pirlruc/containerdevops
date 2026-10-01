@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `main` → tag **6.0.2** (image), **6.0.3** tag-only digests |
+| **Branch** | `main` → tag **6.1.0** (cache policy; image stays **6.0.7**) |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -38,7 +38,7 @@ Shared infra/secrets/supply-chain forward to
 | `docker/setup-qemu-action` | `4.4.0` → `99012661…` |
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
-| Release (reusables callers pin) | **6.0.2** → `dedddba0782f46d645a36199fcbd74e522f7b698` |
+| Release (reusables callers pin) | **6.1.0** (cache-to on the default branch only; image unchanged) |
 | Release (ci-container image) | `6.0.7` (CI_BASE is ci-lint 5.2.4; Alpine owns unsuffixed) |
 
 ## Delivery status
@@ -115,9 +115,11 @@ python3 .github/scaffold/scripts/issues-sync.py \
   Hub Overview sync runs only for the unsuffixed-owning variant.
 - **GHA cache scope:** build uses `scope=<artifact_name>`; publish uses
   `scope=publish-<image_name><tag_suffix>` so parallel variants do not thrash.
-  `cache-to` is `type=gha,mode=min` (not `mode=max`). Leftover `container-image-*`
-  Actions artifacts were deleted 2026-09-15. Do **not** delete published GHCR/Hub
-  tags.
+  `cache-to` is `type=gha,mode=min` (not `mode=max`) and is written **only on
+  the default branch** (6.1.0 / CDO-QUOTA-002). Pull and tag runs restore that
+  cache. The daily sweep deletes caches on `refs/pull/*` and tag refs. Do
+  **not** delete published GHCR/Hub tags, `container-scan-*`, or
+  `common-supply-chain-results`.
 - **verify_command** must be a simple argv (no shell metacharacters); runs via
   `--entrypoint`, not `bash -lc`.
 - **OCI labels:** `docker/metadata-action` defaults to repo name/description. Pass
@@ -174,11 +176,13 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Suggested next work
 
-1. Callers that still pass `image_artifact` must move to 6.0.2. gitlab-mcp is the known one.
+1. Callers still on containerdevops before 6.0.2 (`image_artifact`) must move to 6.1.0.
 2. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship rebuilt images.
 
 ## Recent history
 
+- 2026-10-01: **6.1.0** — BuildKit `cache-to` only on the default branch; the
+  artifact sweep deletes pull and tag Actions caches. Image is not republished.
 - 2026-09-30: **6.0.2** — CI_BASE is ci-lint 5.2.2. Alpine
   `sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a`,
   debian `sha256:6e0df10282985ac503cee69f869f1784789735713c9c5e5f2d52070280792cd4`.
@@ -244,4 +248,4 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-01 (codeql-action upload-sarif 4.38.2)*
+*Last updated: 2026-10-01 (6.1.0 cache-to on the default branch only)*

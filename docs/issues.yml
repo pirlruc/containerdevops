@@ -1417,3 +1417,50 @@ milestones:
               - grep -q dockerfiles .github/workflows/container-lint.yml
             guardrail_refs:
               - DOCKER-LINT-001
+
+      - id: CDO-QUOTA-002
+        status: done
+        title: Stop writing BuildKit caches on pull and tag refs
+        overview:
+          problem: >-
+            cache-to type=gha wrote a full layer cache on every pull-request
+            and tag ref. Those copies cannot be restored by main and were the
+            bulk of Actions storage.
+          goal: >-
+            Write the cache only from the default branch, and sweep leftover
+            pull and tag caches.
+        decision: >-
+          In the context of Actions quota, facing per-ref BuildKit caches, we
+          decided cache-to runs only on the default branch and the sweeper
+          deletes pull and tag caches, to achieve storage that does not grow
+          with every pull request, accepting that the first build on main after
+          a cold cache is slower.
+        out_of_scope:
+          - Deleting published GHCR or Docker Hub tags
+          - Deleting container-scan or supply-chain result artifacts
+        architecture:
+          target: container build, publish, and the artifact sweep
+          modules:
+            - .github/workflows/container-build.yml
+            - .github/workflows/container-publish.yml
+            - .github/workflows/artifact-sweep.yml
+        acceptance_criteria:
+          - cache-to is empty unless the ref is the default branch
+          - The sweep deletes caches whose ref is a pull or a tag
+        guardrail_refs:
+          - CI-004
+          - DOCKER-DELIV-004
+        tasks:
+          - id: CDO-QUOTA-002-T1
+            status: done
+            title: Gate cache-to and sweep stale caches
+            instructions:
+              files:
+                - .github/workflows/container-build.yml
+                - .github/workflows/container-publish.yml
+                - .github/workflows/artifact-sweep.yml
+            verification:
+              - grep -q default_branch .github/workflows/container-build.yml
+              - grep -q actions/caches .github/workflows/artifact-sweep.yml
+            guardrail_refs:
+              - CI-004

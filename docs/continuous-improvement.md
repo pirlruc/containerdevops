@@ -157,6 +157,7 @@ Do not recommend removing these without **requires user decision**:
 6. Build/publish jobs stay on the plain runner (no job `container:`)
 7. Caller jobs must grant every permission the reusable job declares (no escalation)
 8. Size gates measure uncompressed rootfs via `du -sxm /` (not store-dependent inspect size)
+9. BuildKit `cache-to` writes only on the default branch; do not delete published GHCR or Docker Hub tags as quota cleanup
 
 ## Automation configuration
 
