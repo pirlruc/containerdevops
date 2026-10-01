@@ -1,6 +1,6 @@
 ---
 # Thin caller — publishes ghcr.io/pirlruc/ci-container (CI-026).
-# Debian and Alpine variants; Alpine owns unsuffixed tags (follows ci-lint 5.1.1).
+# Debian and Alpine variants; Alpine owns unsuffixed tags (follows ci-lint).
 # Pins to this repo's reusable workflows at the same commit (scripts_ref in lockstep).
 # CI_BASE digests are centralised in env below — update once per commondevops release.
 # 5.0.2: compose GHCR ref from handoff_package + digest (image_ref is secret-masked).
@@ -58,10 +58,10 @@ jobs:
     steps:
       - id: set
         run: |
-          # commondevops ci-lint 5.2.2 — Alpine owns unsuffixed tags (CI-026)
+          # commondevops ci-lint 5.2.4 — Alpine owns unsuffixed tags (CI-026)
           {
-            echo "debian=ghcr.io/pirlruc/ci-lint@sha256:2cb20ba2d39f55ccc4195acc162013162682cb3bcccc31c300261965ca9b30c1"
-            echo "alpine=ghcr.io/pirlruc/ci-lint@sha256:fd24e836c677e044163aab19e1e7d49d92ce34576deb7970b1ae16ea52b36d1b"
+            echo "debian=ghcr.io/pirlruc/ci-lint@sha256:618b469a95b60097eb709830cbe3ee079a78f614ad0bf74b5643d4c8c0895cec"
+            echo "alpine=ghcr.io/pirlruc/ci-lint@sha256:e0a51c64b004c6f4e4ca1672f3bb865aaf03d91bd8a2e228e0fa39be1174dfb4"
           } >> "$GITHUB_OUTPUT"
 
   lint:
@@ -104,7 +104,7 @@ jobs:
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
-  # Build/scan on PR once CI_BASE resolves from GHCR (ci-lint 5.1.1 published).
+  # Build/scan on PR once CI_BASE resolves from GHCR.
   build:
     needs: [lint, lint-alpine, bases]
     if: >-

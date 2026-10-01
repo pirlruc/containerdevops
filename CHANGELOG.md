@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.0.8] - 2026-10-01
+
+### Changed
+
+- Write 6.0.7 alpine and debian digests into Hub and Packages pages. Tag only.
+  No GitHub Release, so the image is not republished.
+
+## [6.0.7] - 2026-10-01
+
+### Changed
+
+- `CI_BASE` is ci-lint **5.2.4**. That Debian base ships OpenSSL `deb13u3`,
+  and the Alpine base keeps the refreshed gitleaks donor.
+- The ci-container Dockerfiles no longer say ci-lint 5.1.1 still vendors
+  PyJWT 2.13.0. ci-lint 5.2.x already installs PyJWT 2.14.0 and urllib3 2.8.0.
+
 ## [6.0.6] - 2026-09-30
 
 ### Changed
