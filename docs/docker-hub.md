@@ -16,8 +16,10 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 
 | Tag | Meaning |
 |-----|---------|
-| `6.0.5` / `6.0.5-alpine` | Alpine `sha256:09b97b6c4dfdde9f43113c1000bbae2f80aaae194725ffe1e8f1ccc8ff3204e0` |
-| `6.0.5-debian` | Debian `sha256:38fb1ced38c9e128036a4dfdbf719ca633d6a926384f7f1d78b8d13eb628afed` |
+| `6.0.7` / `6.0.7-alpine` | Alpine `sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9` |
+| `6.0.7-debian` | Debian `sha256:dc0c7444fa56183064e8de599fa9ac94affca67c77aa403720192d232548ac0f` |
+| `6.0.5` / `6.0.5-alpine` | Previous Alpine `sha256:09b97b6c4dfdde9f43113c1000bbae2f80aaae194725ffe1e8f1ccc8ff3204e0` |
+| `6.0.5-debian` | Previous Debian `sha256:38fb1ced38c9e128036a4dfdbf719ca633d6a926384f7f1d78b8d13eb628afed` |
 | `6.0.2` / `6.0.2-alpine` | Previous Alpine `sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a` |
 | `6.0.2-debian` | Previous Debian `sha256:6e0df10282985ac503cee69f869f1784789735713c9c5e5f2d52070280792cd4` |
 | `6.0.0` / `6.0.0-alpine` | Previous Alpine `sha256:10f60eae5efd277c78f8f9c7e27e5376e8f4b1ed299eae7756a5c332c0b48f05` |
@@ -37,23 +39,23 @@ prefer a digest in production.
 move `latest` off the SemVer tag — pin the digest, not `latest`.
 
 ```bash
-docker pull pirlruc/ci-container:6.0.5
+docker pull pirlruc/ci-container:6.0.7
 # or
-docker pull pirlruc/ci-container:6.0.5-debian
-docker pull pirlruc/ci-container@sha256:09b97b6c4dfdde9f43113c1000bbae2f80aaae194725ffe1e8f1ccc8ff3204e0
+docker pull pirlruc/ci-container:6.0.7-debian
+docker pull pirlruc/ci-container@sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9
 ```
 
 ## Quick start
 
 ```bash
 docker run --rm -v "$PWD:/workspace:ro" -w /workspace \
-  pirlruc/ci-container:6.0.5 \
+  pirlruc/ci-container:6.0.7 \
   hadolint Dockerfile
 ```
 
 ```bash
 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-  pirlruc/ci-container:6.0.5 \
+  pirlruc/ci-container:6.0.7 \
   dive --ci my-app:local
 ```
 
@@ -66,7 +68,7 @@ docker run --rm \
   --security-opt no-new-privileges \
   --tmpfs /tmp:rw,noexec,nosuid,size=256m \
   -v "$PWD:/workspace:ro" -w /workspace \
-  pirlruc/ci-container:6.0.5 \
+  pirlruc/ci-container:6.0.7 \
   hadolint Dockerfile
 ```
 
@@ -86,13 +88,13 @@ plain runner).
 
 ```bash
 # Prefer digest pins
-docker pull pirlruc/ci-container@sha256:09b97b6c4dfdde9f43113c1000bbae2f80aaae194725ffe1e8f1ccc8ff3204e0
+docker pull pirlruc/ci-container@sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9
 
 # Cosign keyless verify (when the image was signed on a public repo)
 cosign verify \
   --certificate-identity-regexp 'https://github.com/pirlruc/containerdevops/.github/workflows/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  pirlruc/ci-container@sha256:09b97b6c4dfdde9f43113c1000bbae2f80aaae194725ffe1e8f1ccc8ff3204e0
+  pirlruc/ci-container@sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9
 ```
 
 ## Vulnerabilities
