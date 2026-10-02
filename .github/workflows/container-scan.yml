@@ -17,6 +17,11 @@ on:
         required: false
         type: string
         default: vuln,secret
+      image_config_scanners:
+        description: Trivy --image-config-scanners (misconfig,secret). Empty disables.
+        required: false
+        type: string
+        default: misconfig,secret
       blocking:
         required: false
         type: boolean
@@ -61,6 +66,9 @@ on:
       scanners:
         type: string
         default: vuln,secret
+      image_config_scanners:
+        type: string
+        default: misconfig,secret
       blocking:
         type: boolean
         default: false
@@ -82,6 +90,11 @@ on:
 
 # CI-025
 permissions: {}
+
+# CI-002. See container-build.yml. results_artifact differs per variant.
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && format('dispatch-{0}-{1}', github.workflow, github.ref) || format('call-{0}-{1}-{2}', github.workflow, github.run_id, inputs.results_artifact) }}
+  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
 
 env:
   ADVISORY: ${{ inputs.blocking == false }}
@@ -173,6 +186,7 @@ jobs:
           IMAGE: ${{ inputs.image }}
           IGNOREFILE: ${{ inputs.ignorefile }}
           SCANNERS: ${{ inputs.scanners }}
+          IMAGE_CONFIG_SCANNERS: ${{ inputs.image_config_scanners }}
           SEV: ${{ steps.thr.outputs.sev_up }}
         run: |
           set -euo pipefail

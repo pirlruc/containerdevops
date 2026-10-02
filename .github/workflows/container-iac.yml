@@ -59,6 +59,12 @@ on:
 # CI-025
 permissions: {}
 
+# CI-002
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && format('dispatch-{0}-{1}', github.workflow, github.ref) || format('call-{0}-{1}', github.workflow, github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
+
+
 env:
   ADVISORY: ${{ inputs.blocking == false }}
   # checkmarx/kics:v2.1.20-debian linux/amd64 (CI-026). Re-confirmed 2026-09-11:

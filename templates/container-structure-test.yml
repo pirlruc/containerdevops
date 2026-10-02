@@ -9,6 +9,11 @@ commandTests:
     command: "id"
     args: ["-u"]
     expectedOutput: ["65532"]
+  - name: "no setuid or setgid files"
+    command: "sh"
+    args:
+      - "-c"
+      - "! find / -xdev -type f -perm -4000 -print | grep -q . && ! find / -xdev -type f -perm -2000 -print | grep -q ."
 fileExistenceTests:
   - name: "no package manager leftovers (example)"
     path: "/var/lib/apt/lists"

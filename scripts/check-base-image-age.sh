@@ -66,6 +66,8 @@ resolve_ref() {
   printf '%s' "${ref}"
 }
 
+# Final stage only. Builder FROMs are tool pins; the host docker CLI is not
+# logged into dhi.io even when buildx is, so pulling them here fails closed.
 mapfile -t RAW_REFS < <(
   awk '
     /^[Ff][Rr][Oo][Mm][[:space:]]/ {
@@ -74,9 +76,10 @@ mapfile -t RAW_REFS < <(
       sub(/[[:space:]]+[Aa][Ss][[:space:]].*$/, "", line)
       split(line, a, /[[:space:]]+/)
       ref=a[1]
-      if (ref != "" && ref != "scratch") print ref
+      if (ref != "" && ref != "scratch") last=ref
     }
-  ' "${DOCKERFILE}" | sort -u
+    END { if (last != "") print last }
+  ' "${DOCKERFILE}"
 )
 
 if [[ ${#RAW_REFS[@]} -eq 0 ]]; then

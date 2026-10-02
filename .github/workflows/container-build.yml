@@ -164,6 +164,12 @@ on:
 # CI-025
 permissions: {}
 
+# CI-002. Dispatch cancels a previous dispatch. A workflow_call keeps a
+# unique group so parallel Debian/Alpine jobs in one run do not cancel.
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && format('dispatch-{0}-{1}', github.workflow, github.ref) || format('call-{0}-{1}-{2}', github.workflow, github.run_id, inputs.artifact_name) }}
+  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
+
 env:
   ADVISORY: ${{ inputs.blocking == false }}
   DOCKER_BUILD_SUMMARY: "false"

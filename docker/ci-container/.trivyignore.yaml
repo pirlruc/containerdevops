@@ -1,312 +1,128 @@
-# Vendor-static toolchain binaries — refresh digests when upstream ships fixes.
-# Review: 2026-11-11 (CDO-015)
-# Re-pulled 2026-09-11 (CDO-IMG-003): wagoodman/dive:v0.13.1 and
-# container-structure-test:1.22.1 index digests unchanged; no newer tags.
-# Entries kept (updated statements below) rather than dropped.
+# ci-container library scan, 2026-10-02, against ci-lint rebuilt on Go 1.26.8.
+# dive v0.13.1 and container-structure-test v1.22.1 are rebuilt from those
+# tags. Stdlib findings in actionlint and gitleaks are gone. Module findings
+# stay until upstream ships. Every entry expires 2026-11-01.
 vulnerabilities:
-  - id: CVE-2026-33810
-    paths:
-      - "**/actionlint"
-    statement: Go stdlib embedded in rhysd/actionlint donor; no newer digest yet.
-
-  - id: CVE-2025-22874
-    paths:
-      - "**/dive"
-    statement: Go/deps embedded in wagoodman/dive v0.13.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2026-25681
-    paths:
-      - "**/dive"
-    statement: Go/deps embedded in wagoodman/dive v0.13.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2026-27136
-    paths:
-      - "**/dive"
-    statement: Go/deps embedded in wagoodman/dive v0.13.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2026-39821
-    paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
-      - "**/dive"
-      - "**/gitleaks"
-    statement: Go/deps embedded in wagoodman/dive v0.13.1 and rhysd/actionlint donors; remaining until upstream rebuild.
-
-  - id: CVE-2026-46600
-    paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
-      - "**/dive"
-      - "**/gitleaks"
-    statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
   - id: CVE-2024-25621
     paths:
       - "**/container-structure-test"
-    statement: Go/deps embedded in container-structure-test 1.22.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2024-45337
-    paths:
-      - "**/container-structure-test"
-    statement: Go/deps embedded in container-structure-test 1.22.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2025-22869
-    paths:
-      - "**/container-structure-test"
-    statement: Go/deps embedded in container-structure-test 1.22.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2025-47913
-    paths:
-      - "**/container-structure-test"
-    statement: Go/deps embedded in container-structure-test 1.22.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2026-39828
-    paths:
-      - "**/container-structure-test"
-    statement: Go/deps embedded in container-structure-test 1.22.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2026-39829
-    paths:
-      - "**/container-structure-test"
-    statement: Go/deps embedded in container-structure-test 1.22.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2026-39830
-    paths:
-      - "**/container-structure-test"
-    statement: Go/deps embedded in container-structure-test 1.22.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2026-39831
-    paths:
-      - "**/container-structure-test"
-    statement: Go/deps embedded in container-structure-test 1.22.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2026-39832
-    paths:
-      - "**/container-structure-test"
-    statement: Go/deps embedded in container-structure-test 1.22.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2026-39835
-    paths:
-      - "**/container-structure-test"
-    statement: Go/deps embedded in container-structure-test 1.22.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2026-42508
-    paths:
-      - "**/container-structure-test"
-    statement: Go/deps embedded in container-structure-test 1.22.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2026-46595
-    paths:
-      - "**/container-structure-test"
-    statement: Go/deps embedded in container-structure-test 1.22.1 donor; remaining until upstream rebuild.
-
-  - id: CVE-2026-46597
-    paths:
-      - "**/container-structure-test"
-    statement: Go/deps embedded in container-structure-test 1.22.1 donor; remaining until upstream rebuild.
-
+    expired_at: 2026-11-01
+    statement: github.com/containerd/containerd in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
   - id: CVE-2026-53488
     paths:
       - "**/container-structure-test"
-    statement: Go/deps embedded in container-structure-test 1.22.1 donor; remaining until upstream rebuild.
-
+    expired_at: 2026-11-01
+    statement: github.com/containerd/containerd in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
   - id: CVE-2025-15558
     paths:
       - "**/container-structure-test"
       - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2025-61726
-    paths:
-      - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2025-61729
-    paths:
-      - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2025-68121
-    paths:
-      - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-25679
-    paths:
-      - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-27145
-    paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-32280
-    paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-32281
-    paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-32283
-    paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-33811
-    paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-33814
-    paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-34040
-    paths:
-      - "**/container-structure-test"
-      - "**/dive"
-      - "**/grype"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-39820
-    paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-39822
-    paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-39836
-    paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
+    expired_at: 2026-11-01
+    statement: github.com/docker/cli in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
   - id: CVE-2026-41567
     paths:
       - "**/container-structure-test"
       - "**/dive"
-      - "**/grype"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
+    expired_at: 2026-11-01
+    statement: github.com/docker/docker in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
   - id: CVE-2026-42306
     paths:
       - "**/container-structure-test"
       - "**/dive"
-      - "**/grype"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-42499
+    expired_at: 2026-11-01
+    statement: github.com/docker/docker in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2024-45337
     paths:
-      - "**/actionlint"
       - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-42504
+    expired_at: 2026-11-01
+    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2025-22869
     paths:
-      - "**/actionlint"
       - "**/container-structure-test"
-      - "**/dive"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-56852
+    expired_at: 2026-11-01
+    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2025-47913
     paths:
-      - "**/dive"
-      - "**/grant"
-    statement: Vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-71556
-    paths:
-      - "**/grant"
-      - "**/grype"
-      - "**/syft"
-      - "**/trivy"
-    statement: Embedded deps in DHI/Anchore/Aqua donor binaries; bump when floating tag ships fix.
-
-  - id: GHSA-hrxh-6v49-42gf
-    paths:
-      - "**/grant"
-    statement: Embedded deps in grant donor binary.
-
-  - id: CVE-2026-33818
-    paths:
-      - "**/actionlint"
       - "**/container-structure-test"
-      - "**/dive"
-      - "**/gitleaks"
-    statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-56853
+    expired_at: 2026-11-01
+    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-39828
     paths:
-      - "**/actionlint"
       - "**/container-structure-test"
-      - "**/dive"
-      - "**/gitleaks"
-    statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
+    expired_at: 2026-11-01
+    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-39829
+    paths:
+      - "**/container-structure-test"
+    expired_at: 2026-11-01
+    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-39830
+    paths:
+      - "**/container-structure-test"
+    expired_at: 2026-11-01
+    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-39831
+    paths:
+      - "**/container-structure-test"
+    expired_at: 2026-11-01
+    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-39832
+    paths:
+      - "**/container-structure-test"
+    expired_at: 2026-11-01
+    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-39835
+    paths:
+      - "**/container-structure-test"
+    expired_at: 2026-11-01
+    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-42508
+    paths:
+      - "**/container-structure-test"
+    expired_at: 2026-11-01
+    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-46595
+    paths:
+      - "**/container-structure-test"
+    expired_at: 2026-11-01
+    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-46597
+    paths:
+      - "**/container-structure-test"
+    expired_at: 2026-11-01
+    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
   - id: CVE-2026-56854
     paths:
       - "**/container-structure-test"
-      - "**/gitleaks"
-    statement: golang.org/x/crypto embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-56858
+    expired_at: 2026-11-01
+    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-25681
     paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
       - "**/dive"
-      - "**/gitleaks"
-    statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-56859
+    expired_at: 2026-11-01
+    statement: golang.org/x/net in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-27136
     paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
       - "**/dive"
-      - "**/gitleaks"
-    statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-56860
+    expired_at: 2026-11-01
+    statement: golang.org/x/net in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-33814
     paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
       - "**/dive"
-      - "**/gitleaks"
-    statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
-
-  - id: CVE-2026-56862
+    expired_at: 2026-11-01
+    statement: golang.org/x/net in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-39821
     paths:
-      - "**/actionlint"
-      - "**/container-structure-test"
       - "**/dive"
-      - "**/gitleaks"
-    statement: Go stdlib embedded in vendor-static CI toolchain donors; refresh digests when upstream ships fixes.
+    expired_at: 2026-11-01
+    statement: golang.org/x/net in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-46600
+    paths:
+      - "**/dive"
+    expired_at: 2026-11-01
+    statement: golang.org/x/net in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+  - id: CVE-2026-56852
+    paths:
+      - "**/dive"
+    expired_at: 2026-11-01
+    statement: golang.org/x/text in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.

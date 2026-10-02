@@ -1,16 +1,16 @@
 # KICS query exclusions (DOCKER-LINT-002)
 
-Machine-readable list: [`.github/kics.config`](../.github/kics.config) (`exclude-queries`).
-This file is the **tracked rationale** for every ID in that list — why the finding is
-suppressed rather than fixed in the scanned tree.
+`.github/kics.config` no longer excludes queries globally. A finding that
+cannot be fixed is disabled on the file that triggers it, with
+`# kics-scan disable=<query-id>`, and the reason stays in this table.
 
-Do not add an ID here without adding it to `.github/kics.config`, and vice versa.
+Do not add a query id to `exclude-queries` for a whole tree.
 
 ## Exclusions
 
 | Query ID | Query name | Severity | Why excluded (not corrected) |
 |----------|------------|----------|------------------------------|
-| `b03a748a-542d-44f4-bb86-9199ab4fd2d5` | [Healthcheck Instruction Missing](https://docs.kics.io/latest/queries/dockerfile-queries/b03a748a-542d-44f4-bb86-9199ab4fd2d5) | LOW | Applies to `docker/ci-container/Dockerfile` (and any consumer Dockerfile scanned with this config). `ci-container` is a **CI toolchain image**: short-lived `docker run` / job-container invocations that execute CLI tools, not a long-running service under an orchestrator. A `HEALTHCHECK` would either probe nothing meaningful (no daemon/listener) or invent a synthetic check that does not improve runtime safety. Guardrails expect HEALTHCHECK rationale on **product** images (`DOCKER-RUN-002` / `DOCKER-RUN-006`); for tooling images the correct response is to document the omission and exclude the query, not to add a cosmetic instruction. |
+| `b03a748a-542d-44f4-bb86-9199ab4fd2d5` | [Healthcheck Instruction Missing](https://docs.kics.io/latest/queries/dockerfile-queries/b03a748a-542d-44f4-bb86-9199ab4fd2d5) | LOW | Disabled on `docker/ci-container/Dockerfile` and `Dockerfile.alpine` only (`# kics-scan disable=`). `ci-container` is a **CI toolchain image**: short-lived `docker run` / job-container invocations that execute CLI tools, not a long-running service. A `HEALTHCHECK` would probe nothing meaningful. Guardrails expect HEALTHCHECK rationale on **product** images (`DOCKER-RUN-002` / `DOCKER-RUN-006`). |
 
 ## Review
 

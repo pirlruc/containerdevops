@@ -5,6 +5,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Changed
+
+- Publish always attaches BuildKit provenance (`mode=max`) and an SBOM.
+  `actions/attest-build-provenance` still runs only when `sign` is true.
+  SC-PROV-001 is retired.
+- Image scans pass `--image-config-scanners misconfig,secret`.
+- Reusable workflows set a concurrency group. Dispatch cancels an older
+  dispatch. Parallel variant calls in one run do not cancel each other.
+- The hadolint template no longer ignores DL3008. The HEALTHCHECK KICS
+  query is disabled on the ci-container Dockerfiles, not for the whole tree.
+- ci-container clears setuid and setgid bits before the structure test.
+- Structure-test template and ci-container assert no setuid or setgid files.
+  The check uses two `find -perm` calls so `sh -c` does not need grouping.
+- ci-container rebuilds dive v0.13.1 and container-structure-test v1.22.1
+  on DHI Go 1.26.8. The ignore file keeps only the module findings those
+  tags still have, each with `expired_at: 2026-11-01`.
+- Security calls commondevops Scorecard (advisory) and the PAT expiry audit.
+  Callers pin commondevops **5.3.0**
+  (`803bfe60ff30d5bbcefe7fe6e38070999a66531d`).
+- `CI_BASE` is ci-lint **5.3.0**. Debian owns the unsuffixed ci-lint tag.
+  Alpine ci-lint is `5.3.0-alpine`. ci-container still publishes Alpine as
+  the unsuffixed tag.
+
 ## [6.1.0] - 2026-10-01
 
 ### Changed

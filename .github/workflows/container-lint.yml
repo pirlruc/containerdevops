@@ -91,6 +91,11 @@ on:
 # CI-025
 permissions: {}
 
+# CI-002. dockerfile differs per variant lint.
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && format('dispatch-{0}-{1}', github.workflow, github.ref) || format('call-{0}-{1}-{2}', github.workflow, github.run_id, inputs.dockerfile) }}
+  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
+
 env:
   ADVISORY: ${{ inputs.blocking == false }}
 
@@ -212,13 +217,14 @@ jobs:
     if: github.event.pull_request.user.login != 'dependabot[bot]' && inputs.run_infra_lint != false
     permissions:
       contents: read
-    uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3
+    uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@803bfe60ff30d5bbcefe7fe6e38070999a66531d
     with:
       blocking: ${{ inputs.blocking }}
       working_directory: ${{ inputs.working_directory }}
       shell_scripts: ${{ inputs.shell_scripts }}
       dockerfiles: ${{ inputs.dockerfile }}
-      scripts_ref: 202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3
+      scripts_ref: 803bfe60ff30d5bbcefe7fe6e38070999a66531d
+      concurrency_suffix: ${{ inputs.dockerfile }}
     secrets:
       checkout_token: ${{ secrets.checkout_token }}
 
@@ -228,10 +234,11 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3
+    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@803bfe60ff30d5bbcefe7fe6e38070999a66531d
     with:
       blocking: ${{ inputs.blocking }}
       working_directory: ${{ inputs.working_directory }}
-      scripts_ref: 202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3
+      scripts_ref: 803bfe60ff30d5bbcefe7fe6e38070999a66531d
+      concurrency_suffix: ${{ inputs.dockerfile }}
     secrets:
       checkout_token: ${{ secrets.checkout_token }}
