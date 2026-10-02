@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `main` → tag **6.1.0** (cache policy; image stays **6.0.7**) |
+| **Branch** | `main` → tag **6.2.1** (digest notes; image stays **6.2.0**) |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -258,4 +258,4 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-02 (6.2.0 digests recorded; guardrails 1.10.0)*
+*Last updated: 2026-10-02 (registry docs match 6.2.0; tip tag 6.2.1)*

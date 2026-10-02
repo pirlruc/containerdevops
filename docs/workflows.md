@@ -202,7 +202,7 @@ Secrets: `ghcr_token`, `scripts_token` (both optional; forwarded to
 `container-scan.yml`). Caller job must grant `packages: read`.
 
 `containerdevops-security.yml` uses this reusable for digest-pinned
-`ghcr.io/pirlruc/ci-container:6.0.7@sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9` (CI-026; do not
+`ghcr.io/pirlruc/ci-container:6.2.0@sha256:8f8b9c76e0f06ef398773646a2ea2e53f479a9b94951396f79f042b8bfb1d7cd` (CI-026; do not
 float `:latest`). Callers pin a released SHA of this file.
 
 ## container-publish.yml
