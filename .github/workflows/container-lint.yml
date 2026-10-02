@@ -217,13 +217,14 @@ jobs:
     if: github.event.pull_request.user.login != 'dependabot[bot]' && inputs.run_infra_lint != false
     permissions:
       contents: read
-    uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@1eaf78aedffbfc1921daa2623150db9fb722879d
+    uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@0b37bd52212bbe0d6eac70f955203d7582dfd9da
     with:
       blocking: ${{ inputs.blocking }}
       working_directory: ${{ inputs.working_directory }}
       shell_scripts: ${{ inputs.shell_scripts }}
       dockerfiles: ${{ inputs.dockerfile }}
-      scripts_ref: 1eaf78aedffbfc1921daa2623150db9fb722879d
+      scripts_ref: 0b37bd52212bbe0d6eac70f955203d7582dfd9da
+      concurrency_suffix: ${{ inputs.dockerfile }}
     secrets:
       checkout_token: ${{ secrets.checkout_token }}
 
@@ -233,10 +234,11 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@1eaf78aedffbfc1921daa2623150db9fb722879d
+    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@0b37bd52212bbe0d6eac70f955203d7582dfd9da
     with:
       blocking: ${{ inputs.blocking }}
       working_directory: ${{ inputs.working_directory }}
-      scripts_ref: 1eaf78aedffbfc1921daa2623150db9fb722879d
+      scripts_ref: 0b37bd52212bbe0d6eac70f955203d7582dfd9da
+      concurrency_suffix: ${{ inputs.dockerfile }}
     secrets:
       checkout_token: ${{ secrets.checkout_token }}
