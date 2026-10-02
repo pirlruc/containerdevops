@@ -65,7 +65,7 @@ or the run fails at startup before any step runs.
 | `blocking` | `false` |
 
 Nested commondevops pin: keep `uses:` and `scripts_ref` in lockstep (currently
-tag `5.2.0` → `9b2e62121f832b15d865fc9bc51a3d462755e2b7`).
+`1eaf78aedffbfc1921daa2623150db9fb722879d`).
 
 ## container-build.yml
 
