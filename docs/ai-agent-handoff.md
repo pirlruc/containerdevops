@@ -24,11 +24,11 @@ Shared infra/secrets/supply-chain forward to
 
 | Submodule / artifact | Pin |
 |----------------------|-----|
-| `docs/guardrails` | tag **1.9.0** → `16a2c95c…` |
+| `docs/guardrails` | tag **1.10.0** → `e2db476f…` |
 | `.github/scaffold` | tag **1.8.0** → `ac9059fd…` |
 | methodologies (links only; not a submodule) | tag **1.8.0** |
-| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.0.7` `sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9` (`latest` == alpine) |
-| `ghcr.io/pirlruc/ci-container` (debian) | `6.0.7-debian` `sha256:dc0c7444fa56183064e8de599fa9ac94affca67c77aa403720192d232548ac0f` |
+| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.2.0` `sha256:8f8b9c76e0f06ef398773646a2ea2e53f479a9b94951396f79f042b8bfb1d7cd` (`latest` == alpine) |
+| `ghcr.io/pirlruc/ci-container` (debian) | `6.2.0-debian` `sha256:ef458ee21bc5c5d679471bce14ff98c8cb9918357f8fdd022399a43c8f0d27cc` |
 | commondevops `uses:` / `scripts_ref` | tag **5.3.0** → `803bfe60ff30d5bbcefe7fe6e38070999a66531d` |
 | `CI_BASE` (ci-lint debian, unsuffixed) | `5.3.0` digest `sha256:38b9afe1086295b011e69d092cf06ee133c17b9784e82a19826db7432ae35c45` |
 | `CI_BASE` (ci-lint alpine) | `5.3.0-alpine` digest `sha256:c55c8f74f2d99d7725cd5a2f785a3782b37d92939baa482a6774308cc5846bf9` |
@@ -39,7 +39,7 @@ Shared infra/secrets/supply-chain forward to
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
 | Release (reusables callers pin) | **6.1.0** (cache-to on the default branch only; image unchanged) |
-| Release (ci-container image) | not yet republished (`CI_BASE` is ci-lint 5.3.0; Alpine still owns unsuffixed ci-container) |
+| Release (ci-container image) | **6.2.0** (`CI_BASE` is ci-lint 5.3.0; Alpine owns unsuffixed) |
 
 ## Delivery status
 
@@ -258,4 +258,4 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-02 (CI_BASE is ci-lint 5.3.0; commondevops pin is tag 5.3.0)*
+*Last updated: 2026-10-02 (6.2.0 digests recorded; guardrails 1.10.0)*

@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.2.1] - 2026-10-02
+
+### Changed
+
+- Record the published 6.2.0 ci-container digests. Alpine still owns the
+  unsuffixed tag.
+- Pin guardrails **1.10.0**.
+
+## [6.2.0] - 2026-10-02
+
 ### Changed
 
 - Publish always attaches BuildKit provenance (`mode=max`) and an SBOM.
