@@ -183,6 +183,8 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Recent history
 
+- 2026-10-02: setuid structure test uses two `find -perm` calls. `sh -c` rejects
+  unquoted parentheses.
 - 2026-10-02: publish provenance is `mode=max` with SBOM always on.
   Image scans add `--image-config-scanners misconfig,secret`. HEALTHCHECK
   KICS exclusion is per Dockerfile. SC-PROV-001 retired. Not released yet.

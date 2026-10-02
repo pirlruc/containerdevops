@@ -16,6 +16,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - The hadolint template no longer ignores DL3008. The HEALTHCHECK KICS
   query is disabled on the ci-container Dockerfiles, not for the whole tree.
 - Structure-test template and ci-container assert no setuid or setgid files.
+  The check uses two `find -perm` calls so `sh -c` does not need grouping.
 
 ## [6.1.0] - 2026-10-01
 
