@@ -22,7 +22,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   on DHI Go 1.26.8. The ignore file keeps only the module findings those
   tags still have, each with `expired_at: 2026-11-01`.
 - Security calls commondevops Scorecard (advisory) and the PAT expiry audit.
-  Callers pin commondevops `9b2e62121f832b15d865fc9bc51a3d462755e2b7`.
+  Callers pin commondevops **5.3.0**
+  (`803bfe60ff30d5bbcefe7fe6e38070999a66531d`).
+- `CI_BASE` is ci-lint **5.3.0**. Debian owns the unsuffixed ci-lint tag.
+  Alpine ci-lint is `5.3.0-alpine`. ci-container still publishes Alpine as
+  the unsuffixed tag.
 
 ## [6.1.0] - 2026-10-01
 
