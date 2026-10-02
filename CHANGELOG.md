@@ -17,6 +17,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   query is disabled on the ci-container Dockerfiles, not for the whole tree.
 - Structure-test template and ci-container assert no setuid or setgid files.
   The check uses two `find -perm` calls so `sh -c` does not need grouping.
+- ci-container rebuilds dive v0.13.1 and container-structure-test v1.22.1
+  on DHI Go 1.26.8. The ignore file keeps only the module findings those
+  tags still have, each with `expired_at: 2026-11-01`.
+- Security calls commondevops Scorecard (advisory) and the PAT expiry audit.
+  Callers pin commondevops `9b2e62121f832b15d865fc9bc51a3d462755e2b7`.
 
 ## [6.1.0] - 2026-10-01
 

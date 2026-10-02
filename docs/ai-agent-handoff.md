@@ -29,7 +29,7 @@ Shared infra/secrets/supply-chain forward to
 | methodologies (links only; not a submodule) | tag **1.8.0** |
 | `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.0.7` `sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9` (`latest` == alpine) |
 | `ghcr.io/pirlruc/ci-container` (debian) | `6.0.7-debian` `sha256:dc0c7444fa56183064e8de599fa9ac94affca67c77aa403720192d232548ac0f` |
-| commondevops `uses:` / `scripts_ref` | tag `5.2.0` → `202582e7aab49d2f7c9d4bd9a6ec5e319d0c95b3` (CI-034 lockstep) |
+| commondevops `uses:` / `scripts_ref` | tag `5.2.0` → `9b2e62121f832b15d865fc9bc51a3d462755e2b7` (CI-034 lockstep) |
 | `CI_BASE` (ci-lint debian) | `5.2.4-debian` digest `sha256:618b469a95b60097eb709830cbe3ee079a78f614ad0bf74b5643d4c8c0895cec` |
 | `CI_BASE` (ci-lint alpine) | `5.2.4` digest `sha256:e0a51c64b004c6f4e4ca1672f3bb865aaf03d91bd8a2e228e0fa39be1174dfb4` |
 | `docker/setup-buildx-action` | `4.4.1` → `f87e5991…` |
@@ -183,6 +183,9 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Recent history
 
+- 2026-10-02: ci-container rebuilds dive and container-structure-test on Go
+  1.26.8. Security calls Scorecard and the token audit. commondevops pin
+  is `9b2e6212…`.
 - 2026-10-02: setuid structure test uses two `find -perm` calls. `sh -c` rejects
   unquoted parentheses.
 - 2026-10-02: publish provenance is `mode=max` with SBOM always on.
