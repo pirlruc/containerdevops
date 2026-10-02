@@ -60,6 +60,7 @@ RUN if ! id -u 1000 >/dev/null 2>&1; then \
     fi; \
     chown -R 1000:1000 /workspace; \
     if [ -d /home/ci ]; then chown -R 1000:1000 /home/ci; fi
+RUN find / -xdev -type f \( -perm -4000 -o -perm -2000 \) -exec chmod a-s {} +
 USER 1000:1000
 
 ENTRYPOINT []

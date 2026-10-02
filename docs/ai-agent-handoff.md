@@ -258,4 +258,4 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-02 (registry provenance, image-config scan, SC-PROV-001 retired)*
+*Last updated: 2026-10-02 (ci-container clears setuid before the structure test)*

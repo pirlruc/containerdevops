@@ -15,6 +15,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   dispatch. Parallel variant calls in one run do not cancel each other.
 - The hadolint template no longer ignores DL3008. The HEALTHCHECK KICS
   query is disabled on the ci-container Dockerfiles, not for the whole tree.
+- ci-container clears setuid and setgid bits before the structure test.
 - Structure-test template and ci-container assert no setuid or setgid files.
   The check uses two `find -perm` calls so `sh -c` does not need grouping.
 - ci-container rebuilds dive v0.13.1 and container-structure-test v1.22.1
