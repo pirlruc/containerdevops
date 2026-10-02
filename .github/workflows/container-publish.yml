@@ -187,6 +187,11 @@ on:
 # CI-025
 permissions: {}
 
+# CI-002. tag_suffix differs per variant publish.
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && format('dispatch-{0}-{1}', github.workflow, github.ref) || format('call-{0}-{1}-{2}', github.workflow, github.run_id, inputs.tag_suffix) }}
+  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
+
 env:
   ADVISORY: ${{ inputs.blocking == false }}
   # Enable `latest` on main for push/schedule/workflow_dispatch without an
@@ -350,8 +355,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           platforms: ${{ inputs.platforms }}
-          provenance: false
-          sbom: false
+          # Registry attestations satisfy SC-PROV-001 on the Free plan.
+          # actions/attest-build-provenance below stays gated on sign.
+          provenance: mode=max
+          sbom: true
           build-args: ${{ inputs.build_args }}
           cache-from: type=gha,scope=publish-${{ inputs.image_name }}${{ inputs.tag_suffix }}
           cache-to: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && format('type=gha,mode=min,scope=publish-{0}{1}', inputs.image_name, inputs.tag_suffix) || '' }}

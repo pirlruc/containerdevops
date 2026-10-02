@@ -149,7 +149,9 @@ python3 .github/scaffold/scripts/issues-sync.py \
   mount `/tmp` for the JSON on Docker Desktop.
 - **Size deviation:** retired. ci-container uses `ci_image_max_size_mb` (2000).
   REL-CHG-001 is closed by root `CHANGELOG.md`. Unsigned private publish is
-  recorded as SC-SIGN-001 / SC-PROV-001.
+  recorded as SC-SIGN-001. SC-PROV-001 is retired: publish sets
+  `provenance: mode=max` and `sbom: true`. GitHub attest-build-provenance
+  still runs only when `sign` is true.
 - **GHCR handoff:** do **not** delete published GHCR/Packages versions. PR
   cleanup may delete a version only when its tags are solely `ci-run-*`. After
   publish retag the same digest carries `5.0.0`/`latest` — never sweep it.
@@ -181,6 +183,9 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Recent history
 
+- 2026-10-02: publish provenance is `mode=max` with SBOM always on.
+  Image scans add `--image-config-scanners misconfig,secret`. HEALTHCHECK
+  KICS exclusion is per Dockerfile. SC-PROV-001 retired. Not released yet.
 - 2026-10-01: **6.1.0** — BuildKit `cache-to` only on the default branch; the
   artifact sweep deletes pull and tag Actions caches. Image is not republished.
 - 2026-09-30: **6.0.2** — CI_BASE is ci-lint 5.2.2. Alpine
@@ -248,4 +253,4 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-01 (6.1.0 cache-to on the default branch only)*
+*Last updated: 2026-10-02 (registry provenance, image-config scan, SC-PROV-001 retired)*

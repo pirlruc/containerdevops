@@ -23,6 +23,11 @@ on:
 
 permissions: {}
 
+# CI-002. package+tag differs per variant cleanup.
+concurrency:
+  group: ${{ format('call-{0}-{1}-{2}-{3}', github.workflow, github.run_id, inputs.package, inputs.tag) }}
+  cancel-in-progress: false
+
 jobs:
   cleanup:
     if: inputs.package != '' && inputs.tag != ''

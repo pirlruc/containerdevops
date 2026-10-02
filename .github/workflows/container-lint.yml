@@ -91,6 +91,11 @@ on:
 # CI-025
 permissions: {}
 
+# CI-002. dockerfile differs per variant lint.
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && format('dispatch-{0}-{1}', github.workflow, github.ref) || format('call-{0}-{1}-{2}', github.workflow, github.run_id, inputs.dockerfile) }}
+  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
+
 env:
   ADVISORY: ${{ inputs.blocking == false }}
 

@@ -12,6 +12,11 @@ on:
 
 permissions: {}
 
+# CI-002
+concurrency:
+  group: artifact-sweep-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   sweep:
     runs-on: ubuntu-24.04

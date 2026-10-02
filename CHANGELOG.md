@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Changed
+
+- Publish always attaches BuildKit provenance (`mode=max`) and an SBOM.
+  `actions/attest-build-provenance` still runs only when `sign` is true.
+  SC-PROV-001 is retired.
+- Image scans pass `--image-config-scanners misconfig,secret`.
+- Reusable workflows set a concurrency group. Dispatch cancels an older
+  dispatch. Parallel variant calls in one run do not cancel each other.
+- The hadolint template no longer ignores DL3008. The HEALTHCHECK KICS
+  query is disabled on the ci-container Dockerfiles, not for the whole tree.
+- Structure-test template and ci-container assert no setuid or setgid files.
+
 ## [6.1.0] - 2026-10-01
 
 ### Changed

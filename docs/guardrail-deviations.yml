@@ -19,17 +19,6 @@ deviations:
     owner: pirlruc
     approved_by: Engineering Lead
     review: 2026-12-31
-  - id: SC-PROV-001
-    why: >-
-      The repository returns to private on the Free plan, where provenance
-      attestation is unavailable. container-publish.yml keeps provenance and
-      sbom false on build-push-action; actions/attest-build-provenance runs
-      only when sign is true, which follows repository visibility (guardrails
-      1.9.0).
-    epic: CDO-PIN-001
-    owner: pirlruc
-    approved_by: Engineering Lead
-    review: 2026-12-31
   - id: CI-032
     why: >-
       A user-owned private repository on GitHub Free cannot protect the

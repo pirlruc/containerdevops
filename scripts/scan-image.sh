@@ -8,6 +8,7 @@
 #   IGNOREFILE   path, empty (auto .trivyignore.yaml), or none
 #   SEV          fail threshold (trivy wants upper case, grype lower)
 #   SCANNERS     trivy --scanners (default vuln,secret)
+#   IMAGE_CONFIG_SCANNERS  trivy --image-config-scanners (default misconfig,secret; empty disables)
 #   RESULTS_DIR  default scan-results
 set -euo pipefail
 
@@ -16,6 +17,8 @@ IMAGE="${IMAGE:?IMAGE is required}"
 PKG_TYPES="${PKG_TYPES:-os,library}"
 IGNOREFILE="${IGNOREFILE:-}"
 SCANNERS="${SCANNERS:-vuln,secret}"
+# ${var-default} so an explicit empty value disables the config scan.
+IMAGE_CONFIG_SCANNERS="${IMAGE_CONFIG_SCANNERS-misconfig,secret}"
 RESULTS_DIR="${RESULTS_DIR:-scan-results}"
 mkdir -p "${RESULTS_DIR}"
 
@@ -37,13 +40,17 @@ case "${cmd}" in
     elif [[ -f .trivyignore ]]; then
       IGNORE=(--ignorefile .trivyignore)
     fi
+    CONFIG_SCAN=()
+    if [[ -n "${IMAGE_CONFIG_SCANNERS}" ]]; then
+      CONFIG_SCAN=(--image-config-scanners "${IMAGE_CONFIG_SCANNERS}")
+    fi
     trivy image --scanners "${SCANNERS}" --pkg-types "${PKG_TYPES}" \
       --severity "CRITICAL,${SEV}" \
       --format sarif --output "${RESULTS_DIR}/trivy.sarif" \
-      "${CFG[@]}" "${IGNORE[@]}" "${IMAGE}"
+      "${CFG[@]}" "${CONFIG_SCAN[@]}" "${IGNORE[@]}" "${IMAGE}"
     trivy image --scanners "${SCANNERS}" --pkg-types "${PKG_TYPES}" \
       --severity "CRITICAL,${SEV}" \
-      --exit-code 1 "${CFG[@]}" "${IGNORE[@]}" "${IMAGE}"
+      --exit-code 1 "${CFG[@]}" "${CONFIG_SCAN[@]}" "${IGNORE[@]}" "${IMAGE}"
     ;;
   syft)
     SELECT=()
