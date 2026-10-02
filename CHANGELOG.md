@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Changed
+
+- Registry pages record ci-container 6.2.0. Alpine owns unsuffixed
+  `ci-container` on its own; that is not the same choice as `ci-lint`.
+
 ## [6.2.1] - 2026-10-02
 
 ### Changed

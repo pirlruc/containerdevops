@@ -16,8 +16,10 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 
 | Tag | Meaning |
 |-----|---------|
-| `6.0.7` / `6.0.7-alpine` | Alpine `sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9` |
-| `6.0.7-debian` | Debian `sha256:dc0c7444fa56183064e8de599fa9ac94affca67c77aa403720192d232548ac0f` |
+| `6.2.0` / `6.2.0-alpine` | Alpine `sha256:8f8b9c76e0f06ef398773646a2ea2e53f479a9b94951396f79f042b8bfb1d7cd` |
+| `6.2.0-debian` | Debian `sha256:ef458ee21bc5c5d679471bce14ff98c8cb9918357f8fdd022399a43c8f0d27cc` |
+| `6.0.7` / `6.0.7-alpine` | Previous Alpine `sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9` |
+| `6.0.7-debian` | Previous Debian `sha256:dc0c7444fa56183064e8de599fa9ac94affca67c77aa403720192d232548ac0f` |
 | `6.0.5` / `6.0.5-alpine` | Previous Alpine `sha256:09b97b6c4dfdde9f43113c1000bbae2f80aaae194725ffe1e8f1ccc8ff3204e0` |
 | `6.0.5-debian` | Previous Debian `sha256:38fb1ced38c9e128036a4dfdbf719ca633d6a926384f7f1d78b8d13eb628afed` |
 | `6.0.2` / `6.0.2-alpine` | Previous Alpine `sha256:8acbde10296d715f02174d0825689276fbcb46186c888ecb4ede82b2110a8f1a` |
@@ -32,7 +34,8 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 | `latest-debian` | Latest non-prerelease Debian publish |
 | `sha-<git>` / `sha-<git>-alpine` / `sha-<git>-debian` | Exact git SHA of the published commit |
 
-Alpine owns the unsuffixed tags to match `ci-lint`. Prefer an explicit
+Alpine owns the unsuffixed `ci-container` tags. `ci-lint` unsuffixed is Debian
+from 5.3.0, for a different reason. Prefer an explicit
 `-alpine` / `-debian` suffix when the libc matters; prefer a digest in production.
 `latest` equals `latest-alpine` (`flavor: latest=false`). A monthly rebuild may
 move `latest` off the SemVer tag — pin the digest, not `latest`.
@@ -42,16 +45,16 @@ move `latest` off the SemVer tag — pin the digest, not `latest`.
 If the package is public, anonymous pulls work:
 
 ```bash
-docker pull ghcr.io/pirlruc/ci-container:6.0.7
+docker pull ghcr.io/pirlruc/ci-container:6.2.0
 ```
 
 If the package is private, authenticate with a PAT that has `read:packages`:
 
 ```bash
 echo "$CR_PAT" | docker login ghcr.io -u USERNAME --password-stdin
-docker pull ghcr.io/pirlruc/ci-container:6.0.7
+docker pull ghcr.io/pirlruc/ci-container:6.2.0
 # or
-docker pull ghcr.io/pirlruc/ci-container@sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9
+docker pull ghcr.io/pirlruc/ci-container@sha256:8f8b9c76e0f06ef398773646a2ea2e53f479a9b94951396f79f042b8bfb1d7cd
 ```
 
 ## Use as a GitHub Actions job container
@@ -61,7 +64,7 @@ jobs:
   lint:
     runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/pirlruc/ci-container:6.0.7
+      image: ghcr.io/pirlruc/ci-container:6.2.0
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -77,7 +80,7 @@ Grant the package **Actions** Read access for the calling repository when using
 
 ```bash
 docker run --rm -v "$PWD:/workspace:ro" -w /workspace \
-  ghcr.io/pirlruc/ci-container:6.0.7 \
+  ghcr.io/pirlruc/ci-container:6.2.0 \
   hadolint Dockerfile
 ```
 
@@ -90,7 +93,7 @@ docker run --rm \
   --security-opt no-new-privileges \
   --tmpfs /tmp:rw,noexec,nosuid,size=256m \
   -v "$PWD:/workspace:ro" -w /workspace \
-  ghcr.io/pirlruc/ci-container:6.0.7 \
+  ghcr.io/pirlruc/ci-container:6.2.0 \
   hadolint Dockerfile
 ```
 
@@ -109,12 +112,12 @@ plain runner).
 ## Verify a publish
 
 ```bash
-docker pull ghcr.io/pirlruc/ci-container@sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9
+docker pull ghcr.io/pirlruc/ci-container@sha256:8f8b9c76e0f06ef398773646a2ea2e53f479a9b94951396f79f042b8bfb1d7cd
 
 cosign verify \
   --certificate-identity-regexp 'https://github.com/pirlruc/containerdevops/.github/workflows/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  ghcr.io/pirlruc/ci-container@sha256:9cecca568d67dfe3debad6431153accf7fb466e08f2b97f08950b3018affe1d9
+  ghcr.io/pirlruc/ci-container@sha256:8f8b9c76e0f06ef398773646a2ea2e53f479a9b94951396f79f042b8bfb1d7cd
 ```
 
 Signing runs only when the source repository is public (`sign: true`).

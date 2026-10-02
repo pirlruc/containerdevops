@@ -135,7 +135,7 @@ Provenance after human merge+sync uses these prefixes and the PR description; do
 |------|--------|
 | `.github/workflows/` | Reusable `container-*` workflows (GHCR digest handoff or `scan_local` without a push; no image tars) + self CI + ci-container caller |
 | `scripts/` | Install, local parity, threshold readers, size gate (`du -sxm /`) |
-| `docker/ci-container/` | Container CI tooling image (extends ci-lint) |
+| `docker/ci-container/` | Container CI tooling image (extends ci-lint). Debian and Alpine variants; unsuffixed owner is recorded in the image workflow |
 | `docs/` | Handoff, this prompt, authored `issues.yml`, deviations, Docker Hub and GitHub Packages pages |
 | `.trivyignore.yaml` (under `docker/ci-container/`) | Path-scoped donor CVE ignores |
 | `.github/dependabot.yml` | Multi-ecosystem dependency updates |
