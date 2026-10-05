@@ -1464,3 +1464,46 @@ milestones:
               - grep -q actions/caches .github/workflows/artifact-sweep.yml
             guardrail_refs:
               - CI-004
+
+      - id: CDO-SMOKE-001
+        status: open
+        title: Add a Compose smoke workflow
+        overview:
+          problem: >-
+            container-iac validates compose config and KICS. It does not start
+            the stack. A catalog of Compose files can pass CI and fail on boot.
+          goal: >-
+            A workflow_call runs docker compose up --wait with a caller-supplied
+            env file and compose file list, then removes the project. Heavy
+            stacks stay opt-in.
+        decision: >-
+          In the context of Compose catalogs, facing a workflow that validates
+          config but does not boot, we decided a smoke workflow, to achieve a
+          boot check, accepting that heavy stacks stay opt-in.
+        out_of_scope:
+          - Replacing container-iac
+          - Starting a stack that needs a GPU or a hypervisor
+        architecture:
+          target: .github/workflows/container-compose-smoke.yml
+          modules:
+            - .github/workflows/container-compose-smoke.yml
+            - docs/workflows.md
+        acceptance_criteria:
+          - The workflow takes compose_files and an env file
+          - It runs up --wait and always removes the project
+          - docs/workflows.md lists it
+        guardrail_refs:
+          - DOCKER-LINT-003
+          - DOCKER-COMPOSE-002
+        tasks:
+          - id: CDO-SMOKE-001-T1
+            status: open
+            title: Add container-compose-smoke.yml
+            instructions:
+              files:
+                - .github/workflows/container-compose-smoke.yml
+                - docs/workflows.md
+            verification:
+              - test -f .github/workflows/container-compose-smoke.yml
+            guardrail_refs:
+              - DOCKER-LINT-003
