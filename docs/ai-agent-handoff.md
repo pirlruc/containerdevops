@@ -178,7 +178,8 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Suggested next work
 
-1. Callers still on containerdevops before 6.0.2 (`image_artifact`) must move to 6.1.0.
+1. CDO-SMOKE-001 is filed and not implemented: a workflow_call that runs `docker compose up --wait` with a caller env file. container-iac stays the config and KICS gate.
+2. Callers still on containerdevops before 6.0.2 (`image_artifact`) must move to 6.1.0.
 2. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship rebuilt images.
 
 ## Recent history
@@ -258,4 +259,4 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-02 (registry docs match 6.2.0; tip tag 6.2.1)*
+*Last updated: 2026-10-05 (CDO-SMOKE-001 filed, not implemented)*
