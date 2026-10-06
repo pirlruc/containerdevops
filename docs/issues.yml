@@ -1464,3 +1464,40 @@ milestones:
               - grep -q actions/caches .github/workflows/artifact-sweep.yml
             guardrail_refs:
               - CI-004
+  - name: C++ overhaul follow-up
+    status: open
+    epics:
+    - id: CDO-CACHE-001
+      status: open
+      title: Document an image convention for a vcpkg binary cache
+      overview:
+        problem: >-
+          C++ libraries that need OpenCV cannot use the analysis image, and there
+          is no containerdevops convention for a binary-cache image.
+        goal: >-
+          A short convention (digest pin, tag ownership, trivyignore, size) for
+          that cache image if cppdevops adopts one.
+      decision: >-
+        In the context of heavy C++ dependencies, facing an analysis image that
+        must stay small, we decided to document a separate cache image convention,
+        to achieve a reviewable publish path, accepting that the image is optional.
+      architecture:
+        target: docs/
+        modules:
+        - docker
+      acceptance_criteria:
+      - The convention cites digest pins and the image size gate
+      guardrail_refs:
+      - DOCKER-PERF-002
+      - DOCKER-BUILD-003
+      tasks:
+      - id: CDO-CACHE-001-T1
+        status: open
+        title: Add the convention note
+        instructions:
+          files:
+          - docs/ai-agent-handoff.md
+        verification:
+        - rg 'binary cache' docs/ai-agent-handoff.md
+        guardrail_refs:
+        - DOCKER-PERF-002
