@@ -1468,7 +1468,7 @@ milestones:
     status: open
     epics:
     - id: CDO-CACHE-001
-      status: open
+      status: done
       title: Document an image convention for a vcpkg binary cache
       overview:
         problem: >-
@@ -1492,7 +1492,7 @@ milestones:
       - DOCKER-BUILD-003
       tasks:
       - id: CDO-CACHE-001-T1
-        status: open
+        status: done
         title: Add the convention note
         instructions:
           files:
