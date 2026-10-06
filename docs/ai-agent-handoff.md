@@ -176,6 +176,22 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Donor ignorefile:** dive `v0.13.1` and CST `1.22.1` digests re-confirmed 2026-09-11;
   no newer tags, so `.trivyignore.yaml` entries were not dropped. Next review 2026-11-11.
 
+## vcpkg binary cache images
+
+A toolchain image that carries a package manager (cppdevops `ci-cpp-vcpkg`)
+is a normal image, not a cache volume baked into the registry. OpenCV and
+other heavy ports stay out of the image (DOCKER-PERF-002, `ci_toolchain`
+2000 MB). Publish it through the existing lint, build, scan, and publish
+workflows:
+
+- Pin the base by digest, with the tag in a Dockerfile comment (DOCKER-BUILD-003).
+- Give it its own name (`ci-cpp-vcpkg`), not a tag on the analysis image.
+- Reuse the analysis image's `.trivyignore.yaml` only for findings inherited
+  from that base. Add a new ignore only with an expiry.
+- The binary cache itself is a files directory (`VCPKG_DEFAULT_BINARY_CACHE`):
+  a named volume locally, `actions/cache` in GitHub Actions. It is not an OCI
+  image and is not published.
+
 ## Suggested next work
 
 1. Callers still on containerdevops before 6.0.2 (`image_artifact`) must move to 6.1.0.
@@ -258,4 +274,4 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-02 (registry docs match 6.2.0; tip tag 6.2.1)*
+*Last updated: 2026-10-06 (vcpkg binary-cache image convention)*
