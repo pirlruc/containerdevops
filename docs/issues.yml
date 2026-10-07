@@ -1501,3 +1501,83 @@ milestones:
         - rg 'binary cache' docs/ai-agent-handoff.md
         guardrail_refs:
         - DOCKER-PERF-002
+
+    - id: CDO-OVL-001
+      status: open
+      title: Document system overlay ports for libraries built into an image
+      overview:
+        problem: >-
+          ci-cpp-opencv ships OpenCV and Eigen, and empty vcpkg ports point
+          find_package at those prefixes. containerdevops does not describe that
+          pattern.
+        goal: >-
+          A note says when an image should ship an empty overlay port instead of
+          letting vcpkg build the library.
+      decision: >-
+        In the context of a compile image, facing a vcpkg port that rebuilds a
+        library the image already installed, we decided to document an empty
+        overlay port, to achieve a find_package of the image copy, accepting one
+        port file per library.
+      acceptance_criteria:
+      - The note names the overlay-port pattern
+      tasks:
+      - id: CDO-OVL-001-T1
+        status: open
+        title: Add the overlay-port note
+        instructions:
+          files:
+          - docs/
+        verification:
+        - rg -n 'overlay' docs
+    - id: CDO-STRUCT-001
+      status: open
+      title: Set minimum structure-test checks for a compile image
+      overview:
+        problem: >-
+          A compile image can publish without proving the compiler, libc++, and
+          the non-root user are present.
+        goal: >-
+          The image guide lists the structure-test checks a compile image must
+          include.
+      decision: >-
+        In the context of compile images, facing a publish with no toolchain
+        check, we decided to require compiler, cmake, and user checks, to
+        achieve a failed publish when the toolchain is missing, accepting a
+        longer structure test.
+      acceptance_criteria:
+      - The guide lists the minimum checks
+      tasks:
+      - id: CDO-STRUCT-001-T1
+        status: open
+        title: List the compile-image checks
+        instructions:
+          files:
+          - docs/
+        verification:
+        - rg -n 'structure' docs
+    - id: CDO-AGE-001
+      status: open
+      title: Open work when a base image digest will age out
+      overview:
+        problem: >-
+          ubuntu:24.04 digest sha256:534baea6 was created 2026-09-17 and ages out
+          on 2026-10-18. Nothing opens the bump before the gate fails.
+        goal: >-
+          A scheduled check opens an issue, or fails a non-publishing job, before
+          base_image_max_age_days.
+      decision: >-
+        In the context of digest pins, facing a base image that ages out on a
+        calendar, we decided to detect that before the gate day, to achieve a
+        bump while a newer digest exists, accepting no bump when the vendor has
+        not published one.
+      acceptance_criteria:
+      - The workflow or the docs say how the age warning is raised
+      tasks:
+      - id: CDO-AGE-001-T1
+        status: open
+        title: Describe the age warning
+        instructions:
+          files:
+          - docs/
+        verification:
+        - rg -n 'base_image_max_age_days' docs
