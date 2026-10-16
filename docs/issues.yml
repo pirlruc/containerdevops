@@ -1464,6 +1464,71 @@ milestones:
               - grep -q actions/caches .github/workflows/artifact-sweep.yml
             guardrail_refs:
               - CI-004
+
+      - id: CDO-IAC-001
+        status: open
+        title: Compose validation cannot read an env file
+        overview:
+          problem: >-
+            container-iac validates each compose_files entry with
+            "docker compose -f FILE config --quiet" and no env file, then passes
+            the same entries to scripts/check-compose-gates.sh, which treats every
+            argument as a path to an existing file. A caller whose stacks use
+            required interpolation (${VAR:?}) and keep .env out of the repository
+            can satisfy neither step: docker compose config fails with "required
+            variable ... is missing a value", and no env file can be threaded
+            through. homelab-docker-catalog hits this on every pull request today.
+          goal: >-
+            container-iac accepts env files, so a fail-closed compose file
+            renders, and the DOCKER-COMPOSE-001/002/005/006/007 gates read that
+            same rendered config.
+        decision: >-
+          In the context of callers that keep secrets out of the repository and
+          fail closed on a missing variable, facing a compose validation step that
+          renders with no environment, we decided container-iac takes env files
+          per compose file, to achieve validation of the configuration that
+          actually ships, accepting one more input on the reusable workflow and a
+          caller-side mapping of file to env file.
+        out_of_scope:
+          - Reading variables from the caller job environment
+          - Validating callers that have no env file requirement
+        architecture:
+          target: .github/workflows/container-iac.yml
+          modules:
+            - .github/workflows/container-iac.yml
+            - scripts/check-compose-gates.sh
+        acceptance_criteria:
+          - An env_files input maps each compose file to its env file
+          - docker compose config receives --env-file for that entry
+          - check-compose-gates.sh renders with the same env file
+          - The input is optional, so existing callers are unaffected
+        guardrail_refs:
+          - DOCKER-COMPOSE-001
+          - DOCKER-COMPOSE-002
+          - DOCKER-COMPOSE-005
+          - DOCKER-COMPOSE-006
+          - DOCKER-COMPOSE-007
+        tasks:
+          - id: CDO-IAC-001-T1
+            status: open
+            title: Add an env_files input to container-iac
+            instructions:
+              files:
+                - .github/workflows/container-iac.yml
+            verification:
+              - a compose file with a required variable renders with its env file
+            guardrail_refs:
+              - DOCKER-COMPOSE-001
+          - id: CDO-IAC-001-T2
+            status: open
+            title: Pass the env file to check-compose-gates.sh
+            instructions:
+              files:
+                - scripts/check-compose-gates.sh
+            verification:
+              - the gates read the same rendered config as docker compose config
+            guardrail_refs:
+              - DOCKER-COMPOSE-005
   - name: C++ overhaul follow-up
     status: open
     epics:
