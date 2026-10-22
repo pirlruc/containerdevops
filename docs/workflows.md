@@ -283,6 +283,7 @@ is always advisory so image publish still succeeds.
 | `paths` | `.` |
 | `exclude_paths` | `""` |
 | `compose_files` | `""` |
+| `env_files` | `""` (passed as `docker compose --env-file` to config and the gates) |
 | `kics_config` | `.github/kics.config` |
 
 KICS `exclude-queries` IDs and why each is suppressed (not fixed) are recorded in

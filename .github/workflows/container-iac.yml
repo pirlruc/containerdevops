@@ -18,6 +18,11 @@ on:
         required: false
         type: string
         default: ""
+      env_files:
+        description: Space-separated env files passed to docker compose --env-file
+        required: false
+        type: string
+        default: ""
       kics_config:
         required: false
         type: string
@@ -44,6 +49,9 @@ on:
         type: string
         default: ""
       compose_files:
+        type: string
+        default: ""
+      env_files:
         type: string
         default: ""
       kics_config:
@@ -166,12 +174,18 @@ jobs:
         continue-on-error: true
         env:
           COMPOSE_FILES: ${{ inputs.compose_files }}
+          COMPOSE_ENV_FILES: ${{ inputs.env_files }}
         run: |
           set -euo pipefail
+          env_args=()
+          # shellcheck disable=SC2086
+          for e in ${COMPOSE_ENV_FILES}; do
+            env_args+=(--env-file "${e}")
+          done
           # shellcheck disable=SC2086
           for f in $COMPOSE_FILES; do
             echo "Validating ${f}"
-            docker compose -f "${f}" config --quiet
+            docker compose "${env_args[@]}" -f "${f}" config --quiet
           done
 
       - name: Compose gates (DOCKER-COMPOSE-001/002/005/006/007)
@@ -180,10 +194,11 @@ jobs:
         continue-on-error: true
         env:
           COMPOSE_FILES: ${{ inputs.compose_files }}
+          COMPOSE_ENV_FILES: ${{ inputs.env_files }}
         run: |
           set -euo pipefail
           # shellcheck disable=SC2086
-          bash _containerdevops/scripts/check-compose-gates.sh $COMPOSE_FILES
+          COMPOSE_ENV_FILES="${COMPOSE_ENV_FILES}" bash _containerdevops/scripts/check-compose-gates.sh $COMPOSE_FILES
 
       - name: Gate — iac
         if: always()
