@@ -272,9 +272,13 @@ private Free-plan repos, where that API is unavailable.
 
 When `dockerhub_image` and `dockerhub_readme` are both set (and the variant
 owns unsuffixed tags), the job pushes the readme as the Docker Hub Overview
-after the image push. The Hub token needs read/write/delete (admin-level)
-scope for the description API. A push-only token yields Forbidden; that step
-is always advisory so image publish still succeeds.
+after the image push. That call uses `DOCKERHUB_DESCRIPTION_TOKEN`, which
+needs Read, Write, and Delete. `DOCKERHUB_TOKEN` stays a push token. If the
+description token is unset, the job warns and does not update the Overview.
+When the token is set, a failed Overview update fails the job.
+
+`container-hub-description.yml` pushes the same Overview without building an
+image. It needs `contents: read` plus those two Hub secrets.
 
 ## container-iac.yml
 

@@ -142,6 +142,11 @@ on:
         required: false
       DOCKERHUB_TOKEN:
         required: false
+      DOCKERHUB_DESCRIPTION_TOKEN:
+        description: >-
+          Docker Hub token with Read, Write, and Delete. Used only for the
+          Overview update. A push token cannot call that API.
+        required: false
       scripts_token:
         description: Token to read this repo scripts when called cross-repo; defaults to github.token
         required: false
@@ -400,21 +405,34 @@ jobs:
             exit 1
           fi
 
-      - name: Docker Hub Overview
-        # Only the variant that owns unsuffixed tags (or a legacy single-variant
-        # publish with empty tag_suffix) should sync the Hub Overview — otherwise
-        # parallel variant jobs race on the same description.
+      - name: Docker Hub description token
+        id: hub_description
         if: >-
           inputs.dockerhub_image != '' &&
           inputs.dockerhub_readme != '' &&
           (inputs.tag_suffix == '' || inputs.tag_alias_unsuffixed)
-        # Always advisory: Hub description API needs admin (read/write/delete) token
-        # scope; a push-only PAT returns Forbidden and must not fail the image publish.
-        continue-on-error: true
+        env:
+          TOKEN: ${{ secrets.DOCKERHUB_DESCRIPTION_TOKEN }}
+        run: |
+          if [ -n "${TOKEN}" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Docker Hub Overview skipped
+        if: steps.hub_description.outputs.present == 'false'
+        run: >-
+          echo "::warning::DOCKERHUB_DESCRIPTION_TOKEN is unset.
+          Hub Overview was not updated. The token needs Read, Write, and Delete."
+      - name: Docker Hub Overview
+        # Only the variant that owns unsuffixed tags should sync the Overview.
+        # Blocking when the description token is set. A push-only token cannot
+        # call the description API.
+        if: steps.hub_description.outputs.present == 'true'
         uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKERHUB_DESCRIPTION_TOKEN }}
           repository: ${{ inputs.dockerhub_image }}
           readme-filepath: ${{ inputs.dockerhub_readme }}
           short-description: ${{ inputs.dockerhub_short_description }}
