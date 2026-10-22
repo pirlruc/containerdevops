@@ -27,6 +27,18 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 1
 fi
 
+env_args=()
+if [[ -n "${COMPOSE_ENV_FILES:-}" ]]; then
+  # shellcheck disable=SC2086
+  for e in ${COMPOSE_ENV_FILES}; do
+    if [[ ! -f "${e}" ]]; then
+      echo "env file not found: ${e}" >&2
+      exit 1
+    fi
+    env_args+=(--env-file "${e}")
+  done
+fi
+
 status=0
 for f in "$@"; do
   if [[ ! -f "${f}" ]]; then
@@ -35,7 +47,7 @@ for f in "$@"; do
     continue
   fi
   echo "==> compose gates: ${f}"
-  json="$(docker compose -f "${f}" config --format json)"
+  json="$(docker compose "${env_args[@]}" -f "${f}" config --format json)"
 
   # DOCKER-COMPOSE-001 — every service image is digest-pinned.
   while IFS= read -r img; do
