@@ -202,7 +202,7 @@ workflows:
 
 ## Suggested next work
 
-1. Wire token-audit to the PATs this repo has (`GUARDRAILS_READ_TOKEN`, `COMMONDEVOPS_READ_TOKEN`). Do not add `SCORECARD_TOKEN`. Confirm PAT expiries before the first scheduled run.
+1. Confirm PAT expiries before the Tuesday 06:17 UTC token audit. This repo passes `GUARDRAILS_READ_TOKEN` and `COMMONDEVOPS_READ_TOKEN`. It does not have `CONTAINERDEVOPS_READ_TOKEN` or `SCORECARD_TOKEN`.
 
 ## Recent history
 

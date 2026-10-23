@@ -65,11 +65,11 @@ jobs:
   token-audit:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions: {}
-    uses: pirlruc/commondevops/.github/workflows/common-token-audit.yml@76b416c74415d27453836ea50fa037990496686b
+    uses: pirlruc/commondevops/.github/workflows/common-token-audit.yml@d03953476f3d5fa1081a0834d9882007ff26dd91
     with:
-      scripts_ref: 76b416c74415d27453836ea50fa037990496686b
+      scripts_ref: d03953476f3d5fa1081a0834d9882007ff26dd91
     secrets:
-      scorecard_token: ${{ secrets.SCORECARD_TOKEN }}
+      guardrails_token: ${{ secrets.GUARDRAILS_READ_TOKEN }}
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
   iac:
