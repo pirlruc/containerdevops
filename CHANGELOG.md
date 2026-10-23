@@ -12,6 +12,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - Advisory scan-posture jobs scan `os,library` with ignores off.
 - Pin github-scaffold **1.10.2** (`c8eddcfb`). OCI description annotations
   were already written on the index and the manifest.
+- commondevops callers pin 5.4.4 (`4a7c8c43`).
 
 ## [6.3.2] - 2026-10-23
 

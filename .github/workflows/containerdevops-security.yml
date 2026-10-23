@@ -26,11 +26,11 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@76b416c74415d27453836ea50fa037990496686b
+    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@4a7c8c431090f32bb0febcd42f5ac8ef2d405e0e
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
-      scripts_ref: 76b416c74415d27453836ea50fa037990496686b
+      scripts_ref: 4a7c8c431090f32bb0febcd42f5ac8ef2d405e0e
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
@@ -39,11 +39,11 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: pirlruc/commondevops/.github/workflows/common-supply-chain.yml@76b416c74415d27453836ea50fa037990496686b
+    uses: pirlruc/commondevops/.github/workflows/common-supply-chain.yml@4a7c8c431090f32bb0febcd42f5ac8ef2d405e0e
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
-      scripts_ref: 76b416c74415d27453836ea50fa037990496686b
+      scripts_ref: 4a7c8c431090f32bb0febcd42f5ac8ef2d405e0e
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
@@ -55,7 +55,7 @@ jobs:
       contents: read
       security-events: write
       id-token: write
-    uses: pirlruc/commondevops/.github/workflows/common-scorecard.yml@76b416c74415d27453836ea50fa037990496686b
+    uses: pirlruc/commondevops/.github/workflows/common-scorecard.yml@4a7c8c431090f32bb0febcd42f5ac8ef2d405e0e
     with:
       blocking: false
       publish_results: false
@@ -65,9 +65,9 @@ jobs:
   token-audit:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions: {}
-    uses: pirlruc/commondevops/.github/workflows/common-token-audit.yml@d03953476f3d5fa1081a0834d9882007ff26dd91
+    uses: pirlruc/commondevops/.github/workflows/common-token-audit.yml@4a7c8c431090f32bb0febcd42f5ac8ef2d405e0e
     with:
-      scripts_ref: d03953476f3d5fa1081a0834d9882007ff26dd91
+      scripts_ref: 4a7c8c431090f32bb0febcd42f5ac8ef2d405e0e
     secrets:
       guardrails_token: ${{ secrets.GUARDRAILS_READ_TOKEN }}
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
