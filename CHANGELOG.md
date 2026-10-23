@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.3.1] - 2026-10-23
+
+### Changed
+
+- Record the published 6.3.0 ci-container digests. Alpine still owns the
+  unsuffixed tag.
+- The scheduled token audit passes `GUARDRAILS_READ_TOKEN` and
+  `COMMONDEVOPS_READ_TOKEN`. It does not pass a Scorecard token.
+
 ## [6.3.0] - 2026-10-23
 
 ### Added
