@@ -1,128 +1,24 @@
-# ci-container library scan, 2026-10-02, against ci-lint rebuilt on Go 1.26.8.
-# dive v0.13.1 and container-structure-test v1.22.1 are rebuilt from those
-# tags. Stdlib findings in actionlint and gitleaks are gone. Module findings
-# stay until upstream ships. Every entry expires 2026-11-01.
+# ci-container library scan, 2026-10-23, binaries rebuilt on Go 1.26.10.
+# x/crypto v0.57.0, x/net v0.60.0, x/text v0.42.0, and compress v1.18.7.
+# container-structure-test also pins containerd v1.7.33.
+# docker/cli v29.2.0 does not compile (missing containerd/errdefs and the
+# moby client module). docker/docker has no fixed release. Review 2026-11-22.
 vulnerabilities:
-  - id: CVE-2024-25621
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: github.com/containerd/containerd in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-53488
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: github.com/containerd/containerd in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
   - id: CVE-2025-15558
     paths:
       - "**/container-structure-test"
       - "**/dive"
-    expired_at: 2026-11-01
-    statement: github.com/docker/cli in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+    expired_at: 2026-11-22
+    statement: github.com/docker/cli. v29.2.0 does not compile into dive v0.13.1 or container-structure-test v1.22.1. Windows CLI finding.
   - id: CVE-2026-41567
     paths:
       - "**/container-structure-test"
       - "**/dive"
-    expired_at: 2026-11-01
-    statement: github.com/docker/docker in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+    expired_at: 2026-11-22
+    statement: github.com/docker/docker has no fixed release in the rebuilt v0.13.1 and v1.22.1 tags.
   - id: CVE-2026-42306
     paths:
       - "**/container-structure-test"
       - "**/dive"
-    expired_at: 2026-11-01
-    statement: github.com/docker/docker in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2024-45337
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2025-22869
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2025-47913
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-39828
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-39829
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-39830
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-39831
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-39832
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-39835
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-42508
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-46595
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-46597
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-56854
-    paths:
-      - "**/container-structure-test"
-    expired_at: 2026-11-01
-    statement: golang.org/x/crypto in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-25681
-    paths:
-      - "**/dive"
-    expired_at: 2026-11-01
-    statement: golang.org/x/net in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-27136
-    paths:
-      - "**/dive"
-    expired_at: 2026-11-01
-    statement: golang.org/x/net in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-33814
-    paths:
-      - "**/dive"
-    expired_at: 2026-11-01
-    statement: golang.org/x/net in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-39821
-    paths:
-      - "**/dive"
-    expired_at: 2026-11-01
-    statement: golang.org/x/net in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-46600
-    paths:
-      - "**/dive"
-    expired_at: 2026-11-01
-    statement: golang.org/x/net in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
-  - id: CVE-2026-56852
-    paths:
-      - "**/dive"
-    expired_at: 2026-11-01
-    statement: golang.org/x/text in the rebuilt v0.13.1/v1.22.1 tag; modules not bumped.
+    expired_at: 2026-11-22
+    statement: github.com/docker/docker has no fixed release in the rebuilt v0.13.1 and v1.22.1 tags.

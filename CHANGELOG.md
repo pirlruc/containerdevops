@@ -5,10 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.3.0] - 2026-10-23
+
+### Added
+
+- `container-compose-smoke.yml` runs `docker compose up --wait` and removes
+  the project. Heavy stacks stay opt-in.
+- Compile-image notes: minimum structure-test checks and empty vcpkg overlay
+  ports. See `docs/compile-image.md`.
+- Base-image age check warns 7 days before `base_image_max_age_days`.
+
 ### Changed
 
-- Registry pages record ci-container 6.2.0. Alpine owns unsuffixed
-  `ci-container` on its own; that is not the same choice as `ci-lint`.
+- Pin guardrails **1.12.0** and github-scaffold **1.10.0**.
+- Callers pin commondevops **5.4.0**.
+- ci-container rebuilds dive and container-structure-test on Go 1.26.10.
+- `CI_BASE` is ci-lint 5.4.0 for Debian and Alpine.
 
 ## [6.2.1] - 2026-10-02
 

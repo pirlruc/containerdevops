@@ -26,11 +26,11 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@803bfe60ff30d5bbcefe7fe6e38070999a66531d
+    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@76b416c74415d27453836ea50fa037990496686b
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
-      scripts_ref: 803bfe60ff30d5bbcefe7fe6e38070999a66531d
+      scripts_ref: 76b416c74415d27453836ea50fa037990496686b
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
@@ -39,11 +39,11 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: pirlruc/commondevops/.github/workflows/common-supply-chain.yml@803bfe60ff30d5bbcefe7fe6e38070999a66531d
+    uses: pirlruc/commondevops/.github/workflows/common-supply-chain.yml@76b416c74415d27453836ea50fa037990496686b
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
-      scripts_ref: 803bfe60ff30d5bbcefe7fe6e38070999a66531d
+      scripts_ref: 76b416c74415d27453836ea50fa037990496686b
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
@@ -55,7 +55,7 @@ jobs:
       contents: read
       security-events: write
       id-token: write
-    uses: pirlruc/commondevops/.github/workflows/common-scorecard.yml@803bfe60ff30d5bbcefe7fe6e38070999a66531d
+    uses: pirlruc/commondevops/.github/workflows/common-scorecard.yml@76b416c74415d27453836ea50fa037990496686b
     with:
       blocking: false
       publish_results: false
@@ -65,7 +65,9 @@ jobs:
   token-audit:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions: {}
-    uses: pirlruc/commondevops/.github/workflows/common-token-audit.yml@803bfe60ff30d5bbcefe7fe6e38070999a66531d
+    uses: pirlruc/commondevops/.github/workflows/common-token-audit.yml@76b416c74415d27453836ea50fa037990496686b
+    with:
+      scripts_ref: 76b416c74415d27453836ea50fa037990496686b
     secrets:
       scorecard_token: ${{ secrets.SCORECARD_TOKEN }}
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}

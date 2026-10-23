@@ -1,0 +1,30 @@
+schemaVersion: "2.0.0"
+# Minimum checks for a compile image (CDO-STRUCT-001).
+# Adjust the compiler command and the non-root uid for the image.
+metadataTest:
+  user:
+    uid: 1000
+    gid: 1000
+commandTests:
+  - name: "compiler"
+    command: "c++"
+    args: ["--version"]
+    exitCode: 0
+  - name: "cmake"
+    command: "cmake"
+    args: ["--version"]
+    exitCode: 0
+  - name: "C++ standard library"
+    command: "sh"
+    args:
+      - "-c"
+      - "find /usr -name 'libc++.so*' -o -name 'libstdc++.so*' | grep -q ."
+  - name: "non-root id"
+    command: "id"
+    args: ["-u"]
+    expectedOutput: ["1000"]
+  - name: "no setuid or setgid files"
+    command: "sh"
+    args:
+      - "-c"
+      - "! find / -xdev -type f -perm -4000 -print | grep -q . && ! find / -xdev -type f -perm -2000 -print | grep -q ."

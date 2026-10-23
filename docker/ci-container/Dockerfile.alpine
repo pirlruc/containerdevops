@@ -16,22 +16,24 @@
 # Alpine final stage does not need a musl toolchain.
 ARG CI_BASE=ghcr.io/pirlruc/ci-lint:local
 
-FROM dhi.io/golang:1.26-debian13-dev@sha256:06dc5566a36380eb27e0eef948ce336fe53790617fd8512a1d21b1d774c0545a AS dive-build
+FROM dhi.io/golang:1.26-debian13-dev@sha256:5bff7bbb70c4f0791e039b58deb70eb0609dcc2d503c5524af3565b86d8b7544 AS dive-build
 WORKDIR /src
 RUN git init \
  && git remote add origin https://github.com/wagoodman/dive.git \
  && git fetch --depth 1 origin fe98c8a2eb08c443a36e3cc7568078909e298433 \
  && git checkout --detach FETCH_HEAD \
  && test "$(git rev-parse HEAD)" = "fe98c8a2eb08c443a36e3cc7568078909e298433" \
+ && go get golang.org/x/crypto@v0.57.0 golang.org/x/net@v0.60.0 golang.org/x/text@v0.42.0 github.com/klauspost/compress@v1.18.7 \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/dive .
 
-FROM dhi.io/golang:1.26-debian13-dev@sha256:06dc5566a36380eb27e0eef948ce336fe53790617fd8512a1d21b1d774c0545a AS cst-build
+FROM dhi.io/golang:1.26-debian13-dev@sha256:5bff7bbb70c4f0791e039b58deb70eb0609dcc2d503c5524af3565b86d8b7544 AS cst-build
 WORKDIR /src
 RUN git init \
  && git remote add origin https://github.com/GoogleContainerTools/container-structure-test.git \
  && git fetch --depth 1 origin 1e1bb81e5272bf616f3ee87d5e085e2f90d94917 \
  && git checkout --detach FETCH_HEAD \
  && test "$(git rev-parse HEAD)" = "1e1bb81e5272bf616f3ee87d5e085e2f90d94917" \
+ && go get golang.org/x/crypto@v0.57.0 golang.org/x/net@v0.60.0 golang.org/x/text@v0.42.0 github.com/klauspost/compress@v1.18.7 github.com/containerd/containerd@v1.7.33 \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/container-structure-test ./cmd/container-structure-test
 
 ARG CI_BASE

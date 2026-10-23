@@ -48,6 +48,7 @@ or the run fails at startup before any step runs.
 | `container-published-rescan.yml` | `contents: read`, `security-events: write`, `packages: read` |
 | `container-publish.yml` | `contents: read`, `packages: write`, `id-token: write` |
 | `container-iac.yml` | `contents: read`, `security-events: write` |
+| `container-compose-smoke.yml` | `contents: read` |
 | `container-devcontainer.yml` | `contents: read` |
 
 ## container-lint.yml
@@ -65,7 +66,7 @@ or the run fails at startup before any step runs.
 | `blocking` | `false` |
 
 Nested commondevops pin: keep `uses:` and `scripts_ref` in lockstep (currently
-`803bfe60ff30d5bbcefe7fe6e38070999a66531d`).
+tag **5.4.0**, `76b416c74415d27453836ea50fa037990496686b`).
 
 ## container-build.yml
 
@@ -134,6 +135,18 @@ and tag runs restore that cache and do not create a per-ref copy (CI-004).
 `docker image inspect .Size`, which reports uncompressed size on classic Docker
 Engine / GHA runners but a compressed value under containerd image-store hosts).
 Tune `image_max_size_mb` / `ci_image_max_size_mb` against this measurement.
+
+**Base image age (DOCKER-BUILD-006):** this job runs
+`scripts/check-base-image-age.sh` on the final-stage `FROM` before the image
+is published. `base_image_max_age_days` is 30. The script warns when the base
+is within 7 days of that threshold and fails this build job when the age
+exceeds it. Publish is a later job. The monthly image rebuild runs the same
+gate. The warning is the signal to bump the digest while a newer base exists.
+When the vendor has not published a newer digest, the warning stays a warning
+until the threshold day.
+
+A compile image's structure test has a minimum set of checks. See
+[docs/compile-image.md](compile-image.md).
 
 ## container-scan.yml
 
@@ -280,6 +293,21 @@ When the token is set, a failed Overview update fails the job.
 `container-hub-description.yml` pushes the same Overview without building an
 image. It needs `contents: read` plus those two Hub secrets.
 
+## container-compose-smoke.yml
+
+| Input | Default |
+|-------|---------|
+| `compose_files` | required |
+| `env_files` | `""` |
+| `project_name` | `compose-smoke-<run_id>` |
+| `blocking` | `false` |
+| `scripts_ref` | `""` |
+
+Runs `docker compose up --wait` and always removes the project. Callers that
+boot a heavy stack opt in by calling the workflow. `container-iac` still
+validates config and KICS and does not start containers. Pass the same
+`env_files` the stack needs to render.
+
 ## container-iac.yml
 
 | Input | Default |
@@ -293,7 +321,7 @@ image. It needs `contents: read` plus those two Hub secrets.
 KICS `exclude-queries` IDs and why each is suppressed (not fixed) are recorded in
 [`docs/kics-exclusions.md`](kics-exclusions.md) (DOCKER-LINT-002).
 
-Guardrails 1.9.0 names two KICS queries that may be ignored **per service**, not
+Guardrails 1.12.0 names two KICS queries that may be ignored **per service**, not
 per file, when the matching compose rule already holds:
 
 | Query | When a per-service ignore is enough |

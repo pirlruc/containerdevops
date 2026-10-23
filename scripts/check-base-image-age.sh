@@ -96,6 +96,16 @@ done
 
 NOW_EPOCH="$(date -u +%s)"
 MAX_SECONDS=$((MAX_DAYS * 86400))
+# CDO-AGE-001: warn this many days before the hard gate. The build job is
+# not the publish job, so the warning and the later failure both land before
+# a tag is pushed. A vendor with no newer digest stays a warning until the
+# threshold day.
+WARN_LEAD_DAYS=7
+if (( MAX_DAYS > WARN_LEAD_DAYS )); then
+  WARN_AFTER=$(( (MAX_DAYS - WARN_LEAD_DAYS) * 86400 ))
+else
+  WARN_AFTER=0
+fi
 FAILED=0
 
 for ref in "${REFS[@]}"; do
@@ -123,6 +133,8 @@ for ref in "${REFS[@]}"; do
   if (( age > MAX_SECONDS )); then
     echo "error: ${ref} is ${age_days} days old (> ${MAX_DAYS}) — DOCKER-BUILD-006" >&2
     FAILED=1
+  elif (( age > WARN_AFTER )); then
+    echo "warning: ${ref} is ${age_days} days old; base_image_max_age_days is ${MAX_DAYS}. Bump the digest before the gate fails (CDO-AGE-001)." >&2
   fi
 done
 
