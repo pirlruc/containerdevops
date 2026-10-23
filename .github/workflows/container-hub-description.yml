@@ -72,4 +72,4 @@ jobs:
           password: ${{ secrets.DOCKERHUB_DESCRIPTION_TOKEN }}
           repository: ${{ github.event_name == 'push' && 'pirlruc/ci-container' || inputs.dockerhub_image }}
           readme-filepath: ${{ github.event_name == 'push' && 'docs/docker-hub.md' || inputs.dockerhub_readme }}
-          short-description: ${{ github.event_name == 'push' && 'CI toolchain: ci-lint plus dive and container-structure-test' || inputs.dockerhub_short_description }}
+          short-description: "${{ github.event_name == 'push' && 'CI toolchain: ci-lint plus dive and container-structure-test' || inputs.dockerhub_short_description }}"
