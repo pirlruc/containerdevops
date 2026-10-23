@@ -72,7 +72,7 @@ jobs:
        github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
       contents: read
-      security-events: write
+      packages: read
     uses: ./.github/workflows/container-lint.yml
     with:
       dockerfile: docker/ci-container/Dockerfile
@@ -92,7 +92,7 @@ jobs:
        github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
       contents: read
-      security-events: write
+      packages: read
     uses: ./.github/workflows/container-lint.yml
     with:
       dockerfile: docker/ci-container/Dockerfile.alpine

@@ -64,7 +64,7 @@ jobs:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
       contents: read
-      security-events: write
+      packages: read
     uses: ./.github/workflows/container-lint.yml
     with:
       dockerfile: docker/ci-container/Dockerfile
