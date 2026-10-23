@@ -274,4 +274,4 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-06 (vcpkg binary-cache image convention)*
+*Last updated: 2026-10-07 (phase-3 review issues appended to docs/issues.yml)*
