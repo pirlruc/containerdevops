@@ -203,9 +203,11 @@ workflows:
 ## Suggested next work
 
 1. Confirm PAT expiries before the Tuesday 06:17 UTC token audit. This repo passes `GUARDRAILS_READ_TOKEN` and `COMMONDEVOPS_READ_TOKEN`. It does not have `CONTAINERDEVOPS_READ_TOKEN` or `SCORECARD_TOKEN`.
+2. Hub Overview for `pirlruc/ci-container` is `workflow_dispatch` on `.github/workflows/hub-description.yml`. It calls `container-hub-description.yml` and does not republish the image.
 
 ## Recent history
 
+- 2026-10-23: Hub Overview dispatch for `ci-container`. It does not republish the image.
 - 2026-10-23: **6.3.1** — record the published 6.3.0 ci-container digests.
 - 2026-10-23: **6.3.0** — guardrails 1.12.0, scaffold 1.10.0, commondevops
   5.4.0. Compose smoke workflow. Age warning 7 days before
@@ -286,4 +288,4 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-23 (6.3.0 published; digests recorded)*
+*Last updated: 2026-10-23 (Hub Overview dispatch for ci-container)*
