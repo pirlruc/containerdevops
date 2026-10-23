@@ -1,0 +1,70 @@
+name: Container Hub description
+
+# Push a Docker Hub Overview without rebuilding the image.
+# DOCKERHUB_DESCRIPTION_TOKEN needs Read, Write, and Delete.
+# contents: read is the only GitHub permission.
+
+on:
+  workflow_call:
+    inputs:
+      dockerhub_image:
+        description: Docker Hub repository, for example pirlruc/ci-lint
+        required: true
+        type: string
+      dockerhub_readme:
+        description: Path in the caller checkout to push as the Overview
+        required: true
+        type: string
+      dockerhub_short_description:
+        description: Short description, at most 100 characters
+        required: false
+        type: string
+        default: ""
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_DESCRIPTION_TOKEN:
+        required: true
+  workflow_dispatch:
+    inputs:
+      dockerhub_image:
+        description: Docker Hub repository, for example pirlruc/ci-lint
+        required: true
+        type: string
+      dockerhub_readme:
+        description: Path in this checkout to push as the Overview
+        required: true
+        type: string
+      dockerhub_short_description:
+        description: Short description, at most 100 characters
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  overview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Require the description token
+        env:
+          TOKEN: ${{ secrets.DOCKERHUB_DESCRIPTION_TOKEN }}
+        run: |
+          if [ -z "${TOKEN}" ]; then
+            echo "::error::DOCKERHUB_DESCRIPTION_TOKEN is unset. It needs Read, Write, and Delete on Docker Hub."
+            exit 1
+          fi
+      - name: Docker Hub Overview
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_DESCRIPTION_TOKEN }}
+          repository: ${{ inputs.dockerhub_image }}
+          readme-filepath: ${{ inputs.dockerhub_readme }}
+          short-description: ${{ inputs.dockerhub_short_description }}
