@@ -20,8 +20,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - Pin guardrails **1.12.0** and github-scaffold **1.10.0**.
 - Callers pin commondevops **5.4.0**.
 - ci-container rebuilds dive and container-structure-test on Go 1.26.10.
-- Debian `CI_BASE` is ci-lint 5.4.0. Alpine `CI_BASE` stays ci-lint 5.3.3
-  because the 5.4.0 Alpine publish did not complete.
+- `CI_BASE` is ci-lint 5.4.0 for Debian and Alpine.
 
 ## [6.2.1] - 2026-10-02
 

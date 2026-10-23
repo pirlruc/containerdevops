@@ -59,11 +59,10 @@ jobs:
     steps:
       - id: set
         run: |
-          # commondevops ci-lint 5.4.0 Debian. Alpine 5.4.0 did not publish
-          # (dhi.io returned 503 on that release). Alpine stays on 5.3.3.
+          # commondevops ci-lint 5.4.0. Debian owns unsuffixed tags.
           {
             echo "debian=ghcr.io/pirlruc/ci-lint@sha256:9473bd0a4bf654ac5e01f8df6bd8278c7e0d61208baf33a051c79bd8afa47bc2"
-            echo "alpine=ghcr.io/pirlruc/ci-lint@sha256:bdd9c2ea12ad700da6ebd8426845d883510156a188b741f32ffd9ceb3f43f830"
+            echo "alpine=ghcr.io/pirlruc/ci-lint@sha256:71b45eb68f35020f1598f3e21f20117e87c0dbd6bcb4c9158f3da788b20a849a"
           } >> "$GITHUB_OUTPUT"
 
   lint:
