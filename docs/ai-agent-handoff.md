@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `feature-cdo-630` → release target **6.3.0** |
+| **Branch** | `feature-record-630-digests` records the **6.3.0** image digests. **6.3.0** is released |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -27,8 +27,8 @@ Shared infra/secrets/supply-chain forward to
 | `docs/guardrails` | tag **1.12.0** → `f4baf619…` |
 | `.github/scaffold` | tag **1.10.0** → `1d9901f7…` |
 | methodologies (links only; not a submodule) | tag **1.9.1** |
-| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.2.0` `sha256:8f8b9c76e0f06ef398773646a2ea2e53f479a9b94951396f79f042b8bfb1d7cd` (`latest` == alpine) |
-| `ghcr.io/pirlruc/ci-container` (debian) | `6.2.0-debian` `sha256:ef458ee21bc5c5d679471bce14ff98c8cb9918357f8fdd022399a43c8f0d27cc` |
+| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.3.0` `sha256:b70472adbfb4a25d61bf92e7a3d957af17525872be5a17d8cc171c003e70e106` (`latest` == alpine) |
+| `ghcr.io/pirlruc/ci-container` (debian) | `6.3.0-debian` `sha256:1a559f798141722373600d2191b87bb4e5d037ab0a159b67b16b40dca96680c6` |
 | commondevops `uses:` / `scripts_ref` | tag **5.4.0** → `76b416c74415d27453836ea50fa037990496686b` |
 | `CI_BASE` (ci-lint debian, unsuffixed) | `5.4.0` digest `sha256:9473bd0a4bf654ac5e01f8df6bd8278c7e0d61208baf33a051c79bd8afa47bc2` |
 | `CI_BASE` (ci-lint alpine) | `5.4.0-alpine` digest `sha256:71b45eb68f35020f1598f3e21f20117e87c0dbd6bcb4c9158f3da788b20a849a` |
@@ -39,7 +39,7 @@ Shared infra/secrets/supply-chain forward to
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
 | Release (reusables callers pin) | **6.1.0** (cache-to on the default branch only; image unchanged) |
-| Release (ci-container image) | **6.3.0** target (`CI_BASE` is ci-lint 5.4.0) |
+| Release (ci-container image) | **6.3.0** published. Alpine owns the unsuffixed tag |
 
 ## Delivery status
 
@@ -202,12 +202,11 @@ workflows:
 
 ## Suggested next work
 
-1. Record the 6.3.0 image digests after publish.
-2. Wire token-audit to the PATs this repo has. Do not add `SCORECARD_TOKEN`.
-   Confirm PAT expiries before the first scheduled run.
+1. Wire token-audit to the PATs this repo has (`GUARDRAILS_READ_TOKEN`, `COMMONDEVOPS_READ_TOKEN`). Do not add `SCORECARD_TOKEN`. Confirm PAT expiries before the first scheduled run.
 
 ## Recent history
 
+- 2026-10-23: **6.3.1** — record the published 6.3.0 ci-container digests.
 - 2026-10-23: **6.3.0** — guardrails 1.12.0, scaffold 1.10.0, commondevops
   5.4.0. Compose smoke workflow. Age warning 7 days before
   `base_image_max_age_days`. Compile-image structure-test and overlay-port
@@ -287,4 +286,4 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-23 (6.3.0 smoke, age warning, Go 1.26.10 rebuild)*
+*Last updated: 2026-10-23 (6.3.0 published; digests recorded)*
