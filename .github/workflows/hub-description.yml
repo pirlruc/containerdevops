@@ -1,0 +1,23 @@
+# Push the ci-container Docker Hub Overview without rebuilding the image.
+
+name: Hub description
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci-container:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/container-hub-description.yml
+    with:
+      dockerhub_image: pirlruc/ci-container
+      dockerhub_readme: docs/docker-hub.md
+      dockerhub_short_description: >-
+        CI toolchain: ci-lint plus dive and container-structure-test
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_DESCRIPTION_TOKEN: ${{ secrets.DOCKERHUB_DESCRIPTION_TOKEN }}

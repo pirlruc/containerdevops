@@ -12,3 +12,4 @@ rules:
       - containerdevops-ci.yml
       - containerdevops-security.yml
       - container-published-rescan.yml
+      - hub-description.yml
