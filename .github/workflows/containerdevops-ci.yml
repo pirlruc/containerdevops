@@ -113,6 +113,7 @@ jobs:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
       contents: read
+      actions: read
       security-events: write
     uses: ./.github/workflows/container-iac.yml
     with:
