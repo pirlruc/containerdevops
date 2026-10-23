@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `feature-record-630-digests` records the **6.3.0** image digests. **6.3.0** is released |
+| **Branch** | `main`. **6.3.2** is an annotated tag only (guardrails 1.13.1 and Hub Overview push). **6.3.0** remains the caller pin |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -24,7 +24,7 @@ Shared infra/secrets/supply-chain forward to
 
 | Submodule / artifact | Pin |
 |----------------------|-----|
-| `docs/guardrails` | tag **1.12.0** → `f4baf619…` |
+| `docs/guardrails` | tag **1.13.1** → `1945211ac851c3c0f83694bd4ea53571fdced4ab` |
 | `.github/scaffold` | tag **1.10.0** → `1d9901f7…` |
 | methodologies (links only; not a submodule) | tag **1.9.1** |
 | `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.3.0` `sha256:b70472adbfb4a25d61bf92e7a3d957af17525872be5a17d8cc171c003e70e106` (`latest` == alpine) |
@@ -203,10 +203,11 @@ workflows:
 ## Suggested next work
 
 1. Confirm PAT expiries before the Tuesday 06:17 UTC token audit. This repo passes `GUARDRAILS_READ_TOKEN` and `COMMONDEVOPS_READ_TOKEN`. It does not have `CONTAINERDEVOPS_READ_TOKEN` or `SCORECARD_TOKEN`.
-2. Hub Overview for `pirlruc/ci-container` is `workflow_dispatch` on `.github/workflows/hub-description.yml`. It calls `container-hub-description.yml` and does not republish the image.
+2. Hub Overview for `pirlruc/ci-container` updates on a push to `main` when `docs/docker-hub*.md` changes, via `container-hub-description.yml`. `workflow_dispatch` on `.github/workflows/hub-description.yml` remains. Neither path republishes the image. Do not hook the Overview to the image-publish `release` event.
 
 ## Recent history
 
+- 2026-10-23: **6.3.2** — guardrails 1.13.1. Hub Overview push when `docs/docker-hub*.md` changes. Tag only. No GitHub Release.
 - 2026-10-23: Hub Overview dispatch for `ci-container`. It does not republish the image.
 - 2026-10-23: **6.3.1** — record the published 6.3.0 ci-container digests.
 - 2026-10-23: **6.3.0** — guardrails 1.12.0, scaffold 1.10.0, commondevops
@@ -288,4 +289,4 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-23 (Hub Overview dispatch for ci-container)*
+*Last updated: 2026-10-23 (guardrails 1.13.1, Hub Overview push, tag 6.3.2)*

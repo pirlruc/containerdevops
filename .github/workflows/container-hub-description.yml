@@ -5,6 +5,11 @@ name: Container Hub description
 # contents: read is the only GitHub permission.
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/docker-hub*.md"
+      - ".github/workflows/container-hub-description.yml"
   workflow_call:
     inputs:
       dockerhub_image:
@@ -65,6 +70,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_DESCRIPTION_TOKEN }}
-          repository: ${{ inputs.dockerhub_image }}
-          readme-filepath: ${{ inputs.dockerhub_readme }}
-          short-description: ${{ inputs.dockerhub_short_description }}
+          repository: ${{ github.event_name == 'push' && 'pirlruc/ci-container' || inputs.dockerhub_image }}
+          readme-filepath: ${{ github.event_name == 'push' && 'docs/docker-hub.md' || inputs.dockerhub_readme }}
+          short-description: "${{ github.event_name == 'push' && 'CI toolchain: ci-lint plus dive and container-structure-test' || inputs.dockerhub_short_description }}"

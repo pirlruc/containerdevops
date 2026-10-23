@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.3.2] - 2026-10-23
+
+### Changed
+
+- Pin guardrails **1.13.1** (`1945211a`). No Kotlin consumer. Existing
+  caller SHAs are unchanged.
+- `container-hub-description.yml` updates the `pirlruc/ci-container` Overview
+  on a push to `main` when `docs/docker-hub*.md` changes. It does not run
+  on `release` and does not rebuild the image.
+
 ## [6.3.1] - 2026-10-23
 
 ### Changed
