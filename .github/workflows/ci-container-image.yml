@@ -208,6 +208,46 @@ jobs:
       ignorefile: docker/ci-container/.trivyignore.yaml
       blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
 
+  scan-posture:
+    needs: build
+    if: >-
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
+    permissions:
+      contents: read
+      security-events: write
+      packages: read
+    uses: ./.github/workflows/container-scan.yml
+    with:
+      image: ${{ format('ghcr.io/{0}/{1}@{2}', github.repository_owner, needs.build.outputs.handoff_package, needs.build.outputs.digest) }}
+      results_artifact: container-scan-posture-debian
+      sarif_category: trivy-posture-debian
+      scripts_ref: ${{ github.sha }}
+      pkg_types: os,library
+      ignorefile: none
+      blocking: false
+
+  scan-posture-alpine:
+    needs: build-alpine
+    if: >-
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
+    permissions:
+      contents: read
+      security-events: write
+      packages: read
+    uses: ./.github/workflows/container-scan.yml
+    with:
+      image: ${{ format('ghcr.io/{0}/{1}@{2}', github.repository_owner, needs.build-alpine.outputs.handoff_package, needs.build-alpine.outputs.digest) }}
+      results_artifact: container-scan-posture-alpine
+      sarif_category: trivy-posture-alpine
+      scripts_ref: ${{ github.sha }}
+      pkg_types: os,library
+      ignorefile: none
+      blocking: false
+
   publish:
     needs: [build, scan, bases]
     if: >-
