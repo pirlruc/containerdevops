@@ -291,7 +291,10 @@ description token is unset, the job warns and does not update the Overview.
 When the token is set, a failed Overview update fails the job.
 
 `container-hub-description.yml` pushes the same Overview without building an
-image. It needs `contents: read` plus those two Hub secrets.
+image. It needs `contents: read` plus those two Hub secrets. A push to `main`
+that changes `docs/docker-hub*.md` updates the `pirlruc/ci-container` Overview.
+`workflow_call` and `workflow_dispatch` still take the image and readme inputs.
+This workflow does not run on `release`, because that event republishes images.
 
 ## container-compose-smoke.yml
 
