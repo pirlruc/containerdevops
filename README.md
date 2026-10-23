@@ -5,8 +5,8 @@ images — hadolint, buildx, container-structure-test, Trivy/Syft/Grype, SBOM,
 signing, GHCR and Docker Hub publishing, plus KICS, Compose Spec validation,
 and the `ci-container` toolchain image.
 
-Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails/tree/1.9.0/docker)
-(`DOCKER-*`), pinned at `docs/guardrails/` tag `1.9.0`. Pin this repo by commit SHA (`CI-018`).
+Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails/tree/1.12.0/docker)
+(`DOCKER-*`), pinned at `docs/guardrails/` tag `1.12.0`. Pin this repo by commit SHA (`CI-018`).
 
 ## Workflows
 
@@ -18,6 +18,7 @@ Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails
 | `container-published-rescan.yml` | GHCR probe + `container-scan.yml` for a published registry tag |
 | `container-publish.yml` | Multi-arch push to GHCR and Docker Hub; optional cosign + provenance |
 | `container-iac.yml` | KICS + `docker compose config` + DOCKER-COMPOSE measurable gates |
+| `container-compose-smoke.yml` | `docker compose up --wait`, then remove the project |
 | `container-devcontainer.yml` | Devcontainer Dockerfile lint (structure-test stub) |
 | `container-handoff-cleanup.yml` | PR-only delete of `ci-run-*` GHCR versions |
 | `artifact-sweep.yml` | Scheduled delete of leftover `container-image*` artifacts |
@@ -107,6 +108,9 @@ resolution table). No system install required.
 
 Creates create-once `.github/workflows/ci-container.yml` and seeds scan configs
 from `templates/` when missing.
+
+Compile images list the structure-test checks and the overlay-port pattern in
+[docs/compile-image.md](docs/compile-image.md).
 
 ## Toolchain image
 

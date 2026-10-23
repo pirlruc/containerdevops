@@ -1,7 +1,7 @@
 # Authored backlog for containerdevops.
 #
 # Schema: https://github.com/pirlruc/github-scaffold/blob/main/docs/issues-schema.md
-# Methodology: https://github.com/pirlruc/methodologies/tree/1.8.0/github-issue-adr
+# Methodology: https://github.com/pirlruc/methodologies/tree/1.9.1/github-issue-adr
 
 milestones:
   - name: Phase 1 — Image lifecycle
@@ -205,7 +205,7 @@ milestones:
           - .github/workflows/container-iac.yml
         acceptance_criteria:
         - Every reusable workflow has a top-level or job-level permissions block
-        - Lint and build use contents: read (and no write scopes)
+        - "Lint and build use contents: read (and no write scopes)"
         - actionlint passes
         guardrail_refs:
         - CI-001
@@ -883,7 +883,7 @@ milestones:
               - test -f docker/ci-container/.dockerignore
               - test -f docker/ci-container/container-structure-test.yml
               - test -f docker/ci-container/.trivyignore.yaml
-              - grep -q 'structure_test_config: docker/ci-container' .github/workflows/ci-container-image.yml
+              - "grep -q 'structure_test_config: docker/ci-container' .github/workflows/ci-container-image.yml"
             guardrail_refs:
               - DOCKER-BUILD-005
               - DOCKER-TEST-001
@@ -1466,7 +1466,7 @@ milestones:
               - CI-004
 
       - id: CDO-IAC-001
-        status: open
+        status: done
         title: Compose validation cannot read an env file
         overview:
           problem: >-
@@ -1510,7 +1510,7 @@ milestones:
           - DOCKER-COMPOSE-007
         tasks:
           - id: CDO-IAC-001-T1
-            status: open
+            status: done
             title: Add an env_files input to container-iac
             instructions:
               files:
@@ -1520,7 +1520,7 @@ milestones:
             guardrail_refs:
               - DOCKER-COMPOSE-001
           - id: CDO-IAC-001-T2
-            status: open
+            status: done
             title: Pass the env file to check-compose-gates.sh
             instructions:
               files:
@@ -1529,6 +1529,49 @@ milestones:
               - the gates read the same rendered config as docker compose config
             guardrail_refs:
               - DOCKER-COMPOSE-005
+
+      - id: CDO-SMOKE-001
+        status: done
+        title: Add a Compose smoke workflow
+        overview:
+          problem: >-
+            container-iac validates compose config and KICS. It does not start
+            the stack. A catalog of Compose files can pass CI and fail on boot.
+          goal: >-
+            A workflow_call runs docker compose up --wait with a caller-supplied
+            env file and compose file list, then removes the project. Heavy
+            stacks stay opt-in.
+        decision: >-
+          In the context of Compose catalogs, facing a workflow that validates
+          config but does not boot, we decided a smoke workflow, to achieve a
+          boot check, accepting that heavy stacks stay opt-in.
+        out_of_scope:
+          - Replacing container-iac
+          - Starting a stack that needs a GPU or a hypervisor
+        architecture:
+          target: .github/workflows/container-compose-smoke.yml
+          modules:
+            - .github/workflows/container-compose-smoke.yml
+            - docs/workflows.md
+        acceptance_criteria:
+          - The workflow takes compose_files and an env file
+          - It runs up --wait and always removes the project
+          - docs/workflows.md lists it
+        guardrail_refs:
+          - DOCKER-LINT-003
+          - DOCKER-COMPOSE-002
+        tasks:
+          - id: CDO-SMOKE-001-T1
+            status: done
+            title: Add container-compose-smoke.yml
+            instructions:
+              files:
+                - .github/workflows/container-compose-smoke.yml
+                - docs/workflows.md
+            verification:
+              - test -f .github/workflows/container-compose-smoke.yml
+            guardrail_refs:
+              - DOCKER-LINT-003
   - name: C++ overhaul follow-up
     status: open
     epics:
@@ -1568,7 +1611,7 @@ milestones:
         - DOCKER-PERF-002
 
     - id: CDO-OVL-001
-      status: open
+      status: done
       title: Document system overlay ports for libraries built into an image
       overview:
         problem: >-
@@ -1587,7 +1630,7 @@ milestones:
       - The note names the overlay-port pattern
       tasks:
       - id: CDO-OVL-001-T1
-        status: open
+        status: done
         title: Add the overlay-port note
         instructions:
           files:
@@ -1595,7 +1638,7 @@ milestones:
         verification:
         - rg -n 'overlay' docs
     - id: CDO-STRUCT-001
-      status: open
+      status: done
       title: Set minimum structure-test checks for a compile image
       overview:
         problem: >-
@@ -1613,7 +1656,7 @@ milestones:
       - The guide lists the minimum checks
       tasks:
       - id: CDO-STRUCT-001-T1
-        status: open
+        status: done
         title: List the compile-image checks
         instructions:
           files:
@@ -1621,7 +1664,7 @@ milestones:
         verification:
         - rg -n 'structure' docs
     - id: CDO-AGE-001
-      status: open
+      status: done
       title: Open work when a base image digest will age out
       overview:
         problem: >-
@@ -1639,7 +1682,7 @@ milestones:
       - The workflow or the docs say how the age warning is raised
       tasks:
       - id: CDO-AGE-001-T1
-        status: open
+        status: done
         title: Describe the age warning
         instructions:
           files:

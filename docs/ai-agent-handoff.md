@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `main` → tag **6.2.1** (digest notes; image stays **6.2.0**) |
+| **Branch** | `feature-cdo-630` → release target **6.3.0** |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -20,18 +20,18 @@ Owns `.github/workflows/container-{lint,build,scan,publish,iac,devcontainer}.yml
 Shared infra/secrets/supply-chain forward to
 [pirlruc/commondevops](https://github.com/pirlruc/commondevops).
 
-## Pins (2026-09-30)
+## Pins (2026-10-23)
 
 | Submodule / artifact | Pin |
 |----------------------|-----|
-| `docs/guardrails` | tag **1.10.0** → `e2db476f…` |
-| `.github/scaffold` | tag **1.8.0** → `ac9059fd…` |
-| methodologies (links only; not a submodule) | tag **1.8.0** |
+| `docs/guardrails` | tag **1.12.0** → `f4baf619…` |
+| `.github/scaffold` | tag **1.10.0** → `1d9901f7…` |
+| methodologies (links only; not a submodule) | tag **1.9.1** |
 | `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.2.0` `sha256:8f8b9c76e0f06ef398773646a2ea2e53f479a9b94951396f79f042b8bfb1d7cd` (`latest` == alpine) |
 | `ghcr.io/pirlruc/ci-container` (debian) | `6.2.0-debian` `sha256:ef458ee21bc5c5d679471bce14ff98c8cb9918357f8fdd022399a43c8f0d27cc` |
-| commondevops `uses:` / `scripts_ref` | tag **5.3.0** → `803bfe60ff30d5bbcefe7fe6e38070999a66531d` |
-| `CI_BASE` (ci-lint debian, unsuffixed) | `5.3.0` digest `sha256:38b9afe1086295b011e69d092cf06ee133c17b9784e82a19826db7432ae35c45` |
-| `CI_BASE` (ci-lint alpine) | `5.3.0-alpine` digest `sha256:c55c8f74f2d99d7725cd5a2f785a3782b37d92939baa482a6774308cc5846bf9` |
+| commondevops `uses:` / `scripts_ref` | tag **5.4.0** → `76b416c74415d27453836ea50fa037990496686b` |
+| `CI_BASE` (ci-lint debian, unsuffixed) | `5.4.0` digest `sha256:9473bd0a4bf654ac5e01f8df6bd8278c7e0d61208baf33a051c79bd8afa47bc2` |
+| `CI_BASE` (ci-lint alpine) | `5.3.3-alpine` digest `sha256:bdd9c2ea12ad700da6ebd8426845d883510156a188b741f32ffd9ceb3f43f830` (5.4.0 Alpine did not publish) |
 | `docker/setup-buildx-action` | `4.4.1` → `f87e5991…` |
 | `docker/build-push-action` | `7.4.0` → `c3c9e263…` |
 | `github/codeql-action/upload-sarif` | `4.38.2` → `2892aa5e…` |
@@ -39,7 +39,7 @@ Shared infra/secrets/supply-chain forward to
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
 | Release (reusables callers pin) | **6.1.0** (cache-to on the default branch only; image unchanged) |
-| Release (ci-container image) | **6.2.0** (`CI_BASE` is ci-lint 5.3.0; Alpine owns unsuffixed) |
+| Release (ci-container image) | **6.3.0** target (Debian `CI_BASE` is ci-lint 5.4.0; Alpine `CI_BASE` is 5.3.3) |
 
 ## Delivery status
 
@@ -61,6 +61,9 @@ Shared infra/secrets/supply-chain forward to
 | CDO-PIN-018 — guardrails 1.8.0 / scaffold 1.7.0 | Done (landed before 6.0.0) |
 | CDO-PIN-019 — Free-plan CI-032 / REL-PUB-004 | Done (deviations; repo returns to private) |
 | CDO-LOCAL-001 — local scan without GHCR push | Done (`6.0.0`) |
+| CDO-IAC-001 — compose env files | Done (`6.3.0`) |
+| CDO-SMOKE-001 — compose up --wait | Done (`6.3.0`) |
+| CDO-AGE-001 / CDO-STRUCT-001 / CDO-OVL-001 | Done (`6.3.0`, docs + age warning) |
 
 ## Tool versions in scripts/install-container-tools.sh
 
@@ -126,8 +129,10 @@ python3 .github/scaffold/scripts/issues-sync.py \
   `image_title` / `image_description` on publish or the package page leaks the repo
   description. Hub Overview needs `dockerhub_readme` + a Hub token with
   read/write/delete (admin) scope.
-- **Hub Overview:** needs a Hub PAT with read/write/delete (admin). Push-only
-  tokens return Forbidden; the sync step is advisory and does not fail publish.
+- **Hub Overview:** `container-hub-description.yml` and publish use
+  `DOCKERHUB_DESCRIPTION_TOKEN` (Read, Write, Delete). The job warns and
+  continues when that token is unset, and fails when the token is set and the
+  update fails. `DOCKERHUB_TOKEN` stays a push token.
 - **ci-container** extends **ci-lint**; publish needs the digest-pinned `CI_BASE`.
 - Private consumers pass `scripts_token` + matching `scripts_ref`; `checkout_token` only
   for nested commondevops calls (lint secrets/infra).
@@ -173,8 +178,11 @@ python3 .github/scaffold/scripts/issues-sync.py \
   docker watches `/docker/ci-container` only and cannot bump env-var digests. Refresh
   manually (CDO-WF-004-T3). GitHub `checkmarx/kics` `v2.1.21` (2026-07-30) has no Hub
   image tag as of 2026-09-11; stay on `v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…`.
-- **Donor ignorefile:** dive `v0.13.1` and CST `1.22.1` digests re-confirmed 2026-09-11;
-  no newer tags, so `.trivyignore.yaml` entries were not dropped. Next review 2026-11-11.
+- **Donor ignorefile:** dive `v0.13.1` and CST `1.22.1` are rebuilt on Go
+  1.26.10 with `x/crypto` v0.57.0, `x/net` v0.60.0, `x/text` v0.42.0, and
+  `compress` v1.18.7. CST also pins containerd v1.7.33. `docker/cli` v29.2.0
+  does not compile. `docker/docker` has no fix. Those ignores expire
+  2026-11-22. A full local image build needs a GHCR token with `read:packages`.
 
 ## vcpkg binary cache images
 
@@ -194,11 +202,17 @@ workflows:
 
 ## Suggested next work
 
-1. Callers still on containerdevops before 6.0.2 (`image_artifact`) must move to 6.1.0.
-2. Refresh donor digests / drop ignorefile entries before 2026-11-11 if dive/CST ship rebuilt images.
+1. Record the 6.3.0 image digests after publish. Republish Alpine ci-lint 5.4.0
+   and move Alpine `CI_BASE` off 5.3.3.
+2. Wire token-audit to the PATs this repo has. Do not add `SCORECARD_TOKEN`.
+   Confirm PAT expiries before the first scheduled run.
 
 ## Recent history
 
+- 2026-10-23: **6.3.0** — guardrails 1.12.0, scaffold 1.10.0, commondevops
+  5.4.0. Compose smoke workflow. Age warning 7 days before
+  `base_image_max_age_days`. Compile-image structure-test and overlay-port
+  notes. dive and container-structure-test rebuilt on Go 1.26.10.
 - 2026-10-02: ci-container rebuilds dive and container-structure-test on Go
   1.26.8. Security calls Scorecard and the token audit. commondevops pin
   is `9b2e6212…`.
@@ -274,4 +288,4 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-07 (phase-3 review issues appended to docs/issues.yml)*
+*Last updated: 2026-10-23 (6.3.0 smoke, age warning, Go 1.26.10 rebuild)*
