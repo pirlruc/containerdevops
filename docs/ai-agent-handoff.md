@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `main`. **6.3.2** is an annotated tag only (guardrails 1.13.1 and Hub Overview push). **6.3.0** remains the caller pin |
+| **Branch** | `main` at `416e31ea`. **6.3.3** is an annotated tag on that commit and has no GitHub Release. The changelog heading stays `[Unreleased]`. **6.3.0** remains the image tag. Do not move `6.3.3`. The repo is public; image publishes are finished and the owner can set it private. |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -207,6 +207,7 @@ workflows:
 
 ## Recent history
 
+- 2026-10-24: **6.3.3** on `416e31ea` (PR 175). Workflow and docs only. Callers pin commondevops `4a7c8c43`. No GitHub Release, so `ci-container` was not republished. Hub pages stay on the 6.3.0 examples. Do not move `6.3.3`.
 - 2026-10-23: **6.3.2** — guardrails 1.13.1. Hub Overview push when `docs/docker-hub*.md` changes. Tag only. No GitHub Release.
 - 2026-10-23: Hub Overview dispatch for `ci-container`. It does not republish the image.
 - 2026-10-23: **6.3.1** — record the published 6.3.0 ci-container digests.
@@ -289,4 +290,4 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-23 (guardrails 1.13.1, Hub Overview push, tag 6.3.2)*
+*Last updated: 2026-10-24 (annotated tag 6.3.3, no image republish)*

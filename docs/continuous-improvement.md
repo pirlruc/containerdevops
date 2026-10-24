@@ -158,6 +158,7 @@ Do not recommend removing these without **requires user decision**:
 7. Caller jobs must grant every permission the reusable job declares (no escalation)
 8. Size gates measure uncompressed rootfs via `du -sxm /` (not store-dependent inspect size)
 9. BuildKit `cache-to` writes only on the default branch; do not delete published GHCR or Docker Hub tags as quota cleanup
+10. `verify_command` is a simple argv. The smoke run uses `--entrypoint` and does not pass the command through a shell, so quote characters are literal. An image Release body carries the index and platform digests. The git tag does not. A workflow-only annotated tag has no GitHub Release
 
 ## Automation configuration
 
