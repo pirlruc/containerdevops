@@ -76,8 +76,8 @@ permissions: {}
 
 # CI-002. sarif_category differs when one caller rescans more than one image.
 concurrency:
-  group: ${{ github.event_name == 'workflow_dispatch' && format('dispatch-{0}-{1}', github.workflow, github.ref) || format('call-{0}-{1}-{2}', github.workflow, github.run_id, inputs.sarif_category) }}
-  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
+  group: ${{ github.event_name == 'workflow_dispatch' && github.workflow == 'Container Published Rescan (reusable)' && format('dispatch-{0}-{1}', github.workflow, github.ref) || format('call-{0}-{1}-{2}', github.workflow, github.run_id, inputs.sarif_category) }}
+  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' && github.workflow == 'Container Published Rescan (reusable)' }}
 
 jobs:
   probe:

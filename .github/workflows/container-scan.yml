@@ -93,8 +93,8 @@ permissions: {}
 
 # CI-002. See container-build.yml. results_artifact differs per variant.
 concurrency:
-  group: ${{ github.event_name == 'workflow_dispatch' && format('dispatch-{0}-{1}', github.workflow, github.ref) || format('call-{0}-{1}-{2}', github.workflow, github.run_id, inputs.results_artifact) }}
-  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
+  group: ${{ github.event_name == 'workflow_dispatch' && github.workflow == 'Container Scan (reusable)' && format('dispatch-{0}-{1}', github.workflow, github.ref) || format('call-{0}-{1}-{2}', github.workflow, github.run_id, inputs.results_artifact) }}
+  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' && github.workflow == 'Container Scan (reusable)' }}
 
 env:
   ADVISORY: ${{ inputs.blocking == false }}
