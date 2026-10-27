@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Scheduled security and published-image rescan grant `actions: read`.
+  The SARIF upload job requests that scope, and GitHub rejects the
+  caller at startup when the grant is missing.
+- Self-CI zizmor loads `.github/config/zizmor.yml`, so the
+  `self-repository` ignore applies.
+
 ### Changed
 
 - SARIF upload is its own job. Scan and IaC jobs no longer hold
