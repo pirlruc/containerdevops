@@ -69,8 +69,8 @@ permissions: {}
 
 # CI-002
 concurrency:
-  group: ${{ github.event_name == 'workflow_dispatch' && format('dispatch-{0}-{1}', github.workflow, github.ref) || format('call-{0}-{1}', github.workflow, github.run_id) }}
-  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
+  group: ${{ github.event_name == 'workflow_dispatch' && github.workflow == 'Container IaC (reusable)' && format('dispatch-{0}-{1}', github.workflow, github.ref) || format('call-{0}-{1}', github.workflow, github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' && github.workflow == 'Container IaC (reusable)' }}
 
 
 env:

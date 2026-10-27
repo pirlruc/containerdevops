@@ -3,6 +3,15 @@
 All notable changes to this repository are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [6.3.5] - 2026-10-27
+
+### Fixed
+
+- A called reusable no longer joins the dispatch concurrency group just
+  because the caller was `workflow_dispatch`. Sibling jobs were cancelling
+  each other. Direct dispatch of the reusable still cancels its own
+  previous run.
+
 ## [6.3.4] - 2026-10-27
 
 ### Fixed
