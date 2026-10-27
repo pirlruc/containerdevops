@@ -3,7 +3,7 @@
 All notable changes to this repository are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [6.3.4] - 2026-10-27
 
 ### Fixed
 
