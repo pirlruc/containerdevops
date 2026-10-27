@@ -107,7 +107,7 @@ jobs:
         run: |
           docker run --rm -v "${PWD}:/src" -w /src \
             pirlruc/ci-lint@sha256:e0a51c64b004c6f4e4ca1672f3bb865aaf03d91bd8a2e228e0fa39be1174dfb4 \
-            zizmor --min-severity=low .github/workflows
+            zizmor -c .github/config/zizmor.yml --min-severity=low .github/workflows
 
   iac:
     if: github.event.pull_request.user.login != 'dependabot[bot]'

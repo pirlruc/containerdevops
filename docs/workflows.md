@@ -44,10 +44,10 @@ or the run fails at startup before any step runs.
 |----------|----------------------|
 | `container-lint.yml` | `contents: read`; add `security-events: write` when `run_secrets_scan: true` |
 | `container-build.yml` | `contents: read`, `packages: write` |
-| `container-scan.yml` | `contents: read`, `security-events: write`, `packages: read` |
-| `container-published-rescan.yml` | `contents: read`, `security-events: write`, `packages: read` |
+| `container-scan.yml` | `contents: read`, `actions: read`, `security-events: write`, `packages: read` |
+| `container-published-rescan.yml` | `contents: read`, `actions: read`, `security-events: write`, `packages: read` |
 | `container-publish.yml` | `contents: read`, `packages: write`, `id-token: write` |
-| `container-iac.yml` | `contents: read`, `security-events: write` |
+| `container-iac.yml` | `contents: read`, `actions: read`, `security-events: write` |
 | `container-compose-smoke.yml` | `contents: read` |
 | `container-devcontainer.yml` | `contents: read` |
 
@@ -212,7 +212,9 @@ unreleased branch from another private repo.
 | `sarif_category` | `trivy-image` |
 
 Secrets: `ghcr_token`, `scripts_token` (both optional; forwarded to
-`container-scan.yml`). Caller job must grant `packages: read`.
+`container-scan.yml`). The caller job must grant `packages: read` and
+`actions: read`. The nested scan uploads SARIF, and GitHub rejects the
+call at startup when `actions: read` is missing.
 
 `containerdevops-security.yml` uses this reusable for digest-pinned
 `ghcr.io/pirlruc/ci-container:6.3.0@sha256:b70472adbfb4a25d61bf92e7a3d957af17525872be5a17d8cc171c003e70e106` (CI-026; do not

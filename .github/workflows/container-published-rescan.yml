@@ -121,6 +121,7 @@ jobs:
     if: github.event.pull_request.user.login != 'dependabot[bot]' && needs.probe.outputs.present == 'true'
     permissions:
       contents: read
+      actions: read
       security-events: write
       packages: read
     uses: ./.github/workflows/container-scan.yml

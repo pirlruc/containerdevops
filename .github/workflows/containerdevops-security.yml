@@ -55,6 +55,7 @@ jobs:
       github.event.repository.fork == false
     permissions:
       contents: read
+      actions: read
       security-events: write
       id-token: write
     uses: pirlruc/commondevops/.github/workflows/common-scorecard.yml@4a7c8c431090f32bb0febcd42f5ac8ef2d405e0e
@@ -78,6 +79,7 @@ jobs:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
       contents: read
+      actions: read
       security-events: write
     uses: ./.github/workflows/container-iac.yml
     with:
@@ -89,6 +91,7 @@ jobs:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
       contents: read
+      actions: read
       security-events: write
       packages: read
     uses: ./.github/workflows/container-published-rescan.yml
