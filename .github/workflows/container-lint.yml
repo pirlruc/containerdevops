@@ -218,13 +218,13 @@ jobs:
     permissions:
       contents: read
       packages: read
-    uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@c8ab7171a3897bddc58e3fd8c508529ca9803571
+    uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@71bdc6832998e77d5dd89afda9d9ff98570034b8
     with:
       blocking: ${{ inputs.blocking }}
       working_directory: ${{ inputs.working_directory }}
       shell_scripts: ${{ inputs.shell_scripts }}
       dockerfiles: ${{ inputs.dockerfile }}
-      scripts_ref: c8ab7171a3897bddc58e3fd8c508529ca9803571
+      scripts_ref: 71bdc6832998e77d5dd89afda9d9ff98570034b8
       container_image: ghcr.io/pirlruc/ci-lint@sha256:4d96a0235459c9e2cc724a724f42008dcdc3294940c57edb8b33b11e38efddba
       concurrency_suffix: ${{ inputs.dockerfile }}
 
@@ -234,10 +234,10 @@ jobs:
     permissions:
       contents: read
       packages: read
-    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@c8ab7171a3897bddc58e3fd8c508529ca9803571
+    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@71bdc6832998e77d5dd89afda9d9ff98570034b8
     with:
       blocking: ${{ inputs.blocking }}
       working_directory: ${{ inputs.working_directory }}
-      scripts_ref: c8ab7171a3897bddc58e3fd8c508529ca9803571
+      scripts_ref: 71bdc6832998e77d5dd89afda9d9ff98570034b8
       container_image: ghcr.io/pirlruc/ci-lint@sha256:4d96a0235459c9e2cc724a724f42008dcdc3294940c57edb8b33b11e38efddba
       concurrency_suffix: ${{ inputs.dockerfile }}
