@@ -38,7 +38,7 @@ jobs:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
       contents: read
-    uses: pirlruc/commondevops/.github/workflows/common-doc-verify.yml@c866096b836f288415b3c1040621ca9bbb372982
+    uses: pirlruc/commondevops/.github/workflows/common-doc-verify.yml@83d4b87eb8eef920ca86d7ad63bf13145a025957
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       shell_scripts: scripts/*.sh
@@ -46,7 +46,7 @@ jobs:
       yaml_files: docs/issues.yml docs/guardrail-deviations.yml .github/dependabot.yml
       yaml_globs: .github/workflows/*.yml
       run_link_lint: true
-      scripts_ref: c866096b836f288415b3c1040621ca9bbb372982
+      scripts_ref: 83d4b87eb8eef920ca86d7ad63bf13145a025957
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
@@ -55,10 +55,10 @@ jobs:
     permissions:
       contents: read
       issues: read
-    uses: pirlruc/commondevops/.github/workflows/common-scaffold-verify.yml@c866096b836f288415b3c1040621ca9bbb372982
+    uses: pirlruc/commondevops/.github/workflows/common-scaffold-verify.yml@83d4b87eb8eef920ca86d7ad63bf13145a025957
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
-      scripts_ref: c866096b836f288415b3c1040621ca9bbb372982
+      scripts_ref: 83d4b87eb8eef920ca86d7ad63bf13145a025957
 
   lint:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
