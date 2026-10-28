@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `main` at `3eac5bd` before this pin. **6.3.5** is `c92c83b`. commondevops callers pin **5.5.3** (`c8ab717`). Do not move `6.3.3`, `6.3.4`, or `6.3.5`. No image republish. |
+| **Branch** | `main`. **6.3.5** is `c92c83b`. commondevops callers pin `71bdc68`. Tag 5.5.3 stays `c8ab717`. Dependabot runs scaffold and doc verify with `DEPENDABOT_GITHUB_TOKEN`. Do not move `6.3.3`, `6.3.4`, or `6.3.5`. No image republish. |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -292,4 +292,4 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-28 (commondevops callers pin 5.5.3 `c8ab717`; tags 6.3.3–6.3.5 stay)*
+*Last updated: 2026-10-28 (commondevops callers pin `71bdc68`; Dependabot scaffold and doc verify; tags 6.3.3–6.3.5 stay)*
