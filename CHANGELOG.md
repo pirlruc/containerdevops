@@ -3,6 +3,14 @@
 All notable changes to this repository are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Changed
+
+- commondevops callers pin 5.5.3 (`c8ab7171a3897bddc58e3fd8c508529ca9803571`).
+  `scripts_ref` matches that commit. Dispatch concurrency is per workflow.
+  Tags `6.3.3` through `6.3.5` stay put. No image republish.
+
 ## [6.3.5] - 2026-10-27
 
 ### Fixed
