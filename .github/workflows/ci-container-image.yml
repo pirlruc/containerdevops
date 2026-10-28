@@ -59,10 +59,10 @@ jobs:
     steps:
       - id: set
         run: |
-          # commondevops ci-lint 5.4.0. Debian owns unsuffixed tags.
+          # commondevops ci-lint 5.6.1 linux/amd64. Debian owns unsuffixed tags.
           {
-            echo "debian=ghcr.io/pirlruc/ci-lint@sha256:9473bd0a4bf654ac5e01f8df6bd8278c7e0d61208baf33a051c79bd8afa47bc2"
-            echo "alpine=ghcr.io/pirlruc/ci-lint@sha256:71b45eb68f35020f1598f3e21f20117e87c0dbd6bcb4c9158f3da788b20a849a"
+            echo "debian=ghcr.io/pirlruc/ci-lint@sha256:f9001c4c8726f72107545094237d4fc0592baca023cfa299a532634666d88111"
+            echo "alpine=ghcr.io/pirlruc/ci-lint@sha256:207ab77b5ced7d067cb03f7ad6a135a30cf60dfc4a0ed417f61589a7f3d48fc0"
           } >> "$GITHUB_OUTPUT"
 
   lint:
