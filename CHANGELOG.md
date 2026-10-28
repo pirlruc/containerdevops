@@ -3,6 +3,13 @@
 All notable changes to this repository are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [6.3.6] - 2026-10-28
+
+### Changed
+
+- commondevops callers pin 5.5.1 (`c866096b836f288415b3c1040621ca9bbb372982`), which includes the
+  dispatch concurrency fix. scripts_ref matches that commit.
+
 ## [6.3.5] - 2026-10-27
 
 ### Fixed
