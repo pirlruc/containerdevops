@@ -207,7 +207,7 @@ workflows:
 
 ## Recent history
 
-- 2026-10-28: commondevops callers pin 5.5.3 (`c8ab717`). `scripts_ref` matches. Job containers pass the 5.5.0 linux/amd64 manifests (`ci-lint` `4d96a023…`, `ci-supply-chain` Debian `b43eb3a9…`). The reusable default `86283d1f…` is `manifest unknown` to this repo's `GITHUB_TOKEN`. Do not move `6.3.3` through `6.3.5`. No image republish.
+- 2026-10-28: commondevops callers pin 5.5.3 (`c8ab717`). `scripts_ref` matches. Job containers pass the 5.5.0 linux/amd64 manifests (`ci-lint` `4d96a023…`, `ci-supply-chain` Debian `b43eb3a9…`) and do not forward `checkout_token`. That PAT is the registry password and cannot see the package. `github.token` can. Do not move `6.3.3` through `6.3.5`. No image republish.
 - 2026-10-27: **6.3.4** on `8d4164a` adds `actions: read` for the nested SARIF upload. **6.3.5** on `c92c83b` also requires `github.workflow` in the dispatch concurrency group. No GitHub Release. Do not move `6.3.3`, `6.3.4`, or `6.3.5`.
 - 2026-10-24: **6.3.3** on `416e31ea` (PR 175). Workflow and docs only. Callers pin commondevops `4a7c8c43`. No GitHub Release, so `ci-container` was not republished. Hub pages stay on the 6.3.0 examples. Do not move `6.3.3`.
 - 2026-10-23: **6.3.2** — guardrails 1.13.1. Hub Overview push when `docs/docker-hub*.md` changes. Tag only. No GitHub Release.

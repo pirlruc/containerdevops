@@ -227,8 +227,6 @@ jobs:
       scripts_ref: c8ab7171a3897bddc58e3fd8c508529ca9803571
       container_image: ghcr.io/pirlruc/ci-lint@sha256:4d96a0235459c9e2cc724a724f42008dcdc3294940c57edb8b33b11e38efddba
       concurrency_suffix: ${{ inputs.dockerfile }}
-    secrets:
-      checkout_token: ${{ secrets.checkout_token }}
 
   secrets:
     # CI-024 / DOCKER-SEC-005
@@ -243,5 +241,3 @@ jobs:
       scripts_ref: c8ab7171a3897bddc58e3fd8c508529ca9803571
       container_image: ghcr.io/pirlruc/ci-lint@sha256:4d96a0235459c9e2cc724a724f42008dcdc3294940c57edb8b33b11e38efddba
       concurrency_suffix: ${{ inputs.dockerfile }}
-    secrets:
-      checkout_token: ${{ secrets.checkout_token }}
