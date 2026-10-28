@@ -7,7 +7,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 
-- commondevops callers pin 5.5.2 (`83d4b87eb8eef920ca86d7ad63bf13145a025957`), which includes the
+- commondevops callers pin 5.5.3 (`c8ab7171a3897bddc58e3fd8c508529ca9803571`), which includes the
   dispatch concurrency fix. scripts_ref matches that commit.
 
 ## [6.3.5] - 2026-10-27
