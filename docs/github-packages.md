@@ -66,12 +66,12 @@ jobs:
   lint:
     runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/pirlruc/ci-container:6.3.0
+      image: ghcr.io/pirlruc/ci-container@sha256:b70472adbfb4a25d61bf92e7a3d957af17525872be5a17d8cc171c003e70e106
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: hadolint Dockerfile
 ```
 

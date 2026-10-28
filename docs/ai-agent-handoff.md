@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `main`. **6.3.5** is `c92c83b`. commondevops callers pin `71bdc68`. Tag 5.5.3 stays `c8ab717`. Dependabot runs scaffold and doc verify with `DEPENDABOT_GITHUB_TOKEN`. Do not move `6.3.3`, `6.3.4`, or `6.3.5`. No image republish. |
+| **Branch** | `main`. **6.3.6** pins commondevops **5.6.2** (`b85f95b`). **6.3.5** stays `c92c83b`. Dependabot runs scaffold and doc verify with `DEPENDABOT_GITHUB_TOKEN`. Do not move `6.3.3` through `6.3.6` after the tag. No image republish. |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -207,6 +207,7 @@ workflows:
 
 ## Recent history
 
+- 2026-10-28: **6.3.6** pins commondevops 5.6.2 (`b85f95b`). Job containers use the 5.6.1 linux/amd64 manifests. No GitHub Release, so `ci-container` stays on the 6.3.0 digests. Do not move `6.3.3` through `6.3.5`.
 - 2026-10-28: commondevops callers pin 5.5.3 (`c8ab717`). `scripts_ref` matches. Job containers pass the 5.5.0 linux/amd64 manifests (`ci-lint` `4d96a023…`, `ci-supply-chain` Debian `b43eb3a9…`) and do not forward `checkout_token`. That PAT is the registry password and cannot see the package. `github.token` can. Do not move `6.3.3` through `6.3.5`. No image republish.
 - 2026-10-27: **6.3.4** on `8d4164a` adds `actions: read` for the nested SARIF upload. **6.3.5** on `c92c83b` also requires `github.workflow` in the dispatch concurrency group. No GitHub Release. Do not move `6.3.3`, `6.3.4`, or `6.3.5`.
 - 2026-10-24: **6.3.3** on `416e31ea` (PR 175). Workflow and docs only. Callers pin commondevops `4a7c8c43`. No GitHub Release, so `ci-container` was not republished. Hub pages stay on the 6.3.0 examples. Do not move `6.3.3`.
@@ -292,4 +293,4 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-28 (commondevops callers pin `71bdc68`; Dependabot scaffold and doc verify; tags 6.3.3–6.3.5 stay)*
+*Last updated: 2026-10-28 (callers pin commondevops 5.6.2; tag 6.3.6 does not republish; tags 6.3.3–6.3.5 stay)*

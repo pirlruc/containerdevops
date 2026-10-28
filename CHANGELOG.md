@@ -5,20 +5,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.3.6] - 2026-10-28
+
 ### Fixed
 
 - Dependabot pull requests run scaffold and doc verify. Those jobs pass
   `DEPENDABOT_GITHUB_TOKEN` as `checkout_token`. Actions runs pass
   `COMMONDEVOPS_READ_TOKEN`.
+- Vulnerability reports go to the GitHub security advisory form.
 
 ### Changed
 
-- commondevops callers pin `71bdc6832998e77d5dd89afda9d9ff98570034b8`.
-  `scripts_ref` matches that commit. Tag 5.5.3 stays `c8ab717`.
-  Dispatch concurrency is per workflow.
-  Job containers pass the 5.5.0 linux/amd64 manifests and do not
-  forward `checkout_token`. That secret is the registry password, and
-  the read PAT cannot see the package. `github.token` can.
+- commondevops callers pin tag 5.6.2
+  (`b85f95bbac8ba7d82eb90d1d84d1b8d1e8590a12`). `scripts_ref` matches.
+  Job containers use the 5.6.1 linux/amd64 manifests. ci-lint Debian
+  `sha256:f9001c4c8726f72107545094237d4fc0592baca023cfa299a532634666d88111`.
+  ci-lint Alpine
+  `sha256:207ab77b5ced7d067cb03f7ad6a135a30cf60dfc4a0ed417f61589a7f3d48fc0`.
+  ci-supply-chain Debian
+  `sha256:dc83deb4465d5989a03b14ccabef46c3f3426231048b962c69b8e434a7200d48`.
   Tags `6.3.3` through `6.3.5` stay put. No image republish.
 
 ## [6.3.5] - 2026-10-27

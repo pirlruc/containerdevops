@@ -11,10 +11,11 @@ deviations:
   # (DOCKER-PERF-002 / CDO-PIN-001).
   - id: SC-SIGN-001
     why: >-
-      The repository returns to private on the Free plan, where Sigstore
-      keyless signing is unavailable. Publish sets sign from repository
-      visibility, so a private repo stays unsigned. Documented Free-plan
-      pattern in guardrails 1.9.0 supply-chain/guardrails.md.
+      The repository is public today, so publish signs while visibility stays
+      public. It returns to private on the Free plan, where keyless signing
+      stops (sign is keyed on visibility == public). Documented Free-plan
+      pattern in guardrails supply-chain/guardrails.md. Registry provenance
+      stays mode=max. The agent does not change visibility.
     epic: CDO-PIN-001
     owner: pirlruc
     approved_by: Engineering Lead
