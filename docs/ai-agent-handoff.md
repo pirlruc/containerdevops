@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `main` at `416e31ea`. **6.3.3** is an annotated tag on that commit and has no GitHub Release. The changelog heading stays `[Unreleased]`. **6.3.0** remains the image tag. Do not move `6.3.3`. The repo is public; image publishes are finished and the owner can set it private. |
+| **Branch** | `main` at `3eac5bd` before this pin. **6.3.5** is `c92c83b`. commondevops callers pin **5.5.3** (`c8ab717`). Do not move `6.3.3`, `6.3.4`, or `6.3.5`. No image republish. |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -207,7 +207,8 @@ workflows:
 
 ## Recent history
 
-- 2026-10-27: **6.3.4** on `8d4164a` adds `actions: read` for the nested SARIF upload. **6.3.5** on `c92c83b` also requires `github.workflow` in the dispatch concurrency group. No GitHub Release. Callers of commondevops stay at `4a7c8c43` until 5.5.1. Do not move `6.3.3`, `6.3.4`, or `6.3.5`.
+- 2026-10-28: commondevops callers pin 5.5.3 (`c8ab717`). `scripts_ref` matches. Job containers pass the 5.5.0 linux/amd64 manifests (`ci-lint` `4d96a023…`, `ci-supply-chain` Debian `b43eb3a9…`) and do not forward `checkout_token`. That PAT is the registry password and cannot see the package. `github.token` can. Do not move `6.3.3` through `6.3.5`. No image republish.
+- 2026-10-27: **6.3.4** on `8d4164a` adds `actions: read` for the nested SARIF upload. **6.3.5** on `c92c83b` also requires `github.workflow` in the dispatch concurrency group. No GitHub Release. Do not move `6.3.3`, `6.3.4`, or `6.3.5`.
 - 2026-10-24: **6.3.3** on `416e31ea` (PR 175). Workflow and docs only. Callers pin commondevops `4a7c8c43`. No GitHub Release, so `ci-container` was not republished. Hub pages stay on the 6.3.0 examples. Do not move `6.3.3`.
 - 2026-10-23: **6.3.2** — guardrails 1.13.1. Hub Overview push when `docs/docker-hub*.md` changes. Tag only. No GitHub Release.
 - 2026-10-23: Hub Overview dispatch for `ci-container`. It does not republish the image.
@@ -291,4 +292,4 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-27 (tags 6.3.4 and 6.3.5, no image republish)*
+*Last updated: 2026-10-28 (commondevops callers pin 5.5.3 `c8ab717`; tags 6.3.3–6.3.5 stay)*
