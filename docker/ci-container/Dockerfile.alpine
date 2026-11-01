@@ -16,7 +16,7 @@
 # Alpine final stage does not need a musl toolchain.
 ARG CI_BASE=ghcr.io/pirlruc/ci-lint:local
 
-FROM dhi.io/golang:1.26-debian13-dev@sha256:5bff7bbb70c4f0791e039b58deb70eb0609dcc2d503c5524af3565b86d8b7544 AS dive-build
+FROM dhi.io/golang:1.27-debian13-dev@sha256:f04703b3de0b1b86a420e6de4bd2d410d98e125bf331ec159ffd5277f1037e26 AS dive-build
 WORKDIR /src
 RUN git init \
  && git remote add origin https://github.com/wagoodman/dive.git \
@@ -26,7 +26,7 @@ RUN git init \
  && go get golang.org/x/crypto@v0.57.0 golang.org/x/net@v0.60.0 golang.org/x/text@v0.42.0 github.com/klauspost/compress@v1.18.7 \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/dive .
 
-FROM dhi.io/golang:1.26-debian13-dev@sha256:5bff7bbb70c4f0791e039b58deb70eb0609dcc2d503c5524af3565b86d8b7544 AS cst-build
+FROM dhi.io/golang:1.27-debian13-dev@sha256:f04703b3de0b1b86a420e6de4bd2d410d98e125bf331ec159ffd5277f1037e26 AS cst-build
 WORKDIR /src
 RUN git init \
  && git remote add origin https://github.com/GoogleContainerTools/container-structure-test.git \
