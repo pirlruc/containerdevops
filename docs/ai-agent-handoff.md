@@ -293,4 +293,4 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-10-28 (callers pin commondevops 5.6.2; tag 6.3.6 does not republish; tags 6.3.3–6.3.5 stay)*
+*Last updated: 2026-11-01 (README describes signing without calling the repo private).*

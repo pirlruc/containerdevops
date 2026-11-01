@@ -1,9 +1,10 @@
 # containerdevops
 
-Reusable GitHub Actions workflows and templates for production-grade container
-images — hadolint, buildx, container-structure-test, Trivy/Syft/Grype, SBOM,
-signing, GHCR and Docker Hub publishing, plus KICS, Compose Spec validation,
-and the `ci-container` toolchain image.
+Reusable GitHub Actions workflows to build, scan, and publish OCI images.
+
+Templates cover hadolint, buildx, container-structure-test, Trivy, Syft, Grype,
+an SBOM, signing, GHCR and Docker Hub, KICS, Compose Spec validation, and the
+`ci-container` toolchain image.
 
 Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails/tree/1.13.1/docker)
 (`DOCKER-*`), pinned at `docs/guardrails/` tag `1.13.1`. Pin this repo by commit SHA (`CI-018`).
@@ -85,8 +86,8 @@ to GHCR. Scan jobs need `packages: read` and a composed GHCR digest ref
 equals the repository owner). Publish workflows need `packages: write`,
 `id-token: write`, `source_image` from the same composed ref, and Docker Hub
 credentials (`DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`) when pushing to Docker Hub.
-Signing (`sign: true`) is intended for public repositories; this private repo
-records `SC-SIGN-001` / `SC-PROV-001`.
+Signing (`sign: true`) is intended for public image publishers. This repository
+records `SC-SIGN-001` and `SC-PROV-001` when it does not sign.
 
 ## Local parity
 
