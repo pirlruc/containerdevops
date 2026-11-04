@@ -294,3 +294,4 @@ workflows:
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
 *Last updated: 2026-11-01 (README describes signing without calling the repo private).*
+*Last updated: 2026-11-04 — workflows no longer pass COMMONDEVOPS_READ_TOKEN, CONTAINERDEVOPS_READ_TOKEN, or a Dependabot secret as a checkout token. The secrets are still present until they are deleted.*

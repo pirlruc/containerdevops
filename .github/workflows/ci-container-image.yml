@@ -82,8 +82,6 @@ jobs:
       run_infra_lint: true
       run_secrets_scan: true
       blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
-    secrets:
-      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
   lint-alpine:
     if: >-
@@ -102,8 +100,6 @@ jobs:
       run_infra_lint: false
       run_secrets_scan: true
       blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
-    secrets:
-      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
   # Build/scan on PR once CI_BASE resolves from GHCR.
   build:

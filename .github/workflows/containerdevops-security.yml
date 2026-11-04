@@ -69,7 +69,6 @@ jobs:
       scripts_ref: b85f95bbac8ba7d82eb90d1d84d1b8d1e8590a12
     secrets:
       guardrails_token: ${{ secrets.GUARDRAILS_READ_TOKEN }}
-      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
   iac:
     if: github.event.pull_request.user.login != 'dependabot[bot]'

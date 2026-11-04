@@ -46,8 +46,6 @@ jobs:
       yaml_globs: .github/workflows/*.yml
       run_link_lint: true
       scripts_ref: b85f95bbac8ba7d82eb90d1d84d1b8d1e8590a12
-    secrets:
-      checkout_token: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && secrets.DEPENDABOT_GITHUB_TOKEN || secrets.COMMONDEVOPS_READ_TOKEN }}
 
   scaffold:
     permissions:
@@ -57,8 +55,6 @@ jobs:
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       scripts_ref: b85f95bbac8ba7d82eb90d1d84d1b8d1e8590a12
-    secrets:
-      checkout_token: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && secrets.DEPENDABOT_GITHUB_TOKEN || secrets.COMMONDEVOPS_READ_TOKEN }}
 
   lint:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
@@ -73,8 +69,6 @@ jobs:
       scripts_ref: ${{ github.sha }}
       runner_image: ""
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
-    secrets:
-      checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
   # Token-free merge signal for Dependabot (CI-024). No Actions secrets, no submodules.
   lint-dependabot:
