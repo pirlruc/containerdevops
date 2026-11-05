@@ -1689,3 +1689,35 @@ milestones:
           - docs/
         verification:
         - rg -n 'base_image_max_age_days' docs
+
+  - name: Documentation follow-up
+    epics:
+      - id: CDO-CALL-001
+        status: open
+        title: Add a container-publish caller template
+        overview:
+          problem: >-
+            github-scaffold GS-POL-014 asked for a publish caller. This repo
+            already owns container-publish.yml and the permission contract.
+          goal: >-
+            A caller template lives here, including the GHCR-only github.token case.
+        decision: >-
+          In the context of image publish, facing a caller that needs
+          packages write and attestations, we decided the callee repo owns
+          the template, to achieve one contract, accepting that scaffold
+          does not seed it.
+        acceptance_criteria:
+          - The template grants packages write, id-token write, and attestations write only on the publish job
+          - A GHCR-only caller can use github.token
+        tasks:
+          - id: CDO-CALL-001-T1
+            status: open
+            title: Add the publish caller
+            instructions:
+              files:
+                - templates/
+            verification:
+              - The template documents the GHCR-only token case
+            guardrail_refs:
+              - REL-PUB-002
+              - CI-025
