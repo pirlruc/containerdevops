@@ -3,7 +3,7 @@
 # Debian and Alpine variants. Alpine owns unsuffixed ci-container tags.
 # ci-lint 5.3.0 flipped: Debian owns unsuffixed ci-lint tags.
 # Pins to this repo's reusable workflows at the same commit (scripts_ref in lockstep).
-# CI_BASE digests are centralised in env below — update once per commondevops release.
+# Final image stages pin ci-lint 5.6.1 digests in the Dockerfiles.
 # 5.0.2: compose GHCR ref from handoff_package + digest (image_ref is secret-masked).
 name: CI Container Image
 
@@ -45,26 +45,6 @@ permissions:
   contents: read
 
 jobs:
-  # Centralise CI_BASE digests once (reusable-workflow `with:` cannot use env).
-  # Update these two lines when commondevops publishes a new ci-lint.
-  bases:
-    if: github.event.pull_request.user.login != 'dependabot[bot]'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 2
-    permissions:
-      contents: read
-    outputs:
-      debian: ${{ steps.set.outputs.debian }}
-      alpine: ${{ steps.set.outputs.alpine }}
-    steps:
-      - id: set
-        run: |
-          # commondevops ci-lint 5.6.1 linux/amd64. Debian owns unsuffixed tags.
-          {
-            echo "debian=ghcr.io/pirlruc/ci-lint@sha256:f9001c4c8726f72107545094237d4fc0592baca023cfa299a532634666d88111"
-            echo "alpine=ghcr.io/pirlruc/ci-lint@sha256:207ab77b5ced7d067cb03f7ad6a135a30cf60dfc4a0ed417f61589a7f3d48fc0"
-          } >> "$GITHUB_OUTPUT"
-
   lint:
     if: >-
       github.event.pull_request.user.login != 'dependabot[bot]' &&
@@ -107,7 +87,7 @@ jobs:
 
   # Build/scan on PR once CI_BASE resolves from GHCR.
   build:
-    needs: [lint, lint-alpine, bases]
+    needs: [lint, lint-alpine]
     if: >-
       github.event.pull_request.user.login != 'dependabot[bot]' &&
       (github.event_name != 'pull_request' ||
@@ -126,8 +106,6 @@ jobs:
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
       size_class: ci_toolchain
-      build_args: |
-        CI_BASE=${{ (github.event_name == 'workflow_dispatch' && inputs.ci_base_debian != '') && inputs.ci_base_debian || needs.bases.outputs.debian }}
       image_title: ci-container
       image_description: >-
         Short-lived CI toolchain image for container jobs: ci-lint plus dive and
@@ -138,7 +116,7 @@ jobs:
       ghcr_token: ${{ secrets.GHCR_READ_TOKEN }}
 
   build-alpine:
-    needs: [lint, lint-alpine, bases]
+    needs: [lint, lint-alpine]
     if: >-
       github.event.pull_request.user.login != 'dependabot[bot]' &&
       (github.event_name != 'pull_request' ||
@@ -157,8 +135,6 @@ jobs:
       scripts_ref: ${{ github.sha }}
       platforms: linux/amd64
       size_class: ci_toolchain
-      build_args: |
-        CI_BASE=${{ (github.event_name == 'workflow_dispatch' && inputs.ci_base_alpine != '') && inputs.ci_base_alpine || needs.bases.outputs.alpine }}
       image_title: ci-container
       image_description: >-
         Short-lived CI toolchain image for container jobs: ci-lint plus dive and
@@ -253,7 +229,7 @@ jobs:
       blocking: false
 
   publish:
-    needs: [build, scan, bases]
+    needs: [build, scan]
     if: >-
       github.event.pull_request.user.login != 'dependabot[bot]' &&
       (github.event_name == 'release' ||
@@ -274,8 +250,6 @@ jobs:
       platforms: linux/amd64
       tag_suffix: -debian
       tag_alias_unsuffixed: false
-      build_args: |
-        CI_BASE=${{ (github.event_name == 'workflow_dispatch' && inputs.ci_base_debian != '') && inputs.ci_base_debian || needs.bases.outputs.debian }}
       image_title: ci-container
       image_description: >-
         Short-lived CI toolchain image for container jobs: ci-lint plus dive and
@@ -302,7 +276,7 @@ jobs:
       ghcr_token: ${{ secrets.GHCR_READ_TOKEN }}
 
   publish-alpine:
-    needs: [build-alpine, scan-alpine, bases]
+    needs: [build-alpine, scan-alpine]
     if: >-
       github.event.pull_request.user.login != 'dependabot[bot]' &&
       (github.event_name == 'release' ||
@@ -323,8 +297,6 @@ jobs:
       platforms: linux/amd64
       tag_suffix: -alpine
       tag_alias_unsuffixed: true
-      build_args: |
-        CI_BASE=${{ (github.event_name == 'workflow_dispatch' && inputs.ci_base_alpine != '') && inputs.ci_base_alpine || needs.bases.outputs.alpine }}
       image_title: ci-container
       image_description: >-
         Short-lived CI toolchain image for container jobs: ci-lint plus dive and

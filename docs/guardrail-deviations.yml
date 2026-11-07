@@ -9,17 +9,7 @@ deviations:
   # DOCKER-PERF-001 image_max_size_mb deviations retired: ci-container is a CI
   # toolchain image and uses ci_image_max_size_mb (2000) via size_class=ci_toolchain
   # (DOCKER-PERF-002 / CDO-PIN-001).
-  - id: SC-SIGN-001
-    why: >-
-      The repository is public today, so publish signs while visibility stays
-      public. It returns to private on the Free plan, where keyless signing
-      stops (sign is keyed on visibility == public). Documented Free-plan
-      pattern in guardrails supply-chain/guardrails.md. Registry provenance
-      stays mode=max. The agent does not change visibility.
-    epic: CDO-PIN-001
-    owner: pirlruc
-    approved_by: Engineering Lead
-    review: 2026-12-31
+  # SC-SIGN-001 retired: the repository is public and publish signs keyless.
   - id: CI-032
     why: >-
       The default-branch ruleset requires pins and scaffold / verify.

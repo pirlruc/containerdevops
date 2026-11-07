@@ -5,8 +5,8 @@
 | Field | Value |
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
-| **Remote** | https://github.com/pirlruc/containerdevops |
-| **Branch** | `main`. **6.3.6** pins commondevops **5.6.2** (`b85f95b`). **6.3.5** stays `c92c83b`. Dependabot runs scaffold and doc verify with `DEPENDABOT_GITHUB_TOKEN`. Do not move `6.3.3` through `6.3.6` after the tag. No image republish. |
+| **Remote** | <https://github.com/pirlruc/containerdevops> |
+| **Branch** | `feature-compliance-6-4`. Target **6.4.0**. Guardrails 1.15.0, scaffold 1.12.0, commondevops 6.0.1. **6.3.5** stays `c92c83b`. Do not move `6.3.3` through `6.3.6`. |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -244,9 +244,7 @@ workflows:
   scheduled rescan off `ci-container:3.0.0` onto 5.0.0 Hub alpine digest.
 - 2026-09-15: Quota sweep — leftover `container-image-*` artifacts deleted.
   BuildKit GHA cache stays `mode=min`. No published GHCR/Hub tag delete.
-- 2026-09-15: **5.0.2** — compose GHCR scan/publish refs from `handoff_package`
-  + `digest`. `image_ref` with the owner is secret-masked when Hub username
-  equals `github.repository_owner`.
+- 2026-09-15: **5.0.2** — compose GHCR scan/publish refs from `handoff_package` and `digest`. `image_ref` with the owner is secret-masked when Hub username equals `github.repository_owner`.
 - 2026-09-14: **5.0.1** — reusable-workflow handoff without `if: always()`
   (still insufficient: owner in `image_ref` is secret-masked).
 - 2026-09-14: **5.0.0** — GHCR digest handoff (no default image tar),
@@ -293,6 +291,4 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-11-01 (README describes signing without calling the repo private).*
-
-*Last updated: 2026-11-04 — filed documentation follow-up epics moved out of guardrails, methodologies, or github-scaffold. Not implemented here.*
+*Last updated: 2026-11-07 — feature-compliance-6-4. Guardrails 1.15.0. Scaffold 1.12.0. commondevops 6.0.1. Literal ci-lint digests in the Dockerfiles.*

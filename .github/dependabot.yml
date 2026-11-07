@@ -53,6 +53,20 @@ updates:
     cooldown:
       default-days: 7
 
+  - package-ecosystem: gitsubmodule
+    directory: /
+    schedule:
+      interval: monthly
+      time: "06:00"
+      timezone: Europe/Lisbon
+    registries:
+      - github-private
+    commit-message:
+      prefix: build
+      include: scope
+    cooldown:
+      default-days: 7
+
   # KICS is not a Dockerfile FROM and is not a GitHub Action: container-iac.yml
   # pins checkmarx/kics as KICS_IMAGE (workflow env digest). Dependabot's docker
   # ecosystem only watches /docker/ci-container, and github-actions does not bump

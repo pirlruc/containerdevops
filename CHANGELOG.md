@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added
+
+- `templates/ci-container-publish.yml` is the GHCR publish caller. `github.token` is the push credential when the job grants `packages: write`.
+- `scripts/check-ci-local.sh` is the host-first local CI entry.
+- Dependabot has a `gitsubmodule` entry outside the group.
+- Security runs on pull requests and pushes, with one aggregate check (CI-044).
+
+### Changed
+
+- Final `ci-container` stages use a literal ci-lint 5.6.1 digest. dive and container-structure-test rebuild on Go 1.27 with docker/cli 29.2.1.
+- `docs/guardrails` is 1.15.0. `.github/scaffold` is 1.12.0.
+- commondevops callers pin 6.0.1. Doc verify runs shfmt and markdownlint.
+- Callers no longer pass `DEPENDABOT_GITHUB_TOKEN` as `checkout_token`.
+
 ## [6.3.6] - 2026-10-28
 
 ### Fixed
@@ -171,7 +185,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - `CI_BASE` is ci-lint **5.2.2**. The Alpine base has no HIGH or CRITICAL OS
   findings. Debian openssl HIGH remains in the newest DHI digest.
 
-
 ## [6.0.4] - 2026-09-30
 
 ### Changed
@@ -185,7 +198,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 - Write 6.0.2 alpine and debian digests into Hub and Packages pages. Tag only.
   No GitHub Release, so the image is not republished.
-
 
 ## [6.0.2] - 2026-09-30
 
