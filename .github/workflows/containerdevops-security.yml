@@ -87,8 +87,10 @@ jobs:
       scripts_ref: ${{ github.sha }}
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
 
+  # The published tag is the last release. A pull request cannot change it, so
+  # the rescan stays on schedule and dispatch. 6.4.0 replaces this digest.
   published-image-rescan:
-    if: github.event.pull_request.user.login != 'dependabot[bot]'
+    if: github.event_name != 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
       contents: read
       actions: read
