@@ -292,3 +292,5 @@ workflows:
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
 *Last updated: 2026-11-07 — 6.4.0. Guardrails 1.15.0. Scaffold 1.12.0. commondevops 6.0.1. Literal ci-lint digests in the Dockerfiles.*
+
+*Last updated: 2026-11-07 — Scorecard Code-Review, Fuzzing, and CII-Best-Practices stay open. See docs/scorecard-open-checks.md.*
