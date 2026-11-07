@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | <https://github.com/pirlruc/containerdevops> |
-| **Branch** | `feature-compliance-6-4`. Target **6.4.0**. Guardrails 1.15.0, scaffold 1.12.0, commondevops 6.0.1. **6.3.5** stays `c92c83b`. Do not move `6.3.3` through `6.3.6`. |
+| **Branch** | `main`. **6.4.0** is the compliance release. Guardrails 1.15.0, scaffold 1.12.0, commondevops 6.0.1. **6.3.5** stays `c92c83b`. Do not move `6.3.3` through `6.3.6`. |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -291,4 +291,4 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-11-07 — feature-compliance-6-4. Guardrails 1.15.0. Scaffold 1.12.0. commondevops 6.0.1. Literal ci-lint digests in the Dockerfiles.*
+*Last updated: 2026-11-07 — 6.4.0. Guardrails 1.15.0. Scaffold 1.12.0. commondevops 6.0.1. Literal ci-lint digests in the Dockerfiles.*

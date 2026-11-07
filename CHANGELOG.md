@@ -5,6 +5,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.4.0] - 2026-11-07
+
 ### Added
 
 - `templates/ci-container-publish.yml` is the GHCR publish caller. `github.token` is the push credential when the job grants `packages: write`.
