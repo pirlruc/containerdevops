@@ -267,6 +267,7 @@ jobs:
       # Release refs are not branch refs; schedule/dispatch on main get latest
       # from container-publish.yml without passing tag_latest (CDO-WF-003).
       tag_latest: ${{ github.event_name == 'release' && github.event.release.prerelease == false }}
+      environment: ${{ github.event_name == 'release' && 'release' || '' }}
       verify_platforms: true
       verify_command: /bin/true
       source_image: ${{ format('ghcr.io/{0}/{1}@{2}', github.repository_owner, needs.build.outputs.handoff_package, needs.build.outputs.digest) }}
@@ -315,6 +316,7 @@ jobs:
       # Release refs are not branch refs; schedule/dispatch on main get latest
       # from container-publish.yml without passing tag_latest (CDO-WF-003).
       tag_latest: ${{ github.event_name == 'release' && github.event.release.prerelease == false }}
+      environment: ${{ github.event_name == 'release' && 'release' || '' }}
       verify_platforms: true
       verify_command: /bin/true
       source_image: ${{ format('ghcr.io/{0}/{1}@{2}', github.repository_owner, needs.build-alpine.outputs.handoff_package, needs.build-alpine.outputs.digest) }}

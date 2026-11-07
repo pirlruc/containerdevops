@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.5.0] - 2026-11-07
+
+### Added
+
+- `container-publish` takes an optional `environment` input. The image workflow passes `release` only on a release event. Schedule and workflow_dispatch stay on repository secrets.
+
+### Changed
+
+- CI-032 and REL-PUB-004 are retired. The default-branch ruleset already requires the token-free checks, and the tag ruleset already blocks rewrite.
+- Final `ci-container` Debian stage uses the ci-lint 6.0.0 linux/amd64 manifest. dive and container-structure-test rebuild on the current Go 1.27 digest.
+- Action pins: docker/login-action 4.7.0, upload-artifact 7.0.2, download-artifact 8.0.2, codeql-action/upload-sarif 4.39.1.
+
 ## [6.4.0] - 2026-11-07
 
 ### Added

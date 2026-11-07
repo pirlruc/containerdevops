@@ -12,6 +12,7 @@ Index of the file-scoped Cursor rules. Each row's instructions are in that `SKIL
 | `supply-chain-artifacts` | `**/*sbom*,**/cosign*,**/*provenance*,**/license_gate*,**/attestation*` | [SKILL.md](.agents/skills/supply-chain-artifacts/SKILL.md) |
 | `release-publish` | `**/CHANGELOG*,**/RELEASE*,**/.release-please*,**/release-please*,**/commitizen*,**/cz.yaml,**/.cz.toml,**/action-gh-release*` | [SKILL.md](.agents/skills/release-publish/SKILL.md) |
 | `ansible-roles` | `roles/**,**/playbooks/**` | [SKILL.md](.agents/skills/ansible-roles/SKILL.md) |
+| `container-implementations` | `**/Dockerfile*,**/templates/**,.github/workflows/container-*.yml` | [SKILL.md](.agents/skills/container-implementations/SKILL.md) |
 | `cpp-quality-gates` | `**/*.{h,hh,hpp,hxx,c,cc,cpp,cxx},**/CMakeLists.txt,**/*.cmake,**/.clang-tidy` | [SKILL.md](.agents/skills/cpp-quality-gates/SKILL.md) |
 | `opentofu-iac` | `**/*.tf,**/*.tfvars,**/*.hcl` | [SKILL.md](.agents/skills/opentofu-iac/SKILL.md) |
 | `sops-secrets` | `**/*.sops.*,**/.sops.yaml` | [SKILL.md](.agents/skills/sops-secrets/SKILL.md) |

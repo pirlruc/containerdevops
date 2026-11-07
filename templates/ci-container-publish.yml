@@ -5,6 +5,8 @@
 # Do not pass a read-only PAT as the push credential. Omit DOCKERHUB_*
 # unless the image also goes to Docker Hub. A private base that github.token
 # cannot pull needs ghcr_token (packages: read on that package).
+# Pass environment: release only from a release event. Leave it empty for
+# schedule, workflow_dispatch, and pull_request publishes.
 name: Publish container
 
 on:
