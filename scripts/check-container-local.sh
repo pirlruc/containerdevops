@@ -34,36 +34,66 @@ NO_IGNOREFILE=0
 SIZE_CLASS="application"
 
 while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --dockerfile) DOCKERFILE="$2"; shift 2 ;;
-    --context) CONTEXT="$2"; shift 2 ;;
-    --image) IMAGE="$2"; shift 2 ;;
-    --structure-test) STRUCTURE_TEST="$2"; shift 2 ;;
-    --size-class) SIZE_CLASS="$2"; shift 2 ;;
-    --skip-scan) SKIP_SCAN=1; shift ;;
-    --skip-age) SKIP_AGE=1; shift ;;
-    --advisory) ADVISORY=1; shift ;;
-    --no-ignorefile) NO_IGNOREFILE=1; shift ;;
-    *) echo "Unknown arg: $1" >&2; exit 2 ;;
-  esac
+	case "$1" in
+	--dockerfile)
+		DOCKERFILE="$2"
+		shift 2
+		;;
+	--context)
+		CONTEXT="$2"
+		shift 2
+		;;
+	--image)
+		IMAGE="$2"
+		shift 2
+		;;
+	--structure-test)
+		STRUCTURE_TEST="$2"
+		shift 2
+		;;
+	--size-class)
+		SIZE_CLASS="$2"
+		shift 2
+		;;
+	--skip-scan)
+		SKIP_SCAN=1
+		shift
+		;;
+	--skip-age)
+		SKIP_AGE=1
+		shift
+		;;
+	--advisory)
+		ADVISORY=1
+		shift
+		;;
+	--no-ignorefile)
+		NO_IGNOREFILE=1
+		shift
+		;;
+	*)
+		echo "Unknown arg: $1" >&2
+		exit 2
+		;;
+	esac
 done
 
 if [[ ! -f "${DOCKERFILE}" ]]; then
-  echo "error: Dockerfile not found: ${DOCKERFILE}" >&2
-  exit 2
+	echo "error: Dockerfile not found: ${DOCKERFILE}" >&2
+	exit 2
 fi
 if [[ ! -d "${CONTEXT}" ]]; then
-  echo "error: context directory not found: ${CONTEXT}" >&2
-  exit 2
+	echo "error: context directory not found: ${CONTEXT}" >&2
+	exit 2
 fi
 
 THRESHOLDS="${ROOT}/scripts/docker.profile.thresholds.yml"
 if [[ ! -f "${THRESHOLDS}" ]]; then
-  THRESHOLDS="${ROOT}/docs/guardrails/docker/profile.thresholds.yml"
+	THRESHOLDS="${ROOT}/docs/guardrails/docker/profile.thresholds.yml"
 fi
 if [[ ! -f "${THRESHOLDS}" ]]; then
-  echo "Missing ${THRESHOLDS}; init the guardrails submodule first." >&2
-  exit 1
+	echo "Missing ${THRESHOLDS}; init the guardrails submodule first." >&2
+	exit 1
 fi
 
 MIN_EFF="$(bash "${ROOT}/scripts/read-thresholds.sh" min_image_efficiency_percent "${THRESHOLDS}")"
@@ -72,50 +102,53 @@ MAX_AGE="$(bash "${ROOT}/scripts/read-thresholds.sh" base_image_max_age_days "${
 SEV="$(bash "${ROOT}/scripts/read-thresholds.sh" vuln_fail_on_severity "${THRESHOLDS}")"
 SEV_UP="$(printf '%s' "${SEV}" | tr '[:lower:]' '[:upper:]')"
 case "${SIZE_CLASS}" in
-  application) SIZE_KEY=image_max_size_mb ;;
-  ci_toolchain) SIZE_KEY=ci_image_max_size_mb ;;
-  *) echo "unknown --size-class '${SIZE_CLASS}' (application|ci_toolchain)" >&2; exit 2 ;;
+application) SIZE_KEY=image_max_size_mb ;;
+ci_toolchain) SIZE_KEY=ci_image_max_size_mb ;;
+*)
+	echo "unknown --size-class '${SIZE_CLASS}' (application|ci_toolchain)" >&2
+	exit 2
+	;;
 esac
 MAX_MB="$(bash "${ROOT}/scripts/read-thresholds.sh" "${SIZE_KEY}" "${THRESHOLDS}")"
 
 if ! command -v docker >/dev/null 2>&1; then
-  echo "docker is required" >&2
-  exit 1
+	echo "docker is required" >&2
+	exit 1
 fi
 
 echo "==> hadolint (${HADOLINT_LEVEL})"
 if command -v hadolint >/dev/null 2>&1; then
-  hadolint --failure-threshold "${HADOLINT_LEVEL}" "${DOCKERFILE}"
+	hadolint --failure-threshold "${HADOLINT_LEVEL}" "${DOCKERFILE}"
 else
-  docker run --rm -i hadolint/hadolint:2.12.0-alpine@sha256:3c206a451cec6d486367e758645269fd7d696c5ccb6ff59d8b03b0e45268a199 \
-    hadolint --failure-threshold "${HADOLINT_LEVEL}" - < "${DOCKERFILE}"
+	docker run --rm -i hadolint/hadolint:2.12.0-alpine@sha256:3c206a451cec6d486367e758645269fd7d696c5ccb6ff59d8b03b0e45268a199 \
+		hadolint --failure-threshold "${HADOLINT_LEVEL}" - <"${DOCKERFILE}"
 fi
 
-if (( SKIP_AGE == 0 )); then
-  echo "==> base image age (max ${MAX_AGE} days)"
-  bash "${ROOT}/scripts/check-base-image-age.sh" "${DOCKERFILE}" "${MAX_AGE}"
+if ((SKIP_AGE == 0)); then
+	echo "==> base image age (max ${MAX_AGE} days)"
+	bash "${ROOT}/scripts/check-base-image-age.sh" "${DOCKERFILE}" "${MAX_AGE}"
 fi
 
 if [[ -z "${IMAGE}" ]]; then
-  IMAGE="containerdevops-local:$(date +%s)"
-  echo "==> buildx build → ${IMAGE}"
-  docker buildx build --load -t "${IMAGE}" -f "${DOCKERFILE}" "${CONTEXT}"
+	IMAGE="containerdevops-local:$(date +%s)"
+	echo "==> buildx build → ${IMAGE}"
+	docker buildx build --load -t "${IMAGE}" -f "${DOCKERFILE}" "${CONTEXT}"
 fi
 
 if [[ -n "${STRUCTURE_TEST}" ]]; then
-  if [[ ! -f "${STRUCTURE_TEST}" ]]; then
-    echo "error: structure-test config not found: ${STRUCTURE_TEST}" >&2
-    exit 2
-  fi
-  echo "==> container-structure-test"
-  if command -v container-structure-test >/dev/null 2>&1; then
-    container-structure-test test --image "${IMAGE}" --config "${STRUCTURE_TEST}"
-  else
-    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-      -v "${PWD}:/work:ro" -w /work \
-      ghcr.io/googlecontainertools/container-structure-test:1.22.1@sha256:710da3ca8ed29a42423315592f74f02df4e3d2ba19f1df7257bd481ea75ba5aa \
-      test --image "${IMAGE}" --config "${STRUCTURE_TEST}"
-  fi
+	if [[ ! -f "${STRUCTURE_TEST}" ]]; then
+		echo "error: structure-test config not found: ${STRUCTURE_TEST}" >&2
+		exit 2
+	fi
+	echo "==> container-structure-test"
+	if command -v container-structure-test >/dev/null 2>&1; then
+		container-structure-test test --image "${IMAGE}" --config "${STRUCTURE_TEST}"
+	else
+		docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+			-v "${PWD}:/work:ro" -w /work \
+			ghcr.io/googlecontainertools/container-structure-test:1.22.1@sha256:710da3ca8ed29a42423315592f74f02df4e3d2ba19f1df7257bd481ea75ba5aa \
+			test --image "${IMAGE}" --config "${STRUCTURE_TEST}"
+	fi
 fi
 
 echo "==> image size"
@@ -126,68 +159,68 @@ DIVE_JSON="${ROOT}/dive-report.json"
 rm -f "${DIVE_JSON}"
 set +e
 if command -v dive >/dev/null 2>&1; then
-  dive --ci --json "${DIVE_JSON}" "${IMAGE}"
-  dive_rc=$?
+	dive --ci --json "${DIVE_JSON}" "${IMAGE}"
+	dive_rc=$?
 else
-  # Mount the repo (not /tmp) so Docker Desktop file-sharing includes the JSON path.
-  docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-    -v "${ROOT}:/work" -w /work \
-    wagoodman/dive:v0.13.1@sha256:f1886e6c32c094fc41a623c1989f5cb3e48aa766da5f0be233f911fc1d85ce10 \
-    --ci --json /work/dive-report.json "${IMAGE}"
-  dive_rc=$?
+	# Mount the repo (not /tmp) so Docker Desktop file-sharing includes the JSON path.
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+		-v "${ROOT}:/work" -w /work \
+		wagoodman/dive:v0.13.1@sha256:f1886e6c32c094fc41a623c1989f5cb3e48aa766da5f0be233f911fc1d85ce10 \
+		--ci --json /work/dive-report.json "${IMAGE}"
+	dive_rc=$?
 fi
 set -e
 if [[ ! -f "${DIVE_JSON}" || ! -s "${DIVE_JSON}" ]]; then
-  echo "dive failed without JSON (exit ${dive_rc}) — not an efficiency miss" >&2
-  if (( ADVISORY == 0 )); then
-    exit "${dive_rc}"
-  fi
+	echo "dive failed without JSON (exit ${dive_rc}) — not an efficiency miss" >&2
+	if ((ADVISORY == 0)); then
+		exit "${dive_rc}"
+	fi
 else
-  bash "${ROOT}/scripts/check-image-efficiency.sh" "${MIN_EFF}" "${DIVE_JSON}"
+	bash "${ROOT}/scripts/check-image-efficiency.sh" "${MIN_EFF}" "${DIVE_JSON}"
 fi
 
-if (( SKIP_SCAN == 0 )); then
-  echo "==> trivy image"
-  IGNORE=()
-  if (( NO_IGNOREFILE == 1 )); then
-    echo "  --no-ignorefile: skipping Trivy ignorefiles"
-  elif [[ -f "${CONTEXT}/.trivyignore.yaml" ]]; then
-    IGNORE=(--ignorefile "${CONTEXT}/.trivyignore.yaml")
-  elif [[ -f .trivyignore.yaml ]]; then
-    IGNORE=(--ignorefile .trivyignore.yaml)
-  elif [[ -f .trivyignore ]]; then
-    IGNORE=(--ignorefile .trivyignore)
-  fi
-  set +e
-  if command -v trivy >/dev/null 2>&1; then
-    trivy image --scanners vuln,secret --severity "CRITICAL,${SEV_UP}" --pkg-types library --exit-code 1 "${IGNORE[@]}" "${IMAGE}"
-  else
-    # Resolve ignorefile paths inside the container mount at /work
-    DIGNORE=()
-    if [[ ${#IGNORE[@]} -gt 0 ]]; then
-      ig="${IGNORE[1]}"
-      if [[ "${ig}" == /* ]]; then
-        rel="${ig#"${PWD}"/}"
-        DIGNORE=(--ignorefile "/work/${rel}")
-      else
-        DIGNORE=(--ignorefile "/work/${ig}")
-      fi
-    fi
-    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-      -v "${PWD}:/work:ro" -w /work \
-      aquasec/trivy:0.73.0@sha256:7cced7cae583819fc7806d4cbc0dbbc7cad18b99f7d3e235192e6da8c091045c image --scanners vuln,secret --severity "CRITICAL,${SEV_UP}" --pkg-types library --exit-code 1 \
-      "${DIGNORE[@]}" "${IMAGE}"
-  fi
-  trc=$?
-  set -e
-  if (( trc != 0 )); then
-    if (( ADVISORY == 1 )); then
-      echo "trivy findings (advisory — continuing)"
-    else
-      echo "trivy findings (blocking). Pass --advisory to continue." >&2
-      exit "${trc}"
-    fi
-  fi
+if ((SKIP_SCAN == 0)); then
+	echo "==> trivy image"
+	IGNORE=()
+	if ((NO_IGNOREFILE == 1)); then
+		echo "  --no-ignorefile: skipping Trivy ignorefiles"
+	elif [[ -f "${CONTEXT}/.trivyignore.yaml" ]]; then
+		IGNORE=(--ignorefile "${CONTEXT}/.trivyignore.yaml")
+	elif [[ -f .trivyignore.yaml ]]; then
+		IGNORE=(--ignorefile .trivyignore.yaml)
+	elif [[ -f .trivyignore ]]; then
+		IGNORE=(--ignorefile .trivyignore)
+	fi
+	set +e
+	if command -v trivy >/dev/null 2>&1; then
+		trivy image --scanners vuln,secret --severity "CRITICAL,${SEV_UP}" --pkg-types library --exit-code 1 "${IGNORE[@]}" "${IMAGE}"
+	else
+		# Resolve ignorefile paths inside the container mount at /work
+		DIGNORE=()
+		if [[ ${#IGNORE[@]} -gt 0 ]]; then
+			ig="${IGNORE[1]}"
+			if [[ "${ig}" == /* ]]; then
+				rel="${ig#"${PWD}"/}"
+				DIGNORE=(--ignorefile "/work/${rel}")
+			else
+				DIGNORE=(--ignorefile "/work/${ig}")
+			fi
+		fi
+		docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+			-v "${PWD}:/work:ro" -w /work \
+			aquasec/trivy:0.73.0@sha256:7cced7cae583819fc7806d4cbc0dbbc7cad18b99f7d3e235192e6da8c091045c image --scanners vuln,secret --severity "CRITICAL,${SEV_UP}" --pkg-types library --exit-code 1 \
+			"${DIGNORE[@]}" "${IMAGE}"
+	fi
+	trc=$?
+	set -e
+	if ((trc != 0)); then
+		if ((ADVISORY == 1)); then
+			echo "trivy findings (advisory — continuing)"
+		else
+			echo "trivy findings (blocking). Pass --advisory to continue." >&2
+			exit "${trc}"
+		fi
+	fi
 fi
 
 echo "Local container checks finished for ${IMAGE}."

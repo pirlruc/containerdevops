@@ -1693,7 +1693,7 @@ milestones:
   - name: Documentation follow-up
     epics:
       - id: CDO-CALL-001
-        status: open
+        status: done
         title: Add a container-publish caller template
         overview:
           problem: >-
@@ -1711,7 +1711,7 @@ milestones:
           - A GHCR-only caller can use github.token
         tasks:
           - id: CDO-CALL-001-T1
-            status: open
+            status: done
             title: Add the publish caller
             instructions:
               files:

@@ -1,46 +1,44 @@
 # syntax=docker/dockerfile:1
 # Container CI tooling image — extends commondevops ci-lint with dive + structure-test.
-# Build with: docker build --build-arg CI_BASE=ci-lint:local ...
+# Build with: docker build -f docker/ci-container/Dockerfile docker/ci-container
 # Publish target: ghcr.io/pirlruc/ci-container (and Docker Hub pirlruc/ci-container).
 # KICS stays a separate digest-pinned image (container-iac.yml).
 #
-# CI_BASE default is :local for bootstrap; publish callers must pass a digest-pinned
-# ghcr.io/pirlruc/ci-lint ref (CI-026).
+# The final FROM is the ci-lint 5.6.1 linux/amd64 digest (CI-026).
 #
 # No HEALTHCHECK: short-lived CI toolchain (CLI job container), not a supervised
 # service (DOCKER-RUN-002 / DOCKER-RUN-006).
 # kics-scan disable=b03a748a-542d-44f4-bb86-9199ab4fd2d5
 
 
-# dive v0.13.1 and container-structure-test v1.22.1 rebuilt on Go 1.26.10.
-# Static binaries, so the Alpine variant copies the same artifacts.
-# Declared before the first FROM so --build-arg CI_BASE reaches the final stage.
-ARG CI_BASE=ghcr.io/pirlruc/ci-lint:local
+# dive v0.13.1 and container-structure-test v1.22.1 rebuilt on Go 1.27.
+# docker/cli 29.2.1 is required by the current Trivy database. Static binaries,
+# so the Alpine variant copies the same artifacts.
+# The final stage is a literal digest (Scorecard Pinned-Dependencies). ci-lint 5.6.1
+# linux/amd64. Debian owns the unsuffixed tag.
 
-FROM dhi.io/golang:1.26-debian13-dev@sha256:5bff7bbb70c4f0791e039b58deb70eb0609dcc2d503c5524af3565b86d8b7544 AS dive-build
+FROM dhi.io/golang:1.27-debian13-dev@sha256:f04703b3de0b1b86a420e6de4bd2d410d98e125bf331ec159ffd5277f1037e26 AS dive-build
 WORKDIR /src
 RUN git init \
  && git remote add origin https://github.com/wagoodman/dive.git \
  && git fetch --depth 1 origin fe98c8a2eb08c443a36e3cc7568078909e298433 \
  && git checkout --detach FETCH_HEAD \
  && test "$(git rev-parse HEAD)" = "fe98c8a2eb08c443a36e3cc7568078909e298433" \
- && go get golang.org/x/crypto@v0.57.0 golang.org/x/net@v0.60.0 golang.org/x/text@v0.42.0 github.com/klauspost/compress@v1.18.7 \
+ && go get golang.org/x/crypto@v0.58.0 golang.org/x/net@v0.62.0 golang.org/x/text@v0.43.0 github.com/klauspost/compress@v1.18.7 github.com/docker/cli@v29.2.1+incompatible github.com/containerd/errdefs@v1.0.0 github.com/moby/moby/client@v0.2.2 github.com/moby/sys/atomicwriter@v0.1.0 \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/dive .
 
-FROM dhi.io/golang:1.26-debian13-dev@sha256:5bff7bbb70c4f0791e039b58deb70eb0609dcc2d503c5524af3565b86d8b7544 AS cst-build
+FROM dhi.io/golang:1.27-debian13-dev@sha256:f04703b3de0b1b86a420e6de4bd2d410d98e125bf331ec159ffd5277f1037e26 AS cst-build
 WORKDIR /src
 RUN git init \
  && git remote add origin https://github.com/GoogleContainerTools/container-structure-test.git \
  && git fetch --depth 1 origin 1e1bb81e5272bf616f3ee87d5e085e2f90d94917 \
  && git checkout --detach FETCH_HEAD \
  && test "$(git rev-parse HEAD)" = "1e1bb81e5272bf616f3ee87d5e085e2f90d94917" \
- && go get golang.org/x/crypto@v0.57.0 golang.org/x/net@v0.60.0 golang.org/x/text@v0.42.0 github.com/klauspost/compress@v1.18.7 github.com/containerd/containerd@v1.7.33 \
+ && go get golang.org/x/crypto@v0.58.0 golang.org/x/net@v0.62.0 golang.org/x/text@v0.43.0 github.com/klauspost/compress@v1.18.7 github.com/containerd/containerd@v1.7.33 github.com/docker/cli@v29.2.1+incompatible github.com/containerd/errdefs@v1.0.0 github.com/moby/moby/client@v0.2.2 github.com/moby/sys/atomicwriter@v0.1.0 \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/container-structure-test ./cmd/container-structure-test
 
-ARG CI_BASE
-
-# hadolint ignore=DL3006
-FROM ${CI_BASE}
+# ci-lint 5.6.1 linux/amd64
+FROM ghcr.io/pirlruc/ci-lint@sha256:f9001c4c8726f72107545094237d4fc0592baca023cfa299a532634666d88111
 
 LABEL org.opencontainers.image.title="ci-container" \
       org.opencontainers.image.description="Short-lived CI toolchain image for container jobs: ci-lint plus dive and container-structure-test. Debian 13 variant. Non-root 1000:1000, linux/amd64." \

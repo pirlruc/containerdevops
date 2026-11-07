@@ -40,45 +40,45 @@ SHELLCHECK_VERSION="${SHELLCHECK_VERSION:-0.10.0}"
 SHELLCHECK_SHA256="${SHELLCHECK_SHA256:-6c881ab0698e4e6ea235245f22832860544f17ba386442fe7e9d629f8cbedf87}"
 
 verify_sha256() {
-  local file="$1"
-  local expected="$2"
-  local actual
-  actual="$(sha256sum "${file}" | awk '{print $1}')"
-  if [[ "${actual}" != "${expected}" ]]; then
-    echo "error: SHA256 mismatch for ${file}" >&2
-    echo "  expected: ${expected}" >&2
-    echo "  actual:   ${actual}" >&2
-    return 1
-  fi
+	local file="$1"
+	local expected="$2"
+	local actual
+	actual="$(sha256sum "${file}" | awk '{print $1}')"
+	if [[ "${actual}" != "${expected}" ]]; then
+		echo "error: SHA256 mismatch for ${file}" >&2
+		echo "  expected: ${expected}" >&2
+		echo "  actual:   ${actual}" >&2
+		return 1
+	fi
 }
 # Nested install bash -c bodies call this helper.
 export -f verify_sha256
 
 should_install() {
-  local name="$1"
-  local only="${INSTALL_ONLY:-}"
-  if [[ -z "${only}" ]]; then
-    return 0
-  fi
-  [[ ",${only}," == *",${name},"* ]]
+	local name="$1"
+	local only="${INSTALL_ONLY:-}"
+	if [[ -z "${only}" ]]; then
+		return 0
+	fi
+	[[ ",${only}," == *",${name},"* ]]
 }
 
 install_if_missing() {
-  local name="$1"
-  shift
-  if ! should_install "${name}"; then
-    return 0
-  fi
-  if command -v "${name}" >/dev/null 2>&1; then
-    echo "${name}: already on PATH ($(command -v "${name}"))"
-    return 0
-  fi
-  echo "Installing ${name}…"
-  "$@"
-  if ! command -v "${name}" >/dev/null 2>&1; then
-    echo "error: ${name} not on PATH after install (PATH=${PATH})" >&2
-    return 1
-  fi
+	local name="$1"
+	shift
+	if ! should_install "${name}"; then
+		return 0
+	fi
+	if command -v "${name}" >/dev/null 2>&1; then
+		echo "${name}: already on PATH ($(command -v "${name}"))"
+		return 0
+	fi
+	echo "Installing ${name}…"
+	"$@"
+	if ! command -v "${name}" >/dev/null 2>&1; then
+		echo "error: ${name} not on PATH after install (PATH=${PATH})" >&2
+		return 1
+	fi
 }
 
 install_if_missing hadolint bash -c "
