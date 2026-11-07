@@ -24,7 +24,7 @@ RUN git init \
  && git fetch --depth 1 origin fe98c8a2eb08c443a36e3cc7568078909e298433 \
  && git checkout --detach FETCH_HEAD \
  && test "$(git rev-parse HEAD)" = "fe98c8a2eb08c443a36e3cc7568078909e298433" \
- && go get golang.org/x/crypto@v0.57.0 golang.org/x/net@v0.60.0 golang.org/x/text@v0.42.0 github.com/klauspost/compress@v1.18.7 github.com/docker/cli@v29.2.1+incompatible \
+ && go get golang.org/x/crypto@v0.57.0 golang.org/x/net@v0.60.0 golang.org/x/text@v0.42.0 github.com/klauspost/compress@v1.18.7 github.com/docker/cli@v29.2.1+incompatible github.com/containerd/errdefs@v1.0.0 github.com/moby/moby/client@v0.2.2 github.com/moby/sys/atomicwriter@v0.1.0 \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/dive .
 
 FROM dhi.io/golang:1.27-debian13-dev@sha256:f04703b3de0b1b86a420e6de4bd2d410d98e125bf331ec159ffd5277f1037e26 AS cst-build
@@ -34,7 +34,7 @@ RUN git init \
  && git fetch --depth 1 origin 1e1bb81e5272bf616f3ee87d5e085e2f90d94917 \
  && git checkout --detach FETCH_HEAD \
  && test "$(git rev-parse HEAD)" = "1e1bb81e5272bf616f3ee87d5e085e2f90d94917" \
- && go get golang.org/x/crypto@v0.57.0 golang.org/x/net@v0.60.0 golang.org/x/text@v0.42.0 github.com/klauspost/compress@v1.18.7 github.com/containerd/containerd@v1.7.33 github.com/docker/cli@v29.2.1+incompatible \
+ && go get golang.org/x/crypto@v0.57.0 golang.org/x/net@v0.60.0 golang.org/x/text@v0.42.0 github.com/klauspost/compress@v1.18.7 github.com/containerd/containerd@v1.7.33 github.com/docker/cli@v29.2.1+incompatible github.com/containerd/errdefs@v1.0.0 github.com/moby/moby/client@v0.2.2 github.com/moby/sys/atomicwriter@v0.1.0 \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/container-structure-test ./cmd/container-structure-test
 
 # ci-lint 5.6.1 linux/amd64
