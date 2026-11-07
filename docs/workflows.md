@@ -217,7 +217,7 @@ Secrets: `ghcr_token`, `scripts_token` (both optional; forwarded to
 call at startup when `actions: read` is missing.
 
 `containerdevops-security.yml` uses this reusable for digest-pinned
-`ghcr.io/pirlruc/ci-container:6.3.0@sha256:b70472adbfb4a25d61bf92e7a3d957af17525872be5a17d8cc171c003e70e106` (CI-026; do not
+`ghcr.io/pirlruc/ci-container:6.4.0@sha256:c4b151f4f60325d2e4fe828cd741b3c1983c1c758365a971e8b053e9256d4f55` (CI-026; do not
 float `:latest`). Callers pin a released SHA of this file.
 
 ## container-publish.yml

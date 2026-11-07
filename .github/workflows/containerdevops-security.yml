@@ -88,7 +88,8 @@ jobs:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
 
   # The published tag is the last release. A pull request cannot change it, so
-  # the rescan stays on schedule and dispatch. 6.4.0 replaces this digest.
+  # the rescan stays on schedule and dispatch. Pinned to the 6.4.0 Alpine
+  # linux/amd64 manifest (the unsuffixed tag).
   published-image-rescan:
     if: github.event_name != 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
@@ -98,7 +99,7 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-published-rescan.yml
     with:
-      image: ghcr.io/pirlruc/ci-container:6.3.0@sha256:b70472adbfb4a25d61bf92e7a3d957af17525872be5a17d8cc171c003e70e106
+      image: ghcr.io/pirlruc/ci-container:6.4.0@sha256:c4b151f4f60325d2e4fe828cd741b3c1983c1c758365a971e8b053e9256d4f55
       scripts_ref: ${{ github.sha }}
       pkg_types: library
       ignorefile: docker/ci-container/.trivyignore.yaml
