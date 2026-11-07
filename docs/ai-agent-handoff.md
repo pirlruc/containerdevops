@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | <https://github.com/pirlruc/containerdevops> |
-| **Branch** | `main`. **6.4.0** is the compliance release. Guardrails 1.15.0, scaffold 1.12.0, commondevops 6.0.1. **6.3.5** stays `c92c83b`. Do not move `6.3.3` through `6.3.6`. |
+| **Branch** | `main`. **6.5.0** adds the publish `environment` input and retires CI-032 and REL-PUB-004. Guardrails 1.15.0, scaffold 1.12.0, commondevops 6.0.1. **6.4.0** stays `6ccc0ab`. Do not move `6.3.3` through `6.4.0`. |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -59,7 +59,8 @@ Shared infra/secrets/supply-chain forward to
 | CDO-DOC-001 — workflows.md publish inputs | Done (`3.1.0`) |
 | CDO-PIN-001 — guardrails 1.6.0 pin | Done |
 | CDO-PIN-018 — guardrails 1.8.0 / scaffold 1.7.0 | Done (landed before 6.0.0) |
-| CDO-PIN-019 — Free-plan CI-032 / REL-PUB-004 | Done (deviations; repo returns to private) |
+| CDO-PIN-019 — Free-plan CI-032 / REL-PUB-004 | Done (recorded, then retired by CDO-ENV-001) |
+| CDO-ENV-001 — publish environment input | Done (`6.5.0`) |
 | CDO-LOCAL-001 — local scan without GHCR push | Done (`6.0.0`) |
 | CDO-IAC-001 — compose env files | Done (`6.3.0`) |
 | CDO-SMOKE-001 — compose up --wait | Done (`6.3.0`) |
@@ -291,6 +292,8 @@ workflows:
 - 2026-08-12: wire Dependabot `registries:` for private git + dhi.io.
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
+
+*Last updated: 2026-11-07 — 6.5.0. Publish environment input. CI-032 and REL-PUB-004 retired. Debian final stage is ci-lint 6.0.0 linux/amd64 `sha256:10946a89…`.*
 
 *Last updated: 2026-11-07 — 6.4.0. Guardrails 1.15.0. Scaffold 1.12.0. commondevops 6.0.1. Literal ci-lint digests in the Dockerfiles.*
 

@@ -1721,3 +1721,43 @@ milestones:
             guardrail_refs:
               - REL-PUB-002
               - CI-025
+
+      - id: CDO-ENV-001
+        status: done
+        title: Pass a release environment into container publish
+        overview:
+          problem: >-
+            REL-PUB-004 wants publish secrets in an environment limited to
+            tags. actionlint rejects environment on a job that calls a
+            reusable workflow, and schedule plus workflow_dispatch also publish.
+          goal: >-
+            The publish job reads an optional environment input, and the
+            image workflow sets it only on a release event.
+        decision: >-
+          In the context of image publish, facing a reusable job that cannot
+          take environment from the caller job, we decided to add an optional
+          environment input and set it only when the event is release, to
+          achieve REL-PUB-004, accepting that schedule and workflow_dispatch
+          still use repository secrets.
+        acceptance_criteria:
+          - container-publish.yml declares environment and sets it on the publish job
+          - ci-container-image.yml passes release only when the event is release
+          - CI-032 and REL-PUB-004 are retired in docs/guardrail-deviations.yml
+        guardrail_refs:
+          - REL-PUB-004
+          - CI-032
+        tasks:
+          - id: CDO-ENV-001-T1
+            status: done
+            title: Add the environment input and retire the deviations
+            instructions:
+              files:
+                - .github/workflows/container-publish.yml
+                - .github/workflows/ci-container-image.yml
+                - docs/guardrail-deviations.yml
+            verification:
+              - rg -n "inputs.environment" .github/workflows/container-publish.yml
+              - rg -n "event_name == 'release'" .github/workflows/ci-container-image.yml
+            guardrail_refs:
+              - REL-PUB-004
+              - CI-032

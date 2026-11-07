@@ -243,6 +243,7 @@ float `:latest`). Callers pin a released SHA of this file.
 | `dockerhub_short_description` | `""` (Hub short description when readme is set) |
 | `tag_suffix` | `""` (e.g. `-alpine`, `-debian`; empty = legacy unsuffixed tags only) |
 | `tag_alias_unsuffixed` | `true` (when `tag_suffix` is set, also publish the unsuffixed tag set) |
+| `environment` | `""` (pass `release` only when `github.event_name == 'release'`) |
 
 `docker/metadata-action` uses `flavor: latest=false` so only explicit
 `type=raw,value=latest` rules apply. Alpine owns unsuffixed `latest`.
