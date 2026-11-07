@@ -14,62 +14,62 @@ MAX_DAYS="${2:?max age days required}"
 BUILD_ARGS="${BUILD_ARGS:-}"
 
 if [[ ! -f "${DOCKERFILE}" ]]; then
-  echo "error: Dockerfile not found: ${DOCKERFILE}" >&2
-  exit 2
+	echo "error: Dockerfile not found: ${DOCKERFILE}" >&2
+	exit 2
 fi
 if ! [[ "${MAX_DAYS}" =~ ^[0-9]+$ ]]; then
-  echo "error: max_age_days must be an integer, got '${MAX_DAYS}'" >&2
-  exit 2
+	echo "error: max_age_days must be an integer, got '${MAX_DAYS}'" >&2
+	exit 2
 fi
 if ! command -v docker >/dev/null 2>&1; then
-  echo "error: docker is required" >&2
-  exit 2
+	echo "error: docker is required" >&2
+	exit 2
 fi
 
 declare -A ARGV=()
 while IFS= read -r raw || [[ -n "${raw}" ]]; do
-  line="${raw%%#*}"
-  line="${line#"${line%%[![:space:]]*}"}"
-  [[ "${line}" =~ ^[Aa][Rr][Gg][[:space:]]+([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]] || continue
-  ARGV["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
-done < "${DOCKERFILE}"
+	line="${raw%%#*}"
+	line="${line#"${line%%[![:space:]]*}"}"
+	[[ "${line}" =~ ^[Aa][Rr][Gg][[:space:]]+([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]] || continue
+	ARGV["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+done <"${DOCKERFILE}"
 
 if [[ -n "${BUILD_ARGS}" ]]; then
-  while IFS= read -r raw || [[ -n "${raw}" ]]; do
-    line="${raw#"${raw%%[![:space:]]*}"}"
-    [[ -z "${line}" || "${line}" == \#* || "${line}" != *=* ]] && continue
-    ARGV["${line%%=*}"]="${line#*=}"
-  done <<< "${BUILD_ARGS}"
+	while IFS= read -r raw || [[ -n "${raw}" ]]; do
+		line="${raw#"${raw%%[![:space:]]*}"}"
+		[[ -z "${line}" || "${line}" == \#* || "${line}" != *=* ]] && continue
+		ARGV["${line%%=*}"]="${line#*=}"
+	done <<<"${BUILD_ARGS}"
 fi
 
 resolve_ref() {
-  local ref="$1"
-  local name val
-  if [[ "${ref}" =~ ^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$ ]]; then
-    name="${BASH_REMATCH[1]}"
-    val="${ARGV[${name}]:-}"
-    if [[ -z "${val}" ]]; then
-      echo "error: FROM ${ref} has no ARG default or BUILD_ARGS value" >&2
-      return 1
-    fi
-    if [[ "${val}" =~ \$\{ ]]; then
-      echo "error: FROM ${ref} resolved to another substitution '${val}'" >&2
-      return 1
-    fi
-    printf '%s' "${val}"
-    return 0
-  fi
-  if [[ "${ref}" == \$* ]]; then
-    echo "error: unsupported FROM substitution '${ref}'" >&2
-    return 1
-  fi
-  printf '%s' "${ref}"
+	local ref="$1"
+	local name val
+	if [[ "${ref}" =~ ^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$ ]]; then
+		name="${BASH_REMATCH[1]}"
+		val="${ARGV[${name}]:-}"
+		if [[ -z "${val}" ]]; then
+			echo "error: FROM ${ref} has no ARG default or BUILD_ARGS value" >&2
+			return 1
+		fi
+		if [[ "${val}" =~ \$\{ ]]; then
+			echo "error: FROM ${ref} resolved to another substitution '${val}'" >&2
+			return 1
+		fi
+		printf '%s' "${val}"
+		return 0
+	fi
+	if [[ "${ref}" == \$* ]]; then
+		echo "error: unsupported FROM substitution '${ref}'" >&2
+		return 1
+	fi
+	printf '%s' "${ref}"
 }
 
 # Final stage only. Builder FROMs are tool pins; the host docker CLI is not
 # logged into dhi.io even when buildx is, so pulling them here fails closed.
 mapfile -t RAW_REFS < <(
-  awk '
+	awk '
     /^[Ff][Rr][Oo][Mm][[:space:]]/ {
       line=$0
       sub(/^[Ff][Rr][Oo][Mm][[:space:]]+/, "", line)
@@ -83,15 +83,15 @@ mapfile -t RAW_REFS < <(
 )
 
 if [[ ${#RAW_REFS[@]} -eq 0 ]]; then
-  echo "No base image refs found in ${DOCKERFILE}; nothing to age-check"
-  exit 0
+	echo "No base image refs found in ${DOCKERFILE}; nothing to age-check"
+	exit 0
 fi
 
 REFS=()
 for raw in "${RAW_REFS[@]}"; do
-  resolved="$(resolve_ref "${raw}")" || exit 1
-  echo "FROM ${raw} -> ${resolved}"
-  REFS+=("${resolved}")
+	resolved="$(resolve_ref "${raw}")" || exit 1
+	echo "FROM ${raw} -> ${resolved}"
+	REFS+=("${resolved}")
 done
 
 NOW_EPOCH="$(date -u +%s)"
@@ -101,41 +101,41 @@ MAX_SECONDS=$((MAX_DAYS * 86400))
 # a tag is pushed. A vendor with no newer digest stays a warning until the
 # threshold day.
 WARN_LEAD_DAYS=7
-if (( MAX_DAYS > WARN_LEAD_DAYS )); then
-  WARN_AFTER=$(( (MAX_DAYS - WARN_LEAD_DAYS) * 86400 ))
+if ((MAX_DAYS > WARN_LEAD_DAYS)); then
+	WARN_AFTER=$(((MAX_DAYS - WARN_LEAD_DAYS) * 86400))
 else
-  WARN_AFTER=0
+	WARN_AFTER=0
 fi
 FAILED=0
 
 for ref in "${REFS[@]}"; do
-  echo "Inspecting ${ref}"
-  if ! docker pull --quiet "${ref}" >/dev/null 2>&1; then
-    echo "warning: pull failed for ${ref}; fail-closed" >&2
-    FAILED=1
-    continue
-  fi
-  created="$(docker image inspect "${ref}" --format '{{.Created}}' 2>/dev/null || true)"
-  if [[ -z "${created}" ]]; then
-    echo "warning: could not resolve .Created for ${ref}; fail-closed" >&2
-    FAILED=1
-    continue
-  fi
-  created_epoch="$(date -u -d "${created}" +%s 2>/dev/null || true)"
-  if [[ -z "${created_epoch}" ]]; then
-    echo "warning: unparseable created='${created}' for ${ref}; fail-closed" >&2
-    FAILED=1
-    continue
-  fi
-  age=$((NOW_EPOCH - created_epoch))
-  age_days=$((age / 86400))
-  echo "  created=${created} age_days=${age_days} max=${MAX_DAYS}"
-  if (( age > MAX_SECONDS )); then
-    echo "error: ${ref} is ${age_days} days old (> ${MAX_DAYS}) — DOCKER-BUILD-006" >&2
-    FAILED=1
-  elif (( age > WARN_AFTER )); then
-    echo "warning: ${ref} is ${age_days} days old; base_image_max_age_days is ${MAX_DAYS}. Bump the digest before the gate fails (CDO-AGE-001)." >&2
-  fi
+	echo "Inspecting ${ref}"
+	if ! docker pull --quiet "${ref}" >/dev/null 2>&1; then
+		echo "warning: pull failed for ${ref}; fail-closed" >&2
+		FAILED=1
+		continue
+	fi
+	created="$(docker image inspect "${ref}" --format '{{.Created}}' 2>/dev/null || true)"
+	if [[ -z "${created}" ]]; then
+		echo "warning: could not resolve .Created for ${ref}; fail-closed" >&2
+		FAILED=1
+		continue
+	fi
+	created_epoch="$(date -u -d "${created}" +%s 2>/dev/null || true)"
+	if [[ -z "${created_epoch}" ]]; then
+		echo "warning: unparseable created='${created}' for ${ref}; fail-closed" >&2
+		FAILED=1
+		continue
+	fi
+	age=$((NOW_EPOCH - created_epoch))
+	age_days=$((age / 86400))
+	echo "  created=${created} age_days=${age_days} max=${MAX_DAYS}"
+	if ((age > MAX_SECONDS)); then
+		echo "error: ${ref} is ${age_days} days old (> ${MAX_DAYS}) — DOCKER-BUILD-006" >&2
+		FAILED=1
+	elif ((age > WARN_AFTER)); then
+		echo "warning: ${ref} is ${age_days} days old; base_image_max_age_days is ${MAX_DAYS}. Bump the digest before the gate fails (CDO-AGE-001)." >&2
+	fi
 done
 
 exit "${FAILED}"
