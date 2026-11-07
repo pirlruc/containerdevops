@@ -344,3 +344,34 @@ jobs:
     with:
       package: ${{ needs.build-alpine.outputs.handoff_package }}
       tag: ${{ needs.build-alpine.outputs.handoff_tag }}
+
+  # REL-PUB-005. Alpine owns the unsuffixed tag. Debian is the -debian tag.
+  release-digests:
+    needs: [publish, publish-alpine]
+    if: >-
+      github.event_name == 'release' &&
+      needs.publish.result == 'success' &&
+      needs.publish-alpine.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/append-release-digests.sh
+          sparse-checkout-cone-mode: false
+      - name: Append digest table
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          sh scripts/append-release-digests.sh \
+            "ghcr.io/${REPO_OWNER}/ci-container:${TAG}" \
+            "ghcr.io/${REPO_OWNER}/ci-container:${TAG}-debian" \
+            "ghcr.io/${REPO_OWNER}/ci-container:${TAG}-alpine"

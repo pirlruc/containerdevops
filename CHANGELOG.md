@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - `scripts/check-ci-local.sh` is the host-first local CI entry.
 - Dependabot has a `gitsubmodule` entry outside the group.
 - Security runs on pull requests and pushes, with one aggregate check (CI-044).
+- A release that publishes `ci-container` appends the index and platform digests to the Release body.
 
 ### Changed
 
