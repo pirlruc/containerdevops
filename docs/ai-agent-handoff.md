@@ -27,8 +27,8 @@ Shared infra/secrets/supply-chain forward to
 | `docs/guardrails` | tag **1.13.1** → `1945211ac851c3c0f83694bd4ea53571fdced4ab` |
 | `.github/scaffold` | tag **1.10.0** → `1d9901f7…` |
 | methodologies (links only; not a submodule) | tag **1.9.1** |
-| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.3.0` `sha256:b70472adbfb4a25d61bf92e7a3d957af17525872be5a17d8cc171c003e70e106` (`latest` == alpine) |
-| `ghcr.io/pirlruc/ci-container` (debian) | `6.3.0-debian` `sha256:1a559f798141722373600d2191b87bb4e5d037ab0a159b67b16b40dca96680c6` |
+| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.4.0` linux/amd64 `sha256:c4b151f4f60325d2e4fe828cd741b3c1983c1c758365a971e8b053e9256d4f55`. Index `sha256:6d2d447a3a562379da4c8e940ef5901373cbd679044a240dbcdb41c38ac09e6b` (`latest` == alpine) |
+| `ghcr.io/pirlruc/ci-container` (debian) | `6.4.0-debian` linux/amd64 `sha256:060c38bf00328acec25a474d668adf80ec984c3531c71c6a13b53d70e0605776`. Index `sha256:63518cc0f3f5be287da9d29bffbffc6b3bb2d7540d276dca5818432541b876af` |
 | commondevops `uses:` / `scripts_ref` | tag **5.4.0** → `76b416c74415d27453836ea50fa037990496686b` |
 | `CI_BASE` (ci-lint debian, unsuffixed) | `5.4.0` digest `sha256:9473bd0a4bf654ac5e01f8df6bd8278c7e0d61208baf33a051c79bd8afa47bc2` |
 | `CI_BASE` (ci-lint alpine) | `5.4.0-alpine` digest `sha256:71b45eb68f35020f1598f3e21f20117e87c0dbd6bcb4c9158f3da788b20a849a` |
@@ -39,7 +39,7 @@ Shared infra/secrets/supply-chain forward to
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
 | Release (reusables callers pin) | **6.1.0** (cache-to on the default branch only; image unchanged) |
-| Release (ci-container image) | **6.3.0** published. Alpine owns the unsuffixed tag |
+| Release (ci-container image) | **6.4.0** published. Alpine owns the unsuffixed tag |
 
 ## Delivery status
 
@@ -98,6 +98,7 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Known pitfalls
 
+- **Release digest append:** `scripts/append-release-digests.sh` must `docker login ghcr.io` with the job token before `imagetools inspect`. Anonymous GHCR pulls of `ci-container` return 401. The awk variable that holds the index digest cannot be named `index`; runner `awk` is gawk and `index` is a builtin. A rerun of the 6.4.0 job checks out tag `6ccc0ab`, so the fixed script is applied to that Release from a checkout of `main`.
 - **Size class:** CI toolchain images pass `size_class: ci_toolchain` so
   `container-build.yml` reads `ci_image_max_size_mb` (2000, DOCKER-PERF-002).
   Do not re-record DOCKER-PERF-001 deviations for ci-container.
@@ -294,3 +295,5 @@ workflows:
 *Last updated: 2026-11-07 — 6.4.0. Guardrails 1.15.0. Scaffold 1.12.0. commondevops 6.0.1. Literal ci-lint digests in the Dockerfiles.*
 
 *Last updated: 2026-11-07 — Scorecard Code-Review, Fuzzing, and CII-Best-Practices stay open. See docs/scorecard-open-checks.md.*
+
+*Last updated: 2026-11-07 — REL-PUB-005 append logs in to GHCR and avoids the gawk `index` builtin. Published rescan pins ci-container 6.4.0 linux/amd64 `sha256:c4b151f4…`.*
