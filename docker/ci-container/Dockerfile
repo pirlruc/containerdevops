@@ -17,7 +17,7 @@
 # The final stage is a literal digest (Scorecard Pinned-Dependencies). ci-lint 6.0.0
 # linux/amd64. Debian owns the unsuffixed tag.
 
-FROM dhi.io/golang:1.27-debian13-dev@sha256:7f62233f80de83e6388c6b7686d51b1c8d8963b6d00d622aaadaf29ab817f7e7 AS dive-build
+FROM dhi.io/golang:1.27-debian13-dev@sha256:7232cdcda200dbf56d8bad246d8a90fc4960fa5695a56a799f15837be1f1ce08 AS dive-build
 WORKDIR /src
 RUN git init \
  && git remote add origin https://github.com/wagoodman/dive.git \
@@ -27,7 +27,7 @@ RUN git init \
  && go get golang.org/x/crypto@v0.58.0 golang.org/x/net@v0.62.0 golang.org/x/text@v0.43.0 github.com/klauspost/compress@v1.18.7 github.com/docker/cli@v29.2.1+incompatible github.com/containerd/errdefs@v1.0.0 github.com/moby/moby/client@v0.2.2 github.com/moby/sys/atomicwriter@v0.1.0 \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/dive .
 
-FROM dhi.io/golang:1.27-debian13-dev@sha256:7f62233f80de83e6388c6b7686d51b1c8d8963b6d00d622aaadaf29ab817f7e7 AS cst-build
+FROM dhi.io/golang:1.27-debian13-dev@sha256:7232cdcda200dbf56d8bad246d8a90fc4960fa5695a56a799f15837be1f1ce08 AS cst-build
 WORKDIR /src
 RUN git init \
  && git remote add origin https://github.com/GoogleContainerTools/container-structure-test.git \
@@ -38,7 +38,7 @@ RUN git init \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/container-structure-test ./cmd/container-structure-test
 
 # ci-lint 6.0.0 linux/amd64. Pin the platform manifest, not the tag index.
-FROM ghcr.io/pirlruc/ci-lint@sha256:10946a8906cdc15361a4a141b189a2fcc6d2af537f46e4f3b6fb5250f65585e3
+FROM ghcr.io/pirlruc/ci-lint@sha256:301482d83e2cee3610413425c0865029e1c3a892cd00e3479b9aee6e6352dfdb
 
 LABEL org.opencontainers.image.title="ci-container" \
       org.opencontainers.image.description="Short-lived CI toolchain image for container jobs: ci-lint plus dive and container-structure-test. Debian 13 variant. Non-root 1000:1000, linux/amd64." \
