@@ -67,6 +67,8 @@ updates:
     cooldown:
       default-days: 7
 
+# last-manual-retrigger: 2026-11-14T15:10Z
+
   # KICS is not a Dockerfile FROM and is not a GitHub Action: container-iac.yml
   # pins checkmarx/kics as KICS_IMAGE (workflow env digest). Dependabot's docker
   # ecosystem only watches /docker/ci-container, and github-actions does not bump
