@@ -23,6 +23,7 @@ of `blocking` (CI-022 / CI-035).
 | Input | Required | Meaning |
 |-------|----------|---------|
 | `scripts_ref` | Cross-repo callers | Commit/tag/branch matching the `uses: …@pin` (CI-034). Same-repo `workflow_dispatch` falls back to `github.sha`. Do **not** use `github.workflow_sha` (that is the caller’s workflow). Empty `scripts_ref` on a cross-repo caller fails closed. |
+| `runs_on` | No | JSON value for `runs-on` on `container-iac` and `container-compose-smoke`. The default is `"ubuntu-24.04"`. A JSON array selects a self-hosted runner. |
 
 Reusable jobs sparse-checkout this repository into `_containerdevops` for
 `scripts/` (install helpers + vendored `docker.profile.thresholds.yml`).
