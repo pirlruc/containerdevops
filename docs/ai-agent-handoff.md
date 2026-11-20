@@ -99,6 +99,7 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Known pitfalls
 
+- **Host tool PATH:** `install-container-tools.sh` installs into `$HOME/.local/bin` and appends that directory to `GITHUB_PATH`. A self-hosted runner does not put `~/.local/bin` on the default PATH, so a later step cannot see hadolint without that append.
 - **Release digest append:** `scripts/append-release-digests.sh` must `docker login ghcr.io` with the job token before `imagetools inspect`. Anonymous GHCR pulls of `ci-container` return 401. The awk variable that holds the index digest cannot be named `index`; runner `awk` is gawk and `index` is a builtin. A rerun of the 6.4.0 job checks out tag `6ccc0ab`, so the fixed script is applied to that Release from a checkout of `main`.
 - **Size class:** CI toolchain images pass `size_class: ci_toolchain` so
   `container-build.yml` reads `ci_image_max_size_mb` (2000, DOCKER-PERF-002).
@@ -293,7 +294,7 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-11-07 — 6.5.0. Publish environment input. CI-032 and REL-PUB-004 retired. Debian final stage is ci-lint 6.0.0 linux/amd64 `sha256:10946a89…`.*
+*Last updated: 2026-11-20 — host tool installs append `$HOME/.local/bin` to `GITHUB_PATH`.*
 
 *Last updated: 2026-11-07 — 6.4.0. Guardrails 1.15.0. Scaffold 1.12.0. commondevops 6.0.1. Literal ci-lint digests in the Dockerfiles.*
 
