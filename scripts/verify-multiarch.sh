@@ -94,8 +94,12 @@ for p in "${PLATFORMS[@]}"; do
 	p="$(echo "${p}" | xargs)"
 	[[ -z "${p}" ]] && continue
 	echo "Smoke run --platform ${p}: ${VERIFY_CMD}"
+	# The index digest is one local image. A second platform pull of that
+	# same digest fails with "cannot overwrite digest" unless the first
+	# platform is removed first.
+	docker image rm "${IMAGE}" >/dev/null 2>&1 || true
 	# Run via --entrypoint argv (no shell) after metacharacter validation above.
-	if ! docker run --rm --platform "${p}" --entrypoint "${VERIFY_ARGV[0]}" "${IMAGE}" "${VERIFY_ARGV[@]:1}"; then
+	if ! docker run --rm --platform "${p}" --pull always --entrypoint "${VERIFY_ARGV[0]}" "${IMAGE}" "${VERIFY_ARGV[@]:1}"; then
 		echo "error: smoke run failed on ${p}" >&2
 		FAILED=1
 		continue
