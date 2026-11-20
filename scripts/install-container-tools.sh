@@ -155,3 +155,8 @@ install_if_missing actionlint bash -c "
 "
 
 echo "Tool install complete. PATH=${PATH}"
+# Later steps do not inherit this process PATH. GitHub-hosted images
+# already include ~/.local/bin; a self-hosted runner does not.
+if [[ -n "${GITHUB_PATH:-}" ]]; then
+	echo "${DEST}" >>"${GITHUB_PATH}"
+fi

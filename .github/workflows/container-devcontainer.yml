@@ -38,6 +38,14 @@ on:
         required: false
         type: string
         default: ""
+      runs_on:
+        description: >-
+          JSON value for runs-on. The default is the GitHub-hosted
+          ubuntu-24.04 label. A caller passes a JSON array of labels
+          to select a self-hosted runner.
+        required: false
+        type: string
+        default: '"ubuntu-24.04"'
     secrets:
       scripts_token:
         description: Token to read this repo scripts when called cross-repo; defaults to github.token
@@ -59,6 +67,10 @@ on:
       runner_image:
         type: string
         default: ""
+      runs_on:
+        description: JSON value for runs-on. Default is the hosted ubuntu-24.04 label.
+        type: string
+        default: '"ubuntu-24.04"'
 
 # CI-025
 permissions: {}
@@ -73,7 +85,7 @@ env:
 
 jobs:
   devcontainer:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
     timeout-minutes: 20
     permissions:
       contents: read
