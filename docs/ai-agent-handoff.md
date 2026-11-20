@@ -210,6 +210,7 @@ workflows:
 
 ## Recent history
 
+- 2026-11-15: `container-iac` and `container-compose-smoke` accept `runs_on`. Default stays `ubuntu-24.04`. Not tagged. Next tag is 6.6.0. No image republish.
 - 2026-10-28: **6.3.6** pins commondevops 5.6.2 (`b85f95b`). Job containers use the 5.6.1 linux/amd64 manifests. No GitHub Release, so `ci-container` stays on the 6.3.0 digests. Do not move `6.3.3` through `6.3.5`.
 - 2026-10-28: commondevops callers pin 5.5.3 (`c8ab717`). `scripts_ref` matches. Job containers pass the 5.5.0 linux/amd64 manifests (`ci-lint` `4d96a023…`, `ci-supply-chain` Debian `b43eb3a9…`) and do not forward `checkout_token`. That PAT is the registry password and cannot see the package. `github.token` can. Do not move `6.3.3` through `6.3.5`. No image republish.
 - 2026-10-27: **6.3.4** on `8d4164a` adds `actions: read` for the nested SARIF upload. **6.3.5** on `c92c83b` also requires `github.workflow` in the dispatch concurrency group. No GitHub Release. Do not move `6.3.3`, `6.3.4`, or `6.3.5`.
@@ -295,6 +296,8 @@ workflows:
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
 *Last updated: 2026-11-20 — host tool installs append `$HOME/.local/bin` to `GITHUB_PATH`.*
+
+*Last updated: 2026-11-15 — `runs_on` on container-iac and container-compose-smoke. Not tagged.*
 
 *Last updated: 2026-11-07 — 6.4.0. Guardrails 1.15.0. Scaffold 1.12.0. commondevops 6.0.1. Literal ci-lint digests in the Dockerfiles.*
 

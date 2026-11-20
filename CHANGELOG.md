@@ -9,6 +9,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 - `install-container-tools.sh` appends `$HOME/.local/bin` to `GITHUB_PATH`, so a later step on a self-hosted runner can run hadolint.
 
+## [6.6.0] - 2026-11-15
+
+### Added
+
+- `container-iac` and `container-compose-smoke` accept `runs_on`, a JSON value for `runs-on`. The default stays `ubuntu-24.04`.
+
 ## [6.5.0] - 2026-11-07
 
 ### Added

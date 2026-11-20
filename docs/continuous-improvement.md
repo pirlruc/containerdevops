@@ -133,7 +133,7 @@ Provenance after human merge+sync uses these prefixes and the PR description; do
 
 | Area | Intent |
 |------|--------|
-| `.github/workflows/` | Reusable `container-*` workflows (GHCR digest handoff or `scan_local` without a push; no image tars) + self CI + ci-container caller |
+| `.github/workflows/` | Reusable `container-*` workflows (GHCR digest handoff or `scan_local` without a push; no image tars) + self CI + ci-container caller. `container-iac` and `container-compose-smoke` take `runs_on` as JSON; the default is a versioned hosted label. |
 | `scripts/` | Install, local parity, threshold readers, size gate (`du -sxm /`) |
 | `docker/ci-container/` | Container CI tooling image (extends ci-lint). Debian and Alpine variants; unsuffixed owner is recorded in the image workflow |
 | `docs/` | Handoff, this prompt, authored `issues.yml`, deviations, Docker Hub and GitHub Packages pages |
