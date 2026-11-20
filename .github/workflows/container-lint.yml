@@ -225,7 +225,7 @@ jobs:
       shell_scripts: ${{ inputs.shell_scripts }}
       dockerfiles: ${{ inputs.dockerfile }}
       scripts_ref: e41270c45b858cfa7a9f8404eaee781b5c29b61c
-      container_image: ghcr.io/pirlruc/ci-lint@sha256:f9001c4c8726f72107545094237d4fc0592baca023cfa299a532634666d88111
+      container_image: ghcr.io/pirlruc/ci-lint@sha256:e0f48be58460a9eeb3adcc8c7c4c3592db0318dbe4de9c90c1b4b9e863898f6c
       concurrency_suffix: ${{ inputs.dockerfile }}
 
   secrets:
@@ -239,5 +239,5 @@ jobs:
       blocking: ${{ inputs.blocking }}
       working_directory: ${{ inputs.working_directory }}
       scripts_ref: e41270c45b858cfa7a9f8404eaee781b5c29b61c
-      container_image: ghcr.io/pirlruc/ci-lint@sha256:f9001c4c8726f72107545094237d4fc0592baca023cfa299a532634666d88111
+      container_image: ghcr.io/pirlruc/ci-lint@sha256:e0f48be58460a9eeb3adcc8c7c4c3592db0318dbe4de9c90c1b4b9e863898f6c
       concurrency_suffix: ${{ inputs.dockerfile }}
