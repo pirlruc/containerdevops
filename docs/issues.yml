@@ -1761,3 +1761,34 @@ milestones:
             guardrail_refs:
               - REL-PUB-004
               - CI-032
+
+      - id: CDO-DESK-001
+        status: open
+        title: Sign desktop bundles and rescan published images
+        overview:
+          problem: >-
+            A desktop bundle workflow can ship an unsigned Linux build,
+            and a published image is scanned once at build time. A later
+            advisory in the base image is invisible until the next build.
+          goal: >-
+            The desktop workflow accepts a signing input, and a scheduled
+            job rescans images that were already published.
+        decision: >-
+          In the context of a published artifact, facing an unsigned
+          desktop bundle and a one-time image scan, we decided a signing
+          input and a rescan of published images, to achieve a bundle a
+          platform will accept and a scan that sees new advisories,
+          accepting that the first bundle may be unsigned Linux.
+        acceptance_criteria:
+          - A desktop bundle workflow has a signing input
+          - A scheduled workflow rescans published image digests
+        tasks:
+          - id: CDO-DESK-001-T1
+            status: open
+            title: Add the signing input and the rescan workflow
+            instructions:
+              files:
+                - .github/workflows
+            verification:
+              - A workflow documents a signing input
+              - A workflow rescans a published digest
