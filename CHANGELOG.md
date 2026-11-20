@@ -5,6 +5,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `install-container-tools.sh` appends `$HOME/.local/bin` to `GITHUB_PATH`, so a later step on a self-hosted runner can run hadolint.
+
 ## [6.6.0] - 2026-11-15
 
 ### Added
