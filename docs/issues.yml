@@ -1573,7 +1573,7 @@ milestones:
             guardrail_refs:
               - DOCKER-LINT-003
       - id: CDO-DEP-001
-        status: open
+        status: done
         title: Run hadolint on Dependabot without a cross-repo token
         overview:
           problem: >-
@@ -1597,7 +1597,7 @@ milestones:
           - DOCKER-LINT-001
         tasks:
           - id: CDO-DEP-001-T1
-            status: open
+            status: done
             title: Fetch the public script archive on Dependabot
             instructions:
               files:
