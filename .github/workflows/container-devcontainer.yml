@@ -110,6 +110,28 @@ jobs:
             scripts
           sparse-checkout-cone-mode: false
 
+      # Dependabot's token cannot read another repository. The scripts pin is public.
+      - name: Fetch public containerdevops scripts
+        if: github.event.pull_request.user.login == 'dependabot[bot]'
+        working-directory: ${{ github.workspace }}
+        env:
+          SCRIPTS_REF: ${{ inputs.scripts_ref || github.sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "${SCRIPTS_REF}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Dependabot script fetch needs a 40-character scripts_ref" >&2
+            exit 1
+          fi
+          archive="$(mktemp)"
+          trap 'rm -f "${archive}"' EXIT
+          curl -fsSL \
+            "https://github.com/pirlruc/containerdevops/archive/${SCRIPTS_REF}.tar.gz" \
+            -o "${archive}"
+          mkdir -p _containerdevops
+          tar -xzf "${archive}" -C _containerdevops --strip-components=1 \
+            "containerdevops-${SCRIPTS_REF}/scripts"
+          test -f _containerdevops/scripts/install-container-tools.sh
+
       - name: Install tooling (host path)
         if: inputs.runner_image == ''
         working-directory: ${{ github.workspace }}

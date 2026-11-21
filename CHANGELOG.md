@@ -8,6 +8,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 ### Fixed
 
 - `install-container-tools.sh` appends `$HOME/.local/bin` to `GITHUB_PATH`, so a later step on a self-hosted runner can run hadolint.
+- Dependabot pull requests fetch the public script archive at `scripts_ref`. Their token cannot check out this repository, and hadolint was failing before it ran.
 
 ## [6.6.0] - 2026-11-15
 

@@ -29,7 +29,10 @@ Reusable jobs sparse-checkout this repository into `_containerdevops` for
 `scripts/` (install helpers + vendored `docker.profile.thresholds.yml`).
 The caller’s `GITHUB_TOKEN` cannot read a different private repository, so
 private consumers must pass `scripts_token`. Same-repo `workflow_dispatch`
-falls back to `github.token`.
+falls back to `github.token`. A Dependabot pull request has no Actions
+secret and its token cannot read another repository, so `container-lint`
+and `container-devcontainer` download the public archive at the pinned
+`scripts_ref` instead. That ref must be a full commit SHA.
 
 Thresholds are vendored under `scripts/` because `docs/guardrails` is a private
 submodule and is not available from nested checkout. Keep the vendored file in

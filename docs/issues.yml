@@ -1572,6 +1572,43 @@ milestones:
               - test -f .github/workflows/container-compose-smoke.yml
             guardrail_refs:
               - DOCKER-LINT-003
+      - id: CDO-DEP-001
+        status: open
+        title: Run hadolint on Dependabot without a cross-repo token
+        overview:
+          problem: >-
+            A Dependabot pull request skips the script checkout, then the
+            devcontainer job still runs install-container-tools.sh and exits
+            127. The Dockerfile bump never reaches hadolint.
+          goal: >-
+            container-lint and container-devcontainer obtain the pinned public
+            scripts with no Actions secret and run hadolint.
+        decision: >-
+          In the context of a Dependabot Dockerfile bump, facing a token that
+          cannot read another repository, we decided to download the public
+          archive at the pinned scripts_ref, to achieve hadolint on that pull
+          request, accepting that a private checkout still needs scripts_token
+          and stays on the non-Dependabot path.
+        acceptance_criteria:
+          - The Dependabot step fetches a 40-character scripts_ref and leaves install-container-tools.sh in place
+          - The token checkout remains skipped for dependabot[bot]
+        guardrail_refs:
+          - CI-024
+          - DOCKER-LINT-001
+        tasks:
+          - id: CDO-DEP-001-T1
+            status: open
+            title: Fetch the public script archive on Dependabot
+            instructions:
+              files:
+                - .github/workflows/container-devcontainer.yml
+                - .github/workflows/container-lint.yml
+            verification:
+              - actionlint .github/workflows/container-devcontainer.yml .github/workflows/container-lint.yml
+            guardrail_refs:
+              - CI-024
+              - DOCKER-LINT-001
+
   - name: C++ overhaul follow-up
     status: open
     epics:
