@@ -99,6 +99,7 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Known pitfalls
 
+- **Call concurrency:** `github.workflow` inside a reusable workflow is the caller name. `container-iac` and `container-compose-smoke` used `call-<caller>-<run id>`, so a caller that runs both cancelled one job immediately. The groups are now `call-iac-<run id>` and `call-smoke-<run id>`.
 - **Host tool PATH:** `install-container-tools.sh` installs into `$HOME/.local/bin` and appends that directory to `GITHUB_PATH`. A self-hosted runner does not put `~/.local/bin` on the default PATH, so a later step cannot see hadolint without that append.
 - **Release digest append:** `scripts/append-release-digests.sh` must `docker login ghcr.io` with the job token before `imagetools inspect`. Anonymous GHCR pulls of `ci-container` return 401. The awk variable that holds the index digest cannot be named `index`; runner `awk` is gawk and `index` is a builtin. A rerun of the 6.4.0 job checks out tag `6ccc0ab`, so the fixed script is applied to that Release from a checkout of `main`.
 - **Size class:** CI toolchain images pass `size_class: ci_toolchain` so
@@ -295,7 +296,7 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-11-20 — host tool installs append `$HOME/.local/bin` to `GITHUB_PATH`.*
+*Last updated: 2026-11-21 — IaC and Compose smoke use separate call concurrency groups.*
 
 *Last updated: 2026-11-15 — `runs_on` on container-iac and container-compose-smoke. Not tagged.*
 
