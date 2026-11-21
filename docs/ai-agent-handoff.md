@@ -173,7 +173,9 @@ python3 .github/scaffold/scripts/issues-sync.py \
 - **Dependabot PRs (CI-024):** secret-backed jobs skip on
   `github.event.pull_request.user.login`, not `github.actor`. `pins` and
   `lint-dependabot` are the token-free merge signal. Do not grant Dependabot
-  the org PAT.
+  the org PAT. `container-lint` and `container-devcontainer` still hadolint a
+  Dependabot pull request by downloading the public archive at the pinned
+  `scripts_ref`. The token checkout stays skipped.
 - **`latest` on schedule:** `flavor: latest=false` plus explicit
   `type=raw,value=latest`. Alpine (`tag_alias_unsuffixed: true`) owns unsuffixed
   `latest`. Do not reintroduce metadata-action's default `latest=auto`. Callers
@@ -296,7 +298,7 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-11-21 — IaC and Compose smoke use separate call concurrency groups.*
+*Last updated: 2026-11-21 — Dependabot hadolint fetches the public script archive at `scripts_ref`.*
 
 *Last updated: 2026-11-15 — `runs_on` on container-iac and container-compose-smoke. Not tagged.*
 
