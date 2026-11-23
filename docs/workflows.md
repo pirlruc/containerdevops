@@ -67,10 +67,11 @@ or the run fails at startup before any step runs.
 | `runner_image` | `""` (host install when empty) |
 | `run_infra_lint` | `true` |
 | `run_secrets_scan` | `true` |
+| `container_username` | `""` (registry login for a package owned by another account) |
 | `blocking` | `false` |
 
 Nested commondevops pin: keep `uses:` and `scripts_ref` in lockstep (currently
-tag **5.6.2**, `e41270c45b858cfa7a9f8404eaee781b5c29b61c`).
+tag **v6.7.0**, `1c621c43fa1bee2613ab4996135f85d0c55d59fb`).
 
 ## container-build.yml
 
@@ -79,6 +80,10 @@ tag **5.6.2**, `e41270c45b858cfa7a9f8404eaee781b5c29b61c`).
 | `context` | `.` |
 | `dockerfile` | `Dockerfile` |
 | `image_name` | `containerdevops-ci:local` |
+| `image_title` | `""` (OCI title; empty uses `image_name`) |
+| `image_description` | `""` (OCI description; empty uses `image_name`) |
+| `image_documentation` | `""` (OCI documentation URL; set at build time) |
+| `image_url` | `""` (OCI url; set at build time) |
 | `structure_test_config` | `container-structure-test.yml` |
 | `platforms` | `linux/amd64` |
 | `scripts_ref` | `""` |

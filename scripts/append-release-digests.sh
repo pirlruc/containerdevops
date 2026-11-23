@@ -25,6 +25,8 @@ fi
 	printf '%s\n' "| Image | Index | Platform |"
 	printf '%s\n' "| --- | --- | --- |"
 	for ref in "$@"; do
+		# metadata-action semver tags drop a leading v. Release tag_name keeps it.
+		ref=$(printf '%s\n' "${ref}" | sed -E 's/:v([0-9])/:\1/')
 		raw=$(docker buildx imagetools inspect --format '{{json .Manifest.Digest}}' "${ref}") || exit 1
 		index_digest=$(printf '%s' "${raw}" | tr -d '"')
 		if [ -z "${index_digest}" ]; then

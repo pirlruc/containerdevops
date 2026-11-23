@@ -1800,7 +1800,7 @@ milestones:
               - CI-032
 
       - id: CDO-DESK-001
-        status: open
+        status: done
         title: Sign desktop bundles and rescan published images
         overview:
           problem: >-
@@ -1821,7 +1821,7 @@ milestones:
           - A scheduled workflow rescans published image digests
         tasks:
           - id: CDO-DESK-001-T1
-            status: open
+            status: done
             title: Add the signing input and the rescan workflow
             instructions:
               files:
@@ -1831,7 +1831,7 @@ milestones:
               - A workflow rescans a published digest
 
       - id: CDO-GHCR-001
-        status: open
+        status: done
         title: Forward a cross-org GHCR token into ci-lint jobs
         overview:
           problem: >-
@@ -1861,7 +1861,7 @@ milestones:
           - CI-024
         tasks:
           - id: CDO-GHCR-001-T1
-            status: open
+            status: done
             title: Forward the registry login to the nested ci-lint jobs
             instructions:
               files:

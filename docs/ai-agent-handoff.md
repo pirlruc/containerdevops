@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | <https://github.com/pirlruc/containerdevops> |
-| **Branch** | `main`. **6.5.0** adds the publish `environment` input and retires CI-032 and REL-PUB-004. Guardrails 1.15.0, scaffold 1.12.0, commondevops 6.0.1. **6.4.0** stays `6ccc0ab`. Do not move `6.3.3` through `6.4.0`. |
+| **Branch** | `main`. Unreleased **6.7.0** fixes the Hub overview overwrite, forwards a cross-org GHCR token, and pins guardrails 1.17.0, scaffold 1.14.0, and commondevops v6.7.0. **6.6.1** is the published image tag. |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -20,16 +20,16 @@ Owns `.github/workflows/container-{lint,build,scan,publish,iac,devcontainer}.yml
 Shared infra/secrets/supply-chain forward to
 [pirlruc/commondevops](https://github.com/pirlruc/commondevops).
 
-## Pins (2026-10-23)
+## Pins (2026-11-23)
 
 | Submodule / artifact | Pin |
 |----------------------|-----|
-| `docs/guardrails` | tag **1.13.1** → `1945211ac851c3c0f83694bd4ea53571fdced4ab` |
-| `.github/scaffold` | tag **1.10.0** → `1d9901f7…` |
-| methodologies (links only; not a submodule) | tag **1.9.1** |
+| `docs/guardrails` | tag **1.17.0** → `9a17ebb269a5ab02899570dd3e40fb72e50ad762` |
+| `.github/scaffold` | tag **1.14.0** → `da8942edf17a0d2736d297c90338fd78b7ec31fb` |
+| methodologies (links only; not a submodule) | tag **1.12.1** |
 | `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.4.0` linux/amd64 `sha256:c4b151f4f60325d2e4fe828cd741b3c1983c1c758365a971e8b053e9256d4f55`. Index `sha256:6d2d447a3a562379da4c8e940ef5901373cbd679044a240dbcdb41c38ac09e6b` (`latest` == alpine) |
 | `ghcr.io/pirlruc/ci-container` (debian) | `6.4.0-debian` linux/amd64 `sha256:060c38bf00328acec25a474d668adf80ec984c3531c71c6a13b53d70e0605776`. Index `sha256:63518cc0f3f5be287da9d29bffbffc6b3bb2d7540d276dca5818432541b876af` |
-| commondevops `uses:` / `scripts_ref` | tag **5.4.0** → `76b416c74415d27453836ea50fa037990496686b` |
+| commondevops `uses:` / `scripts_ref` | tag **v6.7.0** → `1c621c43fa1bee2613ab4996135f85d0c55d59fb` |
 | `CI_BASE` (ci-lint debian, unsuffixed) | `5.4.0` digest `sha256:9473bd0a4bf654ac5e01f8df6bd8278c7e0d61208baf33a051c79bd8afa47bc2` |
 | `CI_BASE` (ci-lint alpine) | `5.4.0-alpine` digest `sha256:71b45eb68f35020f1598f3e21f20117e87c0dbd6bcb4c9158f3da788b20a849a` |
 | `docker/setup-buildx-action` | `4.4.1` → `f87e5991…` |
@@ -208,9 +208,9 @@ workflows:
 
 ## Suggested next work
 
-1. `CDO-GHCR-001`: forward `container_username` and `container_token` from `container-lint.yml` into the nested ci-lint jobs.
-2. Confirm PAT expiries before the Tuesday 06:17 UTC token audit. This repo passes `GUARDRAILS_READ_TOKEN` and `COMMONDEVOPS_READ_TOKEN`. It does not have `CONTAINERDEVOPS_READ_TOKEN` or `SCORECARD_TOKEN`.
-2. Hub Overview for `pirlruc/ci-container` updates on a push to `main` when `docs/docker-hub*.md` changes, via `container-hub-description.yml`. `workflow_dispatch` on `.github/workflows/hub-description.yml` remains. Neither path republishes the image. Do not hook the Overview to the image-publish `release` event.
+1. Confirm PAT expiries before the Tuesday 06:17 UTC token audit. This repo passes `GUARDRAILS_READ_TOKEN` and `COMMONDEVOPS_READ_TOKEN`. It does not have `CONTAINERDEVOPS_READ_TOKEN` or `SCORECARD_TOKEN`.
+2. Republish `ci-container` after 6.7.0 so the image labels include documentation and url. The Hub overview push lives in `hub-description.yml` and calls `container-hub-description.yml` with explicit inputs.
+3. Absorb the Dependabot base-digest pull request and rebuild `ci-container`.
 
 ## Recent history
 
@@ -299,7 +299,7 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-11-21 — Dependabot hadolint fetches the public script archive at `scripts_ref`.*
+*Last updated: 2026-11-23 — Hub overview inputs are always the caller's. Guardrails 1.17.0. Scaffold 1.14.0. commondevops v6.7.0.*
 
 *Last updated: 2026-11-15 — `runs_on` on container-iac and container-compose-smoke. Not tagged.*
 

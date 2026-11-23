@@ -7,8 +7,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- `container-hub-description` no longer treats a caller's push event as `pirlruc/ci-container`. Callers were overwriting that Docker Hub overview with their own page. The push trigger now lives only in this repo's `hub-description.yml`.
 - `install-container-tools.sh` appends `$HOME/.local/bin` to `GITHUB_PATH`, so a later step on a self-hosted runner can run hadolint.
 - Dependabot pull requests fetch the public script archive at `scripts_ref`. Their token cannot check out this repository, and hadolint was failing before it ran.
+
+### Added
+
+- `container-lint` forwards `container_username` and `container_token` into the nested ci-lint jobs (CDO-GHCR-001).
+- `container-build` sets `org.opencontainers.image.documentation` and `org.opencontainers.image.url` when the caller passes them. A later retag cannot add those labels.
+- `scripts/check-ci-docker.sh` runs zizmor, yamllint, and gitleaks in the pinned ci-lint image.
+
+### Changed
+
+- Nested commondevops workflows pin v6.7.0. `common-doc-verify` runs the doc-hygiene check.
+- `docs/guardrails` is 1.17.0 and `.github/scaffold` is 1.14.0.
+- Artifact sweep calls the commondevops reusable. Release digest append strips a leading `v` from image tags, matching commondevops.
 
 ## [6.6.0] - 2026-11-15
 

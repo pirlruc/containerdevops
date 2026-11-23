@@ -1,9 +1,6 @@
 name: Artifact sweep (container-image*, build records, stale caches)
 
-# Safety net for leftover image-tar artifacts, docker/build-push-action
-# build records, and Actions caches written on pull-request or tag refs.
-# Does not delete GHCR packages, container-scan-*, common-supply-chain-results,
-# or caches on the default branch.
+# Caller for the commondevops sweep. The job runs in this repository.
 
 on:
   schedule:
@@ -12,56 +9,12 @@ on:
 
 permissions: {}
 
-# CI-002
 concurrency:
   group: artifact-sweep-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   sweep:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
     permissions:
       actions: write
-    steps:
-      - name: Delete container-image* and dockerbuild artifacts
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          # Collect IDs first so pagination is not invalidated by deletes.
-          mapfile -t rows < <(gh api --paginate "/repos/${REPO}/actions/artifacts?per_page=100" \
-            --jq '.artifacts[] | select(.expired|not) | select(.name|startswith("container-image") or contains(".dockerbuild")) | [.id,.name] | @tsv')
-          deleted=0
-          for row in "${rows[@]}"; do
-            [[ -z "${row}" ]] && continue
-            id="${row%%$'\t'*}"
-            name="${row#*$'\t'}"
-            echo "deleting ${name} (${id})"
-            gh api -X DELETE "/repos/${REPO}/actions/artifacts/${id}"
-            deleted=$((deleted + 1))
-          done
-          echo "deleted ${deleted} container-image* or dockerbuild artifacts"
-
-      - name: Delete pull and tag Actions caches
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          # Pull-request and tag caches cannot be restored by the default branch,
-          # and cache-to no longer writes them. Keep refs/heads/<default>.
-          mapfile -t rows < <(gh api --paginate "/repos/${REPO}/actions/caches?per_page=100" \
-            --jq '.actions_caches[] | select(.ref | startswith("refs/pull/") or startswith("refs/tags/") or contains("/refs/tags/")) | [.id, .ref, .key] | @tsv')
-          deleted=0
-          for row in "${rows[@]}"; do
-            [[ -z "${row}" ]] && continue
-            id="${row%%$'\t'*}"
-            rest="${row#*$'\t'}"
-            ref="${rest%%$'\t'*}"
-            echo "deleting cache ${id} (${ref})"
-            gh api -X DELETE "/repos/${REPO}/actions/caches/${id}" >/dev/null
-            deleted=$((deleted + 1))
-          done
-          echo "deleted ${deleted} pull or tag caches"
+    uses: pirlruc/commondevops/.github/workflows/artifact-sweep.yml@1c621c43fa1bee2613ab4996135f85d0c55d59fb

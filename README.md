@@ -6,15 +6,15 @@ Templates cover hadolint, buildx, container-structure-test, Trivy, Syft, Grype,
 an SBOM, signing, GHCR and Docker Hub, KICS, Compose Spec validation, and the
 `ci-container` toolchain image.
 
-Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails/tree/1.13.1/docker)
-(`DOCKER-*`), pinned at `docs/guardrails/` tag `1.13.1`. Pin this repo by commit SHA (`CI-018`).
+Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails/tree/1.17.0/docker)
+(`DOCKER-*`), pinned at `docs/guardrails/` tag `1.17.0`. Pin this repo by commit SHA (`CI-018`).
 
 ## Workflows
 
 | Workflow | Purpose |
 |----------|---------|
 | `container-lint.yml` | hadolint, shellcheck; optional nested commondevops infra/secrets |
-| `container-build.yml` | buildx, structure-test, dive, size gate; GHCR digest handoff (`image_ref`) |
+| `container-build.yml` | buildx, structure-test, dive, size gate; GHCR digest handoff (`handoff_package` + `digest`) |
 | `container-scan.yml` | Trivy + Syft SBOM + Grype on the **built image** |
 | `container-published-rescan.yml` | GHCR probe + `container-scan.yml` for a published registry tag |
 | `container-publish.yml` | Multi-arch push to GHCR and Docker Hub; optional cosign + provenance |

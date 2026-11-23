@@ -64,6 +64,16 @@ on:
         required: false
         type: string
         default: ""
+      image_documentation:
+        description: OCI documentation label. Set at build time; a later retag cannot change it.
+        required: false
+        type: string
+        default: ""
+      image_url:
+        description: OCI url label. Set at build time; a later retag cannot change it.
+        required: false
+        type: string
+        default: ""
       artifact_name:
         description: Cache scope and ephemeral GHCR tag suffix (unique when multiple builds share a run)
         required: false
@@ -321,6 +331,8 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.title=${{ inputs.image_title != '' && inputs.image_title || inputs.image_name }}
             org.opencontainers.image.description=${{ inputs.image_description != '' && inputs.image_description || inputs.image_name }}
+            ${{ inputs.image_documentation != '' && format('org.opencontainers.image.documentation={0}', inputs.image_documentation) || '' }}
+            ${{ inputs.image_url != '' && format('org.opencontainers.image.url={0}', inputs.image_url) || '' }}
 
       - name: container-structure-test
         id: cst
