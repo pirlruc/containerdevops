@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | <https://github.com/pirlruc/containerdevops> |
-| **Branch** | `main`. Unreleased **6.7.0** fixes the Hub overview overwrite, forwards a cross-org GHCR token, and pins guardrails 1.17.0, scaffold 1.14.0, and commondevops v6.7.0. **6.6.1** is the published image tag. |
+| **Branch** | `main`. Published tip is **6.7.0** (`f0f9077ced9f79097e7597de1a2e00f8eb42e216`). Hub overview inputs are the caller's. Guardrails 1.17.0, scaffold 1.14.0, commondevops v6.7.0 (`1c621c43`). |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
