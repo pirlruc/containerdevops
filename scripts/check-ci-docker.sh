@@ -27,9 +27,10 @@ if [ -f .yamllint.yml ]; then
 else
 	run yamllint .github/workflows || echo "yamllint reported findings; no repo config, not a gate"
 fi
+# --no-git: the ci-lint image used here has no git binary.
 if [ -f .gitleaks.toml ]; then
-	run gitleaks detect --source . --redact --config .gitleaks.toml
+	run gitleaks detect --no-git --source . --redact --config .gitleaks.toml
 else
-	run gitleaks detect --source . --redact
+	run gitleaks detect --no-git --source . --redact
 fi
 echo "Docker CI scans finished."
