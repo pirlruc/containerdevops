@@ -208,7 +208,8 @@ workflows:
 
 ## Suggested next work
 
-1. Confirm PAT expiries before the Tuesday 06:17 UTC token audit. This repo passes `GUARDRAILS_READ_TOKEN` and `COMMONDEVOPS_READ_TOKEN`. It does not have `CONTAINERDEVOPS_READ_TOKEN` or `SCORECARD_TOKEN`.
+1. `CDO-GHCR-001`: forward `container_username` and `container_token` from `container-lint.yml` into the nested ci-lint jobs.
+2. Confirm PAT expiries before the Tuesday 06:17 UTC token audit. This repo passes `GUARDRAILS_READ_TOKEN` and `COMMONDEVOPS_READ_TOKEN`. It does not have `CONTAINERDEVOPS_READ_TOKEN` or `SCORECARD_TOKEN`.
 2. Hub Overview for `pirlruc/ci-container` updates on a push to `main` when `docs/docker-hub*.md` changes, via `container-hub-description.yml`. `workflow_dispatch` on `.github/workflows/hub-description.yml` remains. Neither path republishes the image. Do not hook the Overview to the image-publish `release` event.
 
 ## Recent history
