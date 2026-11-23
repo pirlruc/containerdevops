@@ -3,7 +3,7 @@ name: Container Lint (reusable)
 # Hadolint with docker profile thresholds (host install or docker run of runner_image).
 # actionlint / shellcheck / zizmor → commondevops common-infra-lint.
 # Secrets (DOCKER-SEC-005) → commondevops common-secrets-sast.
-# commondevops pin: keep uses: and scripts_ref in lockstep (tag 5.6.2).
+# commondevops pin: keep uses: and scripts_ref in lockstep (tag v6.7.0).
 #
 # runner_image: empty → install tools on the bare runner (bootstrap / publish caller).
 # Non-empty → docker run that image for hadolint/shellcheck (avoids job-level container:
@@ -57,12 +57,23 @@ on:
         required: false
         type: boolean
         default: true
+      container_username:
+        description: >-
+          Registry username for container_token. Empty uses github.actor.
+          A package owned by another account cannot list this repository
+          under Actions access, so the caller passes the package owner's login.
+        required: false
+        type: string
+        default: ""
     secrets:
       checkout_token:
         description: Token to read pirlruc/commondevops (nested reusables)
         required: false
       scripts_token:
         description: Token to read this repo scripts when called cross-repo; defaults to github.token
+        required: false
+      container_token:
+        description: read:packages on a package owned by another account. Empty uses github.token.
         required: false
   workflow_dispatch:
     inputs:
@@ -235,20 +246,24 @@ jobs:
           bash _containerdevops/scripts/gate-aggregate.sh "${args[@]}"
 
   infra:
-    # Nested commondevops pin — keep uses: and scripts_ref in lockstep (tag 5.6.2).
+    # Nested commondevops pin — keep uses: and scripts_ref in lockstep (tag v6.7.0).
     if: github.event.pull_request.user.login != 'dependabot[bot]' && inputs.run_infra_lint != false
     permissions:
       contents: read
       packages: read
-    uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@e41270c45b858cfa7a9f8404eaee781b5c29b61c
+    uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@1c621c43fa1bee2613ab4996135f85d0c55d59fb
     with:
       blocking: ${{ inputs.blocking }}
       working_directory: ${{ inputs.working_directory }}
       shell_scripts: ${{ inputs.shell_scripts }}
       dockerfiles: ${{ inputs.dockerfile }}
-      scripts_ref: e41270c45b858cfa7a9f8404eaee781b5c29b61c
+      scripts_ref: 1c621c43fa1bee2613ab4996135f85d0c55d59fb
       container_image: ghcr.io/pirlruc/ci-lint@sha256:e0f48be58460a9eeb3adcc8c7c4c3592db0318dbe4de9c90c1b4b9e863898f6c
       concurrency_suffix: ${{ inputs.dockerfile }}
+      container_username: ${{ inputs.container_username }}
+    secrets:
+      checkout_token: ${{ secrets.checkout_token }}
+      container_token: ${{ secrets.container_token }}
 
   secrets:
     # CI-024 / DOCKER-SEC-005
@@ -256,10 +271,14 @@ jobs:
     permissions:
       contents: read
       packages: read
-    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@e41270c45b858cfa7a9f8404eaee781b5c29b61c
+    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@1c621c43fa1bee2613ab4996135f85d0c55d59fb
     with:
       blocking: ${{ inputs.blocking }}
       working_directory: ${{ inputs.working_directory }}
-      scripts_ref: e41270c45b858cfa7a9f8404eaee781b5c29b61c
+      scripts_ref: 1c621c43fa1bee2613ab4996135f85d0c55d59fb
       container_image: ghcr.io/pirlruc/ci-lint@sha256:e0f48be58460a9eeb3adcc8c7c4c3592db0318dbe4de9c90c1b4b9e863898f6c
       concurrency_suffix: ${{ inputs.dockerfile }}
+      container_username: ${{ inputs.container_username }}
+    secrets:
+      checkout_token: ${{ secrets.checkout_token }}
+      container_token: ${{ secrets.container_token }}

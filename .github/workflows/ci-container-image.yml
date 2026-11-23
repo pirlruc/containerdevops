@@ -110,6 +110,8 @@ jobs:
       image_description: >-
         Short-lived CI toolchain image for container jobs: ci-lint plus dive and
         container-structure-test. Debian 13 variant. Non-root 1000:1000, linux/amd64.
+      image_documentation: https://hub.docker.com/r/pirlruc/ci-container
+      image_url: https://hub.docker.com/r/pirlruc/ci-container
       blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
       dhi_login: false
     secrets:
@@ -139,6 +141,8 @@ jobs:
       image_description: >-
         Short-lived CI toolchain image for container jobs: ci-lint plus dive and
         container-structure-test. Alpine 3.24 variant. Non-root 1000:1000, linux/amd64.
+      image_documentation: https://hub.docker.com/r/pirlruc/ci-container
+      image_url: https://hub.docker.com/r/pirlruc/ci-container
       blocking: ${{ github.event_name == 'workflow_dispatch' && inputs.blocking || github.event_name != 'workflow_dispatch' }}
       dhi_login: false
     secrets:

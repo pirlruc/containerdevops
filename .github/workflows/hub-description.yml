@@ -1,12 +1,24 @@
 # Push the ci-container Docker Hub Overview without rebuilding the image.
+# This file owns the push trigger. The reusable workflow does not, because a
+# called workflow still sees the caller's event name.
 
 name: Hub description
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/docker-hub*.md"
+      - ".github/workflows/hub-description.yml"
+      - ".github/workflows/container-hub-description.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: hub-description-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ci-container:

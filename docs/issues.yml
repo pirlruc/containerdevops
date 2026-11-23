@@ -1800,7 +1800,7 @@ milestones:
               - CI-032
 
       - id: CDO-DESK-001
-        status: open
+        status: done
         title: Sign desktop bundles and rescan published images
         overview:
           problem: >-
@@ -1821,7 +1821,7 @@ milestones:
           - A scheduled workflow rescans published image digests
         tasks:
           - id: CDO-DESK-001-T1
-            status: open
+            status: done
             title: Add the signing input and the rescan workflow
             instructions:
               files:
@@ -1829,3 +1829,46 @@ milestones:
             verification:
               - A workflow documents a signing input
               - A workflow rescans a published digest
+
+      - id: CDO-GHCR-001
+        status: done
+        title: Forward a cross-org GHCR token into ci-lint jobs
+        overview:
+          problem: >-
+            common-infra-lint and common-secrets-sast pull private
+            ghcr.io/pirlruc/ci-lint. Actions access on that package cannot
+            include a repository owned by another account, so those callers
+            pass container_username and container_token. container-lint.yml
+            has no such inputs. Its nested jobs log in with github.token and
+            cannot pull the image. Callers therefore set run_infra_lint and
+            run_secrets_scan to false.
+          goal: >-
+            container-lint.yml accepts container_username and container_token
+            and passes them to both nested jobs, on a commondevops pin that
+            already has those inputs.
+        decision: >-
+          In the context of a caller outside the package owner, facing an
+          Actions access list that cannot include that repository, we decided
+          to forward container_username and container_token, to achieve a
+          pull with the caller's read:packages token, accepting that a
+          Dependabot run still cannot read the secret.
+        acceptance_criteria:
+          - container-lint.yml declares container_username and container_token
+          - Both nested jobs pass those values through
+          - The nested commondevops pin accepts those inputs
+        guardrail_refs:
+          - CI-028
+          - CI-024
+        tasks:
+          - id: CDO-GHCR-001-T1
+            status: done
+            title: Forward the registry login to the nested ci-lint jobs
+            instructions:
+              files:
+                - .github/workflows/container-lint.yml
+            verification:
+              - rg -n "container_token" .github/workflows/container-lint.yml
+              - actionlint .github/workflows/container-lint.yml
+            guardrail_refs:
+              - CI-028
+              - CI-024

@@ -1,15 +1,13 @@
 name: Container Hub description
 
 # Push a Docker Hub Overview without rebuilding the image.
+# workflow_call and workflow_dispatch only. A push trigger here would see the
+# caller's event: github.event_name stays "push" inside a called workflow, so
+# every caller would write its own page into one repository.
 # DOCKERHUB_DESCRIPTION_TOKEN needs Read, Write, and Delete.
 # contents: read is the only GitHub permission.
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "docs/docker-hub*.md"
-      - ".github/workflows/container-hub-description.yml"
   workflow_call:
     inputs:
       dockerhub_image:
@@ -49,6 +47,11 @@ on:
 permissions:
   contents: read
 
+# One group per image in this run so parallel callers do not cancel each other (CI-002).
+concurrency:
+  group: hub-overview-${{ github.run_id }}-${{ inputs.dockerhub_image }}
+  cancel-in-progress: false
+
 jobs:
   overview:
     runs-on: ubuntu-24.04
@@ -70,6 +73,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_DESCRIPTION_TOKEN }}
-          repository: ${{ github.event_name == 'push' && 'pirlruc/ci-container' || inputs.dockerhub_image }}
-          readme-filepath: ${{ github.event_name == 'push' && 'docs/docker-hub.md' || inputs.dockerhub_readme }}
-          short-description: "${{ github.event_name == 'push' && 'CI toolchain: ci-lint plus dive and container-structure-test' || inputs.dockerhub_short_description }}"
+          repository: ${{ inputs.dockerhub_image }}
+          readme-filepath: ${{ inputs.dockerhub_readme }}
+          short-description: ${{ inputs.dockerhub_short_description }}

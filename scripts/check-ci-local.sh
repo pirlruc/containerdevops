@@ -27,4 +27,7 @@ run_tool actionlint actionlint -color=false .github/workflows/*.yml
 run_tool shellcheck shellcheck scripts/*.sh
 run_tool hadolint hadolint docker/ci-container/Dockerfile docker/ci-container/Dockerfile.alpine
 
+echo "==> docker scans"
+sh scripts/check-ci-docker.sh
+
 echo "Local CI parity finished."
