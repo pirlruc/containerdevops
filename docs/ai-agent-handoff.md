@@ -188,7 +188,7 @@ python3 .github/scaffold/scripts/issues-sync.py \
   1.26.10 with `x/crypto` v0.57.0, `x/net` v0.60.0, `x/text` v0.42.0, and
   `compress` v1.18.7. CST also pins containerd v1.7.33. `docker/cli` v29.2.0
   does not compile. `docker/docker` has no fix. Those ignores expire
-  2026-11-22. A full local image build needs a GHCR token with `read:packages`.
+  2027-02-23. A full local image build needs a GHCR token with `read:packages`.
 
 ## vcpkg binary cache images
 

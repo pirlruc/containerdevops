@@ -2,23 +2,23 @@
 # x/crypto v0.57.0, x/net v0.60.0, x/text v0.42.0, and compress v1.18.7.
 # container-structure-test also pins containerd v1.7.33.
 # docker/cli v29.2.0 does not compile (missing containerd/errdefs and the
-# moby client module). docker/docker has no fixed release. Review 2026-11-22.
+# moby client module). docker/docker has no fixed release. Review 2027-02-23.
 vulnerabilities:
   - id: CVE-2025-15558
     paths:
       - "**/container-structure-test"
       - "**/dive"
-    expired_at: 2026-11-22
+    expired_at: 2027-02-23
     statement: github.com/docker/cli. v29.2.0 does not compile into dive v0.13.1 or container-structure-test v1.22.1. Windows CLI finding.
   - id: CVE-2026-41567
     paths:
       - "**/container-structure-test"
       - "**/dive"
-    expired_at: 2026-11-22
+    expired_at: 2027-02-23
     statement: github.com/docker/docker has no fixed release in the rebuilt v0.13.1 and v1.22.1 tags.
   - id: CVE-2026-42306
     paths:
       - "**/container-structure-test"
       - "**/dive"
-    expired_at: 2026-11-22
+    expired_at: 2027-02-23
     statement: github.com/docker/docker has no fixed release in the rebuilt v0.13.1 and v1.22.1 tags.
