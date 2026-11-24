@@ -48,7 +48,7 @@ jobs:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
       scripts_ref: 5d8b83da2f8f0c0c1bd894ef920619fe127c033e
-      container_image: ghcr.io/pirlruc/ci-supply-chain@sha256:07518afbf12aa3e2aeeb1e220e2dcb3a633e2d8c1583a60612f30855970a1008
+      container_image: ghcr.io/pirlruc/ci-supply-chain@sha256:cceea28e7719138294d11396fa3b9ebdb078d5997de6b4454b9e3f14e33d5133
   scorecard:
     if: >-
       github.event.pull_request.user.login != 'dependabot[bot]' &&
