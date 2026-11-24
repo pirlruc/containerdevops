@@ -5,8 +5,9 @@ name: Containerdevops Security (scheduled)
 
 on:
   schedule:
-    # Weekly Tuesday 06:17 UTC
-    - cron: "17 6 * * 2"
+    # One-shot 2026-11-24 09:45 UTC after the scheduler stopped queueing
+    # this workflow. Restore "17 6 * * 2" once that run exists.
+    - cron: "45 9 * * 2"
   push:
     branches: [main]
   pull_request:
