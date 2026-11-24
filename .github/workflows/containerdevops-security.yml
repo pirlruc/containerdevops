@@ -88,8 +88,8 @@ jobs:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
 
   # The published tag is the last release. A pull request cannot change it, so
-  # the rescan stays on schedule and dispatch. Pinned to the 6.4.0 Alpine
-  # linux/amd64 manifest (the unsuffixed tag).
+  # the rescan stays on schedule and dispatch. 6.7.0 Alpine linux/amd64.
+  # The unsuffixed tag and 6.7.0-alpine share this manifest.
   published-image-rescan:
     if: github.event_name != 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
@@ -99,16 +99,54 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-published-rescan.yml
     with:
-      image: ghcr.io/pirlruc/ci-container:6.4.0@sha256:c4b151f4f60325d2e4fe828cd741b3c1983c1c758365a971e8b053e9256d4f55
+      image: ghcr.io/pirlruc/ci-container:6.7.0@sha256:9568af6b2726a525fd623caf391cec1aa0541e5ee4db10079e10182c40ac4fa1
       scripts_ref: ${{ github.sha }}
       pkg_types: library
       ignorefile: docker/ci-container/.trivyignore.yaml
+      sarif_category: trivy-image
+      results_artifact: published-ci-container-alpine
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
+
+  # Advisory OS scan. Same category the image workflow uploads, so a
+  # default-branch run closes the alerts that a tag upload cannot.
+  published-posture-alpine:
+    if: github.event_name != 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      packages: read
+    uses: ./.github/workflows/container-published-rescan.yml
+    with:
+      image: ghcr.io/pirlruc/ci-container:6.7.0@sha256:9568af6b2726a525fd623caf391cec1aa0541e5ee4db10079e10182c40ac4fa1
+      scripts_ref: ${{ github.sha }}
+      pkg_types: os,library
+      ignorefile: none
+      sarif_category: trivy-posture-alpine
+      results_artifact: published-posture-alpine
+      blocking: false
+
+  published-posture-debian:
+    if: github.event_name != 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      packages: read
+    uses: ./.github/workflows/container-published-rescan.yml
+    with:
+      image: ghcr.io/pirlruc/ci-container:6.7.0-debian@sha256:dd689a89e39bc7dd033644771dbde06429a97ceedaa939da7a5eea06175ea6e6
+      scripts_ref: ${{ github.sha }}
+      pkg_types: os,library
+      ignorefile: none
+      sarif_category: trivy-posture-debian
+      results_artifact: published-posture-debian
+      blocking: false
 
   # CI-044: one check that is not path-filtered. Security jobs above have no paths.
   security-aggregate:
     if: always()
-    needs: [secrets-sast, supply-chain, scorecard, token-audit, iac, published-image-rescan]
+    needs: [secrets-sast, supply-chain, scorecard, token-audit, iac, published-image-rescan, published-posture-alpine, published-posture-debian]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -122,10 +160,12 @@ jobs:
           TOKEN: ${{ needs.token-audit.result }}
           IAC: ${{ needs.iac.result }}
           RESCAN: ${{ needs.published-image-rescan.result }}
+          POSTURE_ALPINE: ${{ needs.published-posture-alpine.result }}
+          POSTURE_DEBIAN: ${{ needs.published-posture-debian.result }}
         run: |
           set -eu
           failed=""
-          for item in "secrets-sast=${SECRETS}" "supply-chain=${SUPPLY}" "scorecard=${SCORE}" "token-audit=${TOKEN}" "iac=${IAC}" "rescan=${RESCAN}"; do
+          for item in "secrets-sast=${SECRETS}" "supply-chain=${SUPPLY}" "scorecard=${SCORE}" "token-audit=${TOKEN}" "iac=${IAC}" "rescan=${RESCAN}" "posture-alpine=${POSTURE_ALPINE}" "posture-debian=${POSTURE_DEBIAN}"; do
             name=${item%%=*}
             result=${item#*=}
             if [ "${result}" != "success" ] && [ "${result}" != "skipped" ]; then

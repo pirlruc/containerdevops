@@ -15,7 +15,7 @@
 
 deviations:
   - id: DOCKER-SEC-001
-    epic: CDO-SEC-001
+    epic: CDO-MCP-001
     why: >-
       The Debian ci-container image installs semgrep, and semgrep 1.185.0
       requires mcp==1.29.0. CVE-2026-115563 is fixed in mcp 1.30.0.
