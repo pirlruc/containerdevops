@@ -37,7 +37,7 @@ jobs:
   docs:
     permissions:
       contents: read
-    uses: pirlruc/commondevops/.github/workflows/common-doc-verify.yml@1c621c43fa1bee2613ab4996135f85d0c55d59fb
+    uses: pirlruc/commondevops/.github/workflows/common-doc-verify.yml@5d8b83da2f8f0c0c1bd894ef920619fe127c033e
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       shell_scripts: scripts/*.sh
@@ -46,7 +46,7 @@ jobs:
       yaml_globs: .github/workflows/*.yml
       run_link_lint: true
       run_hygiene: true
-      scripts_ref: 1c621c43fa1bee2613ab4996135f85d0c55d59fb
+      scripts_ref: 5d8b83da2f8f0c0c1bd894ef920619fe127c033e
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
 
@@ -54,10 +54,10 @@ jobs:
     permissions:
       contents: read
       issues: read
-    uses: pirlruc/commondevops/.github/workflows/common-scaffold-verify.yml@1c621c43fa1bee2613ab4996135f85d0c55d59fb
+    uses: pirlruc/commondevops/.github/workflows/common-scaffold-verify.yml@5d8b83da2f8f0c0c1bd894ef920619fe127c033e
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
-      scripts_ref: 1c621c43fa1bee2613ab4996135f85d0c55d59fb
+      scripts_ref: 5d8b83da2f8f0c0c1bd894ef920619fe127c033e
     secrets:
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
       packs_token: ${{ secrets.GUARDRAILS_READ_TOKEN }}
