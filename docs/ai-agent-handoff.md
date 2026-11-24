@@ -27,8 +27,8 @@ Shared infra/secrets/supply-chain forward to
 | `docs/guardrails` | tag **1.17.1** → `8508e93691aa3c4f769ecc215ddc83ecf26e70b2` |
 | `.github/scaffold` | tag **1.14.2** → `615dbbcbe906d62a29e4f4e4118cb94cb119f5a5` |
 | methodologies (links only; not a submodule) | tag **1.12.1** |
-| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.8.0` linux/amd64 `sha256:80940e1e17a71884052ce3b4859c3c1741e554b5087df1864a89c10a00312264`. Index `sha256:0dc6ad0d8cdcd2dd5cf10c800c1a080ccc001c8af3094700e2123af1bcd39362` (`latest` == alpine). 6.8.1 digests land in the release notes. |
-| `ghcr.io/pirlruc/ci-container` (debian) | `6.8.0-debian` linux/amd64 `sha256:b1910e253e5941d25158a21a4283006f056ec7b8a4a7b539581d10d110458dd0`. Index `sha256:5178201d0dd0447561f07c236d73c33052770fab1d6e8b20ce8c4aae351fc14a` |
+| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.8.1` linux/amd64 `sha256:80f11be27aa17dafef168678a23d98e30320d358759bcf0ddb77fa52d3cd335a`. Index `sha256:2ff93be1e52ac655579f5a92f92aec18b9094ecbc13d5c706975dec54284f671` |
+| `ghcr.io/pirlruc/ci-container` (debian) | `6.8.1-debian` linux/amd64 `sha256:9df2e1b544d10d893f304ada7174de030573097b0c3b29e68037ce1fbeea946c`. Index `sha256:43dd684e8499acac223290f320580ac7cbd998e06489af70ddd1c30a8595be86` |
 | commondevops `uses:` / `scripts_ref` | tag **v6.10.0** → `a2af891c6d05fe2790bc5ddf761252c95185ce5f` |
 | `CI_BASE` (ci-lint debian, unsuffixed) | `6.8.0` digest `sha256:3ed6d8dcbb08abf82e563630f2c1218cf0e8f33bb883ed46770e147113af48b0` |
 | `CI_BASE` (ci-lint alpine) | `6.8.0-alpine` digest `sha256:adaa142df825e1532a799f57004d969fb2899a41d6c2b768ed06c6ded1099007` |
