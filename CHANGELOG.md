@@ -9,8 +9,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 - `container-compose-smoke` accepts `stacks`. Each line is a compose file, or a compose file and an env file separated by `|`. Stacks start one after another with `--wait`. `compose_files` stays the single-project path.
 
-
-
 ## [6.9.0] - 2026-11-24
 
 ### Changed
