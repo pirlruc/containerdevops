@@ -301,7 +301,7 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-11-24 — 6.9.0 size gate uses host docker export (DOCKER-PERF-003). Published image stays 6.8.1. Guardrails 1.17.1. Scaffold 1.14.2.*
+*Last updated: 2026-11-24 — container-compose-smoke takes a stacks list and brings each stack up in order. Published tip is 6.9.0.*
 
 *Last updated: 2026-11-24 — The 09:45 UTC one-shot did not create a schedule event. The cron is back to 06:17 UTC Tuesday.*
 

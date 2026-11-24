@@ -1981,3 +1981,35 @@ milestones:
         - grep -q 'docker export' scripts/check-image-size.sh
         guardrail_refs:
         - DOCKER-PERF-003
+
+  - name: Compose smoke
+    status: open
+    epics:
+    - id: CDO-SMOKE-002
+      status: done
+      title: Bring several Compose stacks up one after another
+      decision: >-
+        In the context of a catalog that smokes many stacks, facing one
+        reusable call that cancels a second call in the same run, we
+        decided a stacks list on the existing smoke workflow, to achieve
+        one job that waits for each stack, accepting a longer job.
+      overview:
+        problem: A second smoke call in one run shares a concurrency group with the first.
+        goal: One call starts each listed stack, waits, and removes it before the next.
+      acceptance_criteria:
+      - stacks is a line-oriented input of compose file or compose file and env file
+      - The script removes a project before it starts the next line
+      guardrail_refs:
+      - DOCKER-LINT-003
+      tasks:
+      - id: CDO-SMOKE-002-T1
+        status: done
+        title: Add the stacks input
+        instructions:
+          files:
+          - .github/workflows/container-compose-smoke.yml
+          - scripts/compose-smoke.sh
+        verification:
+        - bash -n scripts/compose-smoke.sh
+        guardrail_refs:
+        - DOCKER-LINT-003

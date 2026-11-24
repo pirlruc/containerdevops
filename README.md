@@ -19,7 +19,7 @@ Guardrails: [pirlruc/guardrails `docker/`](https://github.com/pirlruc/guardrails
 | `container-published-rescan.yml` | GHCR probe + `container-scan.yml` for a published registry tag |
 | `container-publish.yml` | Multi-arch push to GHCR and Docker Hub; optional cosign + provenance |
 | `container-iac.yml` | KICS + `docker compose config` + DOCKER-COMPOSE measurable gates |
-| `container-compose-smoke.yml` | `docker compose up --wait`, then remove the project |
+| `container-compose-smoke.yml` | `docker compose up --wait`, then remove the project. `stacks` runs that once per line |
 | `container-devcontainer.yml` | Devcontainer Dockerfile lint (structure-test stub) |
 | `container-handoff-cleanup.yml` | PR-only delete of `ci-run-*` GHCR versions |
 | `artifact-sweep.yml` | Scheduled delete of leftover `container-image*` artifacts |
