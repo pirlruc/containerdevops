@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | <https://github.com/pirlruc/containerdevops> |
-| **Branch** | `main`. Published tip is **6.8.0**. Hub overview inputs are the caller's. Guardrails 1.17.0, scaffold 1.14.0, commondevops v6.7.0 (`1c621c43`). The image in the registry is still **6.7.0** until the next image publish. |
+| **Branch** | `main`. Published tip is **6.8.0**. Hub overview inputs are the caller's. Guardrails 1.17.0, scaffold 1.14.0, commondevops v6.9.0 (`5d8b83d`). The image in the registry is still **6.7.0** until the next image publish. |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -29,7 +29,7 @@ Shared infra/secrets/supply-chain forward to
 | methodologies (links only; not a submodule) | tag **1.12.1** |
 | `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.7.0` linux/amd64 `sha256:9568af6b2726a525fd623caf391cec1aa0541e5ee4db10079e10182c40ac4fa1`. Index `sha256:626ca538560276faf04d9abdef268a79d4cf37b77c12eb9798772f644e8dca4f` (`latest` == alpine) |
 | `ghcr.io/pirlruc/ci-container` (debian) | `6.7.0-debian` linux/amd64 `sha256:dd689a89e39bc7dd033644771dbde06429a97ceedaa939da7a5eea06175ea6e6`. Index `sha256:6ad47abe55aeff94e2660bd5eef5b80bedabdd3b194186f8fe7ad7e6deac5309` |
-| commondevops `uses:` / `scripts_ref` | tag **v6.7.0** → `1c621c43fa1bee2613ab4996135f85d0c55d59fb` |
+| commondevops `uses:` / `scripts_ref` | tag **v6.9.0** → `5d8b83da2f8f0c0c1bd894ef920619fe127c033e` |
 | `CI_BASE` (ci-lint debian, unsuffixed) | `5.4.0` digest `sha256:9473bd0a4bf654ac5e01f8df6bd8278c7e0d61208baf33a051c79bd8afa47bc2` |
 | `CI_BASE` (ci-lint alpine) | `5.4.0-alpine` digest `sha256:71b45eb68f35020f1598f3e21f20117e87c0dbd6bcb4c9158f3da788b20a849a` |
 | `docker/setup-buildx-action` | `4.4.1` → `f87e5991…` |
@@ -302,6 +302,7 @@ workflows:
 
 *Last updated: 2026-11-24 — 6.8.0. Rescan pins ci-container 6.7.0. Posture categories refresh on the default branch. login-action 4.8.0. upload-sarif 4.39.3.*
 
+*Last updated: 2026-11-24 — Self-CI pins commondevops v6.9.0. No new tag. The image in the registry is still 6.7.0.*
 *Last updated: 2026-11-23 — Hub overview inputs are always the caller's. Guardrails 1.17.0. Scaffold 1.14.0. commondevops v6.7.0.*
 
 *Last updated: 2026-11-15 — `runs_on` on container-iac and container-compose-smoke. Not tagged.*

@@ -30,11 +30,11 @@ jobs:
     permissions:
       contents: read
       packages: read
-    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@1c621c43fa1bee2613ab4996135f85d0c55d59fb
+    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@5d8b83da2f8f0c0c1bd894ef920619fe127c033e
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
-      scripts_ref: 1c621c43fa1bee2613ab4996135f85d0c55d59fb
+      scripts_ref: 5d8b83da2f8f0c0c1bd894ef920619fe127c033e
       container_image: ghcr.io/pirlruc/ci-lint@sha256:e0f48be58460a9eeb3adcc8c7c4c3592db0318dbe4de9c90c1b4b9e863898f6c
   supply-chain:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
@@ -43,11 +43,11 @@ jobs:
       actions: read
       packages: read
       security-events: write
-    uses: pirlruc/commondevops/.github/workflows/common-supply-chain.yml@1c621c43fa1bee2613ab4996135f85d0c55d59fb
+    uses: pirlruc/commondevops/.github/workflows/common-supply-chain.yml@5d8b83da2f8f0c0c1bd894ef920619fe127c033e
     with:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
-      scripts_ref: 1c621c43fa1bee2613ab4996135f85d0c55d59fb
+      scripts_ref: 5d8b83da2f8f0c0c1bd894ef920619fe127c033e
       container_image: ghcr.io/pirlruc/ci-supply-chain@sha256:dc83deb4465d5989a03b14ccabef46c3f3426231048b962c69b8e434a7200d48
   scorecard:
     if: >-
@@ -58,7 +58,7 @@ jobs:
       actions: read
       security-events: write
       id-token: write
-    uses: pirlruc/commondevops/.github/workflows/common-scorecard.yml@1c621c43fa1bee2613ab4996135f85d0c55d59fb
+    uses: pirlruc/commondevops/.github/workflows/common-scorecard.yml@5d8b83da2f8f0c0c1bd894ef920619fe127c033e
     with:
       blocking: false
       publish_results: false
@@ -68,9 +68,9 @@ jobs:
   token-audit:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions: {}
-    uses: pirlruc/commondevops/.github/workflows/common-token-audit.yml@1c621c43fa1bee2613ab4996135f85d0c55d59fb
+    uses: pirlruc/commondevops/.github/workflows/common-token-audit.yml@5d8b83da2f8f0c0c1bd894ef920619fe127c033e
     with:
-      scripts_ref: 1c621c43fa1bee2613ab4996135f85d0c55d59fb
+      scripts_ref: 5d8b83da2f8f0c0c1bd894ef920619fe127c033e
     secrets:
       guardrails_token: ${{ secrets.GUARDRAILS_READ_TOKEN }}
       checkout_token: ${{ secrets.COMMONDEVOPS_READ_TOKEN }}
