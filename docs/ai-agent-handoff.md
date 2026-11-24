@@ -112,7 +112,7 @@ python3 .github/scaffold/scripts/issues-sync.py \
   Scan callers still need `packages: read` and a composed GHCR ref
   `ghcr.io/<owner>/<handoff_package>@<digest>`. Do not pass `image_ref` as a
   docker ref: Actions strips outputs that contain `DOCKERHUB_USERNAME`.
-- **Size gate** uses `du -sxm /` (store-independent). Do not use `docker inspect .Size`.
+- **Size gate** exports the rootfs on the host (DOCKER-PERF-003). Do not run a shell inside the image. Do not use `docker inspect .Size`.
 - **ignorefile contract:** empty falls back to caller `.trivyignore.yaml`; set
   `ignorefile: none` (or `--no-ignorefile` locally) for unfiltered posture scans.
   ci-container's ignorefile lives at `docker/ci-container/.trivyignore.yaml`.
@@ -301,7 +301,7 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-11-24 — 6.8.1. Rescan pins ci-container 6.8.0 on trivy-image-alpine and trivy-image-debian. CI_BASE is ci-lint 6.8.0. Guardrails 1.17.1. Scaffold 1.14.2.*
+*Last updated: 2026-11-24 — 6.9.0 size gate uses host docker export (DOCKER-PERF-003). Published image stays 6.8.1. Guardrails 1.17.1. Scaffold 1.14.2.*
 
 *Last updated: 2026-11-24 — The 09:45 UTC one-shot did not create a schedule event. The cron is back to 06:17 UTC Tuesday.*
 

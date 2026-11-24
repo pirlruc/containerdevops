@@ -1944,3 +1944,40 @@ milestones:
         - rg trivy-posture-debian .github/workflows/containerdevops-security.yml
         guardrail_refs:
         - CI-047
+
+  - name: Image measurement
+    status: open
+    epics:
+    - id: CDO-SIZE-001
+      status: done
+      title: Measure image size without a shell inside the image
+      overview:
+        problem: >-
+          The size gate preferred docker run with a shell and du. A runtime
+          image with no shell failed the gate before the export fallback.
+        goal: >-
+          The gate measures the rootfs on the host. A shell-less image passes
+          the same byte check.
+      decision: >-
+        In the context of the image size gate, facing a runtime that ships
+        no shell, we decided to measure with docker export on the host, to
+        achieve one check for every base, accepting a tar walk instead of du.
+      acceptance_criteria:
+      - scripts/check-image-size.sh does not run docker run
+      - docs/workflows.md describes the host export
+      guardrail_refs:
+      - DOCKER-PERF-003
+      - DOCKER-PERF-001
+      tasks:
+      - id: CDO-SIZE-001-T1
+        status: done
+        title: Drop the in-image du measurement
+        instructions:
+          files:
+          - scripts/check-image-size.sh
+          - docs/workflows.md
+        verification:
+        - "! grep -q 'docker run' scripts/check-image-size.sh"
+        - grep -q 'docker export' scripts/check-image-size.sh
+        guardrail_refs:
+        - DOCKER-PERF-003

@@ -72,7 +72,7 @@ invalid and must not be filed.
 
 Identify **improvements, bugs, and design flaws** in workflows, scripts, Dockerfiles, and
 docs — not only process/docs hygiene. Prefer **local-first validation** (`docker build`,
-structure-test, Trivy library+ignorefile and raw os,library, `du -sxm /` size) before
+structure-test, Trivy library+ignorefile and raw os,library, host `docker export` size) before
 recommending Actions-only verification.
 
 ### 4. Optional: alternatives (lightweight)
@@ -134,7 +134,7 @@ Provenance after human merge+sync uses these prefixes and the PR description; do
 | Area | Intent |
 |------|--------|
 | `.github/workflows/` | Reusable `container-*` workflows (GHCR digest handoff or `scan_local` without a push; no image tars) + self CI + ci-container caller. `container-iac` and `container-compose-smoke` take `runs_on` as JSON; the default is a versioned hosted label. |
-| `scripts/` | Install, local parity, threshold readers, size gate (`du -sxm /`) |
+| `scripts/` | Install, local parity, threshold readers, size gate (host `docker export`) |
 | `docker/ci-container/` | Container CI tooling image (extends ci-lint). Debian and Alpine variants; unsuffixed owner is recorded in the image workflow |
 | `docs/` | Handoff, this prompt, authored `issues.yml`, deviations, Docker Hub and GitHub Packages pages |
 | `.trivyignore.yaml` (under `docker/ci-container/`) | Path-scoped donor CVE ignores |
@@ -156,7 +156,7 @@ Do not recommend removing these without **requires user decision**:
 5. Guardrails stay canonical in `pirlruc/guardrails` — cite IDs; record deviations here only
 6. Build/publish jobs stay on the plain runner (no job `container:`)
 7. Caller jobs must grant every permission the reusable job declares (no escalation)
-8. Size gates measure uncompressed rootfs via `du -sxm /` (not store-dependent inspect size)
+8. Size gates measure uncompressed rootfs on the host via `docker export` (DOCKER-PERF-003). Do not run a shell inside the image. Do not use store-dependent inspect size
 9. BuildKit `cache-to` writes only on the default branch; do not delete published GHCR or Docker Hub tags as quota cleanup
 10. `verify_command` is a simple argv. The smoke run uses `--entrypoint` and does not pass the command through a shell, so quote characters are literal. An image Release body carries the index and platform digests. The git tag does not. A workflow-only annotated tag has no GitHub Release
 

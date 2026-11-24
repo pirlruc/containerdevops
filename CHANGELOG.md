@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.9.0] - 2026-11-24
+
+### Changed
+
+- The size gate measures the rootfs with `docker export` on the host. It does not run a shell inside the image (DOCKER-PERF-003). A runtime with no shell still has to pass the gate.
+
 ## [6.8.1] - 2026-11-24
 
 ### Fixed
