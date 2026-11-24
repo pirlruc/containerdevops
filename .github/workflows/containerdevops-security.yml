@@ -100,7 +100,7 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-published-rescan.yml
     with:
-      image: ghcr.io/pirlruc/ci-container:6.8.0@sha256:80940e1e17a71884052ce3b4859c3c1741e554b5087df1864a89c10a00312264
+      image: ghcr.io/pirlruc/ci-container:6.8.1@sha256:80f11be27aa17dafef168678a23d98e30320d358759bcf0ddb77fa52d3cd335a
       scripts_ref: ${{ github.sha }}
       pkg_types: library
       ignorefile: docker/ci-container/.trivyignore.yaml
@@ -117,7 +117,7 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-published-rescan.yml
     with:
-      image: ghcr.io/pirlruc/ci-container:6.8.0-debian@sha256:b1910e253e5941d25158a21a4283006f056ec7b8a4a7b539581d10d110458dd0
+      image: ghcr.io/pirlruc/ci-container:6.8.1-debian@sha256:9df2e1b544d10d893f304ada7174de030573097b0c3b29e68037ce1fbeea946c
       scripts_ref: ${{ github.sha }}
       pkg_types: library
       ignorefile: docker/ci-container/.trivyignore.yaml
@@ -136,7 +136,7 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-published-rescan.yml
     with:
-      image: ghcr.io/pirlruc/ci-container:6.8.0@sha256:80940e1e17a71884052ce3b4859c3c1741e554b5087df1864a89c10a00312264
+      image: ghcr.io/pirlruc/ci-container:6.8.1@sha256:80f11be27aa17dafef168678a23d98e30320d358759bcf0ddb77fa52d3cd335a
       scripts_ref: ${{ github.sha }}
       pkg_types: os,library
       ignorefile: none
@@ -153,7 +153,7 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-published-rescan.yml
     with:
-      image: ghcr.io/pirlruc/ci-container:6.8.0-debian@sha256:b1910e253e5941d25158a21a4283006f056ec7b8a4a7b539581d10d110458dd0
+      image: ghcr.io/pirlruc/ci-container:6.8.1-debian@sha256:9df2e1b544d10d893f304ada7174de030573097b0c3b29e68037ce1fbeea946c
       scripts_ref: ${{ github.sha }}
       pkg_types: os,library
       ignorefile: none

@@ -16,8 +16,10 @@ and container-structure-test. Not a product runtime — no `HEALTHCHECK`.
 
 | Tag | Meaning |
 |-----|---------|
-| `6.8.0` / `6.8.0-alpine` | Alpine `sha256:80940e1e17a71884052ce3b4859c3c1741e554b5087df1864a89c10a00312264` |
-| `6.8.0-debian` | Debian `sha256:b1910e253e5941d25158a21a4283006f056ec7b8a4a7b539581d10d110458dd0` |
+| `6.8.1` / `6.8.1-alpine` | Alpine `sha256:80f11be27aa17dafef168678a23d98e30320d358759bcf0ddb77fa52d3cd335a` |
+| `6.8.1-debian` | Debian `sha256:9df2e1b544d10d893f304ada7174de030573097b0c3b29e68037ce1fbeea946c` |
+| `6.8.0` / `6.8.0-alpine` (previous) | Alpine `sha256:80940e1e17a71884052ce3b4859c3c1741e554b5087df1864a89c10a00312264` |
+| `6.8.0-debian` (previous) | Debian `sha256:b1910e253e5941d25158a21a4283006f056ec7b8a4a7b539581d10d110458dd0` |
 | `6.4.0` / `6.4.0-alpine` | Alpine `sha256:c4b151f4f60325d2e4fe828cd741b3c1983c1c758365a971e8b053e9256d4f55` |
 | `6.4.0-debian` | Debian `sha256:060c38bf00328acec25a474d668adf80ec984c3531c71c6a13b53d70e0605776` |
 | `6.3.0` / `6.3.0-alpine` | Previous Alpine `sha256:b70472adbfb4a25d61bf92e7a3d957af17525872be5a17d8cc171c003e70e106` |
@@ -60,7 +62,7 @@ If the package is private, authenticate with a PAT that has `read:packages`:
 echo "$CR_PAT" | docker login ghcr.io -u USERNAME --password-stdin
 docker pull ghcr.io/pirlruc/ci-container:6.8.0
 # or
-docker pull ghcr.io/pirlruc/ci-container@sha256:80940e1e17a71884052ce3b4859c3c1741e554b5087df1864a89c10a00312264
+docker pull ghcr.io/pirlruc/ci-container@sha256:80f11be27aa17dafef168678a23d98e30320d358759bcf0ddb77fa52d3cd335a
 ```
 
 ## Use as a GitHub Actions job container
@@ -70,7 +72,7 @@ jobs:
   lint:
     runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/pirlruc/ci-container@sha256:80940e1e17a71884052ce3b4859c3c1741e554b5087df1864a89c10a00312264
+      image: ghcr.io/pirlruc/ci-container@sha256:80f11be27aa17dafef168678a23d98e30320d358759bcf0ddb77fa52d3cd335a
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -118,12 +120,12 @@ plain runner).
 ## Verify a publish
 
 ```bash
-docker pull ghcr.io/pirlruc/ci-container@sha256:80940e1e17a71884052ce3b4859c3c1741e554b5087df1864a89c10a00312264
+docker pull ghcr.io/pirlruc/ci-container@sha256:80f11be27aa17dafef168678a23d98e30320d358759bcf0ddb77fa52d3cd335a
 
 cosign verify \
   --certificate-identity-regexp 'https://github.com/pirlruc/containerdevops/.github/workflows/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  ghcr.io/pirlruc/ci-container@sha256:80940e1e17a71884052ce3b4859c3c1741e554b5087df1864a89c10a00312264
+  ghcr.io/pirlruc/ci-container@sha256:80f11be27aa17dafef168678a23d98e30320d358759bcf0ddb77fa52d3cd335a
 ```
 
 Signing runs only when the source repository is public (`sign: true`).
