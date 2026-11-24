@@ -139,11 +139,12 @@ do not pass the repository description.
 `cache-to` is written only when the run ref is the default branch. Pull request
 and tag runs restore that cache and do not create a per-ref copy (CI-004).
 
-**Size gate:** `scripts/check-image-size.sh` measures the image rootfs via
-`du -sxm /` inside a disposable container. This is store-independent (unlike
-`docker image inspect .Size`, which reports uncompressed size on classic Docker
-Engine / GHA runners but a compressed value under containerd image-store hosts).
-Tune `image_max_size_mb` / `ci_image_max_size_mb` against this measurement.
+**Size gate:** `scripts/check-image-size.sh` measures the image rootfs on the
+host with `docker export` and a tar size sum (DOCKER-PERF-003). No shell runs
+inside the image. This is store-independent (unlike `docker image inspect
+.Size`, which reports uncompressed size on classic Docker Engine / GHA runners
+but a compressed value under containerd image-store hosts). Tune
+`image_max_size_mb` / `ci_image_max_size_mb` against this measurement.
 
 **Base image age (DOCKER-BUILD-006):** this job runs
 `scripts/check-base-image-age.sh` on the final-stage `FROM` before the image
