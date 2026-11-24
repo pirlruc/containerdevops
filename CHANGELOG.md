@@ -5,11 +5,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.8.0] - 2026-11-24
+
+### Fixed
+
+- The scheduled rescan reads the published 6.7.0 digests. It was still scanning 6.4.0.
+- Weekly posture rescans upload `trivy-posture-alpine` and `trivy-posture-debian` on the default branch. A release upload uses the tag ref and cannot close those alerts.
+
+### Changed
+
+- `docker/login-action` is 4.8.0 and `github/codeql-action/upload-sarif` is 4.39.3.
+- The semgrep mcp deviation cites CDO-MCP-001. CDO-SEC-001 stays the ignorefile opt-out.
+
+## [6.7.0] - 2026-11-23
+
 ### Fixed
 
 - `container-hub-description` no longer treats a caller's push event as `pirlruc/ci-container`. Callers were overwriting that Docker Hub overview with their own page. The push trigger now lives only in this repo's `hub-description.yml`.
 - `install-container-tools.sh` appends `$HOME/.local/bin` to `GITHUB_PATH`, so a later step on a self-hosted runner can run hadolint.
 - Dependabot pull requests fetch the public script archive at `scripts_ref`. Their token cannot check out this repository, and hadolint was failing before it ran.
+- The Debian image scan ignores CVE-2026-115563 without a path filter. Trivy reports that advisory as package metadata, and a `**/mcp/**` glob never matched.
 
 ### Added
 
@@ -22,6 +37,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - Nested commondevops workflows pin v6.7.0. `common-doc-verify` runs the doc-hygiene check.
 - `docs/guardrails` is 1.17.0 and `.github/scaffold` is 1.14.0.
 - Artifact sweep calls the commondevops reusable. Release digest append strips a leading `v` from image tags, matching commondevops.
+
+## [6.6.1] - 2026-11-21
+
+### Fixed
+
+- IaC and Compose smoke use separate call concurrency groups, so one call no longer cancels the other.
+- Structure tests run on the platform under test. A distroless rootfs is measured without a shell.
+- Host-installed tools stay on `PATH`.
+
+### Changed
+
+- Toolchain images pin public index digests. The devcontainer check can choose its runner.
 
 ## [6.6.0] - 2026-11-15
 

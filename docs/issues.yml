@@ -1610,7 +1610,7 @@ milestones:
               - DOCKER-LINT-001
 
   - name: C++ overhaul follow-up
-    status: open
+    status: done
     epics:
     - id: CDO-CACHE-001
       status: done
@@ -1872,3 +1872,74 @@ milestones:
             guardrail_refs:
               - CI-028
               - CI-024
+
+  - name: Published image rescan
+    status: open
+    epics:
+    - id: CDO-MCP-001
+      status: open
+      title: Accept the semgrep mcp pin until a release allows 1.30.0
+      overview:
+        problem: >-
+          semgrep 1.185.0 and 1.186.0 require mcp==1.29.0. CVE-2026-115563
+          is fixed in mcp 1.30.0. No semgrep release allows that version.
+        goal: >-
+          The Debian image records the advisory as a deviation under this
+          epic. The fail level stays high.
+      decision: >-
+        In the context of the ci-container Debian image, facing a scanner
+        that pins a vulnerable client library, we decided to ignore that
+        one advisory until semgrep allows mcp 1.30.0, to achieve a high
+        fail level that still passes, accepting a review date instead of
+        a silent ignore.
+      acceptance_criteria:
+      - docs/guardrail-deviations.yml cites CDO-MCP-001
+      - The ignore files still name CVE-2026-115563
+      guardrail_refs:
+      - DOCKER-SEC-001
+      tasks:
+      - id: CDO-MCP-001-T1
+        status: done
+        title: Point the deviation at this epic
+        instructions:
+          files:
+          - docs/guardrail-deviations.yml
+        verification:
+        - rg CDO-MCP-001 docs/guardrail-deviations.yml
+        guardrail_refs:
+        - DOCKER-SEC-001
+
+    - id: CDO-POSTURE-001
+      status: open
+      title: Refresh default-branch posture categories from the published digest
+      overview:
+        problem: >-
+          Posture scans uploaded on the default branch stay open after a
+          release, because the release upload uses the tag ref and the
+          weekly rescan uses a different category and an old digest.
+        goal: >-
+          A default-branch schedule uploads the same posture categories
+          against the newest published digests.
+      decision: >-
+        In the context of code scanning on the default branch, facing
+        alerts that a tag upload cannot close, we decided a weekly
+        non-blocking rescan with the original category names, to achieve
+        alerts that match the published image, accepting that unfixed
+        base CVEs stay visible.
+      acceptance_criteria:
+      - The security workflow rescans the 6.7.0 Alpine and Debian digests
+      - Posture jobs set sarif_category to trivy-posture-alpine and trivy-posture-debian
+      guardrail_refs:
+      - CI-047
+      - DOCKER-SEC-001
+      tasks:
+      - id: CDO-POSTURE-001-T1
+        status: done
+        title: Pin the rescan and add the posture jobs
+        instructions:
+          files:
+          - .github/workflows/containerdevops-security.yml
+        verification:
+        - rg trivy-posture-debian .github/workflows/containerdevops-security.yml
+        guardrail_refs:
+        - CI-047
