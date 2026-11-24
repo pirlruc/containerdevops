@@ -100,7 +100,7 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Known pitfalls
 
-- **Tuesday schedule:** `containerdevops-security.yml` is active and its cron is `17 6 * * 2`. On 2026-11-24 that event had not been created by 07:35 UTC. The previous schedule event is 2026-10-27 and ended `startup_failure` with no jobs. Do not disable and re-enable an active workflow to force it.
+- **Tuesday schedule:** The 2026-10-27 schedule run finished in one second with zero jobs (`startup_failure`). No Tuesday was queued after that, including 2026-11-24 06:17 UTC, while push runs of the same workflow succeeded. The workflow was disabled and enabled again at 08:23 UTC. The cron is `45 9 * * 2` only long enough to confirm a schedule event, then it goes back to `17 6 * * 2`.
 - **Call concurrency:** `github.workflow` inside a reusable workflow is the caller name. `container-iac` and `container-compose-smoke` used `call-<caller>-<run id>`, so a caller that runs both cancelled one job immediately. The groups are now `call-iac-<run id>` and `call-smoke-<run id>`.
 - **Host tool PATH:** `install-container-tools.sh` installs into `$HOME/.local/bin` and appends that directory to `GITHUB_PATH`. A self-hosted runner does not put `~/.local/bin` on the default PATH, so a later step cannot see hadolint without that append.
 - **Release digest append:** `scripts/append-release-digests.sh` must `docker login ghcr.io` with the job token before `imagetools inspect`. Anonymous GHCR pulls of `ci-container` return 401. The awk variable that holds the index digest cannot be named `index`; runner `awk` is gawk and `index` is a builtin. A rerun of the 6.4.0 job checks out tag `6ccc0ab`, so the fixed script is applied to that Release from a checkout of `main`.
@@ -301,7 +301,7 @@ workflows:
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
 
-*Last updated: 2026-11-24 — The Tuesday security cron had not started by 07:35 UTC. The workflow stays active.*
+*Last updated: 2026-11-24 — Re-enabled the Tuesday security workflow after four missed crons. A 09:45 UTC one-shot confirms the scheduler, then the cron returns to 06:17.*
 
 *Last updated: 2026-11-24 — 6.8.0. Rescan pins ci-container 6.7.0. Posture categories refresh on the default branch. login-action 4.8.0. upload-sarif 4.39.3.*
 
