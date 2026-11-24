@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | <https://github.com/pirlruc/containerdevops> |
-| **Branch** | `main`. Published tip is **6.8.1** after this release. Hub overview inputs are the caller's. Guardrails 1.17.1, scaffold 1.14.2, commondevops v6.9.0 (`5d8b83d`). The registry image moves to **6.8.1** when the release workflow publishes. |
+| **Branch** | `main`. Published tip is **6.8.1** after this release. Hub overview inputs are the caller's. Guardrails 1.17.1, scaffold 1.14.2, commondevops v6.10.0 (`a2af891`). The registry image moves to **6.8.1** when the release workflow publishes. |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -29,7 +29,7 @@ Shared infra/secrets/supply-chain forward to
 | methodologies (links only; not a submodule) | tag **1.12.1** |
 | `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.8.0` linux/amd64 `sha256:80940e1e17a71884052ce3b4859c3c1741e554b5087df1864a89c10a00312264`. Index `sha256:0dc6ad0d8cdcd2dd5cf10c800c1a080ccc001c8af3094700e2123af1bcd39362` (`latest` == alpine). 6.8.1 digests land in the release notes. |
 | `ghcr.io/pirlruc/ci-container` (debian) | `6.8.0-debian` linux/amd64 `sha256:b1910e253e5941d25158a21a4283006f056ec7b8a4a7b539581d10d110458dd0`. Index `sha256:5178201d0dd0447561f07c236d73c33052770fab1d6e8b20ce8c4aae351fc14a` |
-| commondevops `uses:` / `scripts_ref` | tag **v6.9.0** → `5d8b83da2f8f0c0c1bd894ef920619fe127c033e` |
+| commondevops `uses:` / `scripts_ref` | tag **v6.10.0** → `a2af891c6d05fe2790bc5ddf761252c95185ce5f` |
 | `CI_BASE` (ci-lint debian, unsuffixed) | `6.8.0` digest `sha256:3ed6d8dcbb08abf82e563630f2c1218cf0e8f33bb883ed46770e147113af48b0` |
 | `CI_BASE` (ci-lint alpine) | `6.8.0-alpine` digest `sha256:adaa142df825e1532a799f57004d969fb2899a41d6c2b768ed06c6ded1099007` |
 | `docker/setup-buildx-action` | `4.4.1` → `f87e5991…` |
@@ -306,6 +306,8 @@ workflows:
 *Last updated: 2026-11-24 — The 09:45 UTC one-shot did not create a schedule event. The cron is back to 06:17 UTC Tuesday.*
 
 *Last updated: 2026-11-24 — 6.8.0. Rescan pins ci-container 6.7.0. Posture categories refresh on the default branch. login-action 4.8.0. upload-sarif 4.39.3.*
+
+*Last updated: 2026-11-24 — Self-CI pins commondevops v6.10.0. No new tag.*
 
 *Last updated: 2026-11-24 — Self-CI pins commondevops v6.9.0. No new tag. The image in the registry is still 6.7.0.*
 *Last updated: 2026-11-23 — Hub overview inputs are always the caller's. Guardrails 1.17.0. Scaffold 1.14.0. commondevops v6.7.0.*

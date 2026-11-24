@@ -17,4 +17,4 @@ jobs:
   sweep:
     permissions:
       actions: write
-    uses: pirlruc/commondevops/.github/workflows/artifact-sweep.yml@5d8b83da2f8f0c0c1bd894ef920619fe127c033e
+    uses: pirlruc/commondevops/.github/workflows/artifact-sweep.yml@a2af891c6d05fe2790bc5ddf761252c95185ce5f
