@@ -37,8 +37,8 @@ RUN git init \
  && go get golang.org/x/crypto@v0.58.0 golang.org/x/net@v0.62.0 golang.org/x/text@v0.43.0 github.com/klauspost/compress@v1.18.7 github.com/containerd/containerd@v1.7.33 github.com/docker/cli@v29.2.1+incompatible github.com/containerd/errdefs@v1.0.0 github.com/moby/moby/client@v0.2.2 github.com/moby/sys/atomicwriter@v0.1.0 \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/container-structure-test ./cmd/container-structure-test
 
-# ci-lint 6.0.0 linux/amd64. Pin the platform manifest, not the tag index.
-FROM ghcr.io/pirlruc/ci-lint@sha256:10946a8906cdc15361a4a141b189a2fcc6d2af537f46e4f3b6fb5250f65585e3
+# ci-lint 6.8.0 linux/amd64. Pin the platform manifest, not the tag index.
+FROM ghcr.io/pirlruc/ci-lint@sha256:3ed6d8dcbb08abf82e563630f2c1218cf0e8f33bb883ed46770e147113af48b0
 
 LABEL org.opencontainers.image.title="ci-container" \
       org.opencontainers.image.description="Short-lived CI toolchain image for container jobs: ci-lint plus dive and container-structure-test. Debian 13 variant. Non-root 1000:1000, linux/amd64." \

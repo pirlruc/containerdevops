@@ -35,7 +35,7 @@ jobs:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
       scripts_ref: 5d8b83da2f8f0c0c1bd894ef920619fe127c033e
-      container_image: ghcr.io/pirlruc/ci-lint@sha256:e0f48be58460a9eeb3adcc8c7c4c3592db0318dbe4de9c90c1b4b9e863898f6c
+      container_image: ghcr.io/pirlruc/ci-lint@sha256:3ed6d8dcbb08abf82e563630f2c1218cf0e8f33bb883ed46770e147113af48b0
   supply-chain:
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
@@ -48,7 +48,7 @@ jobs:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
       working_directory: .
       scripts_ref: 5d8b83da2f8f0c0c1bd894ef920619fe127c033e
-      container_image: ghcr.io/pirlruc/ci-supply-chain@sha256:dc83deb4465d5989a03b14ccabef46c3f3426231048b962c69b8e434a7200d48
+      container_image: ghcr.io/pirlruc/ci-supply-chain@sha256:07518afbf12aa3e2aeeb1e220e2dcb3a633e2d8c1583a60612f30855970a1008
   scorecard:
     if: >-
       github.event.pull_request.user.login != 'dependabot[bot]' &&
@@ -88,8 +88,9 @@ jobs:
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
 
   # The published tag is the last release. A pull request cannot change it, so
-  # the rescan stays on schedule and dispatch. 6.7.0 Alpine linux/amd64.
-  # The unsuffixed tag and 6.7.0-alpine share this manifest.
+  # the rescan stays on schedule and dispatch. Categories match ci-container-image.yml
+  # so a default-branch upload can close the release alerts. 6.8.0 Alpine linux/amd64.
+  # The unsuffixed tag and 6.8.0-alpine share this manifest.
   published-image-rescan:
     if: github.event_name != 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
@@ -99,12 +100,29 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-published-rescan.yml
     with:
-      image: ghcr.io/pirlruc/ci-container:6.7.0@sha256:9568af6b2726a525fd623caf391cec1aa0541e5ee4db10079e10182c40ac4fa1
+      image: ghcr.io/pirlruc/ci-container:6.8.0@sha256:80940e1e17a71884052ce3b4859c3c1741e554b5087df1864a89c10a00312264
       scripts_ref: ${{ github.sha }}
       pkg_types: library
       ignorefile: docker/ci-container/.trivyignore.yaml
-      sarif_category: trivy-image
+      sarif_category: trivy-image-alpine
       results_artifact: published-ci-container-alpine
+      blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
+
+  published-image-rescan-debian:
+    if: github.event_name != 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      packages: read
+    uses: ./.github/workflows/container-published-rescan.yml
+    with:
+      image: ghcr.io/pirlruc/ci-container:6.8.0-debian@sha256:b1910e253e5941d25158a21a4283006f056ec7b8a4a7b539581d10d110458dd0
+      scripts_ref: ${{ github.sha }}
+      pkg_types: library
+      ignorefile: docker/ci-container/.trivyignore.yaml
+      sarif_category: trivy-image-debian
+      results_artifact: published-ci-container-debian
       blocking: ${{ github.event_name != 'workflow_dispatch' || inputs.blocking }}
 
   # Advisory OS scan. Same category the image workflow uploads, so a
@@ -118,7 +136,7 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-published-rescan.yml
     with:
-      image: ghcr.io/pirlruc/ci-container:6.7.0@sha256:9568af6b2726a525fd623caf391cec1aa0541e5ee4db10079e10182c40ac4fa1
+      image: ghcr.io/pirlruc/ci-container:6.8.0@sha256:80940e1e17a71884052ce3b4859c3c1741e554b5087df1864a89c10a00312264
       scripts_ref: ${{ github.sha }}
       pkg_types: os,library
       ignorefile: none
@@ -135,7 +153,7 @@ jobs:
       packages: read
     uses: ./.github/workflows/container-published-rescan.yml
     with:
-      image: ghcr.io/pirlruc/ci-container:6.7.0-debian@sha256:dd689a89e39bc7dd033644771dbde06429a97ceedaa939da7a5eea06175ea6e6
+      image: ghcr.io/pirlruc/ci-container:6.8.0-debian@sha256:b1910e253e5941d25158a21a4283006f056ec7b8a4a7b539581d10d110458dd0
       scripts_ref: ${{ github.sha }}
       pkg_types: os,library
       ignorefile: none
@@ -146,7 +164,7 @@ jobs:
   # CI-044: one check that is not path-filtered. Security jobs above have no paths.
   security-aggregate:
     if: always()
-    needs: [secrets-sast, supply-chain, scorecard, token-audit, iac, published-image-rescan, published-posture-alpine, published-posture-debian]
+    needs: [secrets-sast, supply-chain, scorecard, token-audit, iac, published-image-rescan, published-image-rescan-debian, published-posture-alpine, published-posture-debian]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
