@@ -313,7 +313,8 @@ This workflow does not run on `release`, because that event republishes images.
 
 | Input | Default |
 |-------|---------|
-| `compose_files` | required |
+| `compose_files` | `""` (required unless `stacks` is set) |
+| `stacks` | `""`. One stack per line: `compose_file` or `compose_file\|env_file` |
 | `env_files` | `""` |
 | `project_name` | `compose-smoke-<run_id>` |
 | `blocking` | `false` |
@@ -323,6 +324,10 @@ Runs `docker compose up --wait` and always removes the project. Callers that
 boot a heavy stack opt in by calling the workflow. `container-iac` still
 validates config and KICS and does not start containers. Pass the same
 `env_files` the stack needs to render.
+
+`stacks` brings several projects up one after another. Each line is a compose
+file, or `compose_file|env_file`. The job removes a project before it starts
+the next line. Leave `compose_files` empty when `stacks` is set.
 
 ## container-iac.yml
 
