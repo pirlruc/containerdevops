@@ -3,7 +3,7 @@ name: Container Lint (reusable)
 # Hadolint with docker profile thresholds (host install or docker run of runner_image).
 # actionlint / shellcheck / zizmor → commondevops common-infra-lint.
 # Secrets (DOCKER-SEC-005) → commondevops common-secrets-sast.
-# commondevops pin: keep uses: and scripts_ref in lockstep (tag v6.9.0).
+# commondevops pin: keep uses: and scripts_ref in lockstep (tag v6.10.0).
 #
 # runner_image: empty → install tools on the bare runner (bootstrap / publish caller).
 # Non-empty → docker run that image for hadolint/shellcheck (avoids job-level container:
@@ -246,18 +246,18 @@ jobs:
           bash _containerdevops/scripts/gate-aggregate.sh "${args[@]}"
 
   infra:
-    # Nested commondevops pin — keep uses: and scripts_ref in lockstep (tag v6.9.0).
+    # Nested commondevops pin — keep uses: and scripts_ref in lockstep (tag v6.10.0).
     if: github.event.pull_request.user.login != 'dependabot[bot]' && inputs.run_infra_lint != false
     permissions:
       contents: read
       packages: read
-    uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@5d8b83da2f8f0c0c1bd894ef920619fe127c033e
+    uses: pirlruc/commondevops/.github/workflows/common-infra-lint.yml@a2af891c6d05fe2790bc5ddf761252c95185ce5f
     with:
       blocking: ${{ inputs.blocking }}
       working_directory: ${{ inputs.working_directory }}
       shell_scripts: ${{ inputs.shell_scripts }}
       dockerfiles: ${{ inputs.dockerfile }}
-      scripts_ref: 5d8b83da2f8f0c0c1bd894ef920619fe127c033e
+      scripts_ref: a2af891c6d05fe2790bc5ddf761252c95185ce5f
       container_image: ghcr.io/pirlruc/ci-lint@sha256:3ed6d8dcbb08abf82e563630f2c1218cf0e8f33bb883ed46770e147113af48b0
       concurrency_suffix: ${{ inputs.dockerfile }}
       container_username: ${{ inputs.container_username }}
@@ -271,11 +271,11 @@ jobs:
     permissions:
       contents: read
       packages: read
-    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@5d8b83da2f8f0c0c1bd894ef920619fe127c033e
+    uses: pirlruc/commondevops/.github/workflows/common-secrets-sast.yml@a2af891c6d05fe2790bc5ddf761252c95185ce5f
     with:
       blocking: ${{ inputs.blocking }}
       working_directory: ${{ inputs.working_directory }}
-      scripts_ref: 5d8b83da2f8f0c0c1bd894ef920619fe127c033e
+      scripts_ref: a2af891c6d05fe2790bc5ddf761252c95185ce5f
       container_image: ghcr.io/pirlruc/ci-lint@sha256:3ed6d8dcbb08abf82e563630f2c1218cf0e8f33bb883ed46770e147113af48b0
       concurrency_suffix: ${{ inputs.dockerfile }}
       container_username: ${{ inputs.container_username }}
