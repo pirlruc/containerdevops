@@ -1910,7 +1910,7 @@ milestones:
         - DOCKER-SEC-001
 
     - id: CDO-POSTURE-001
-      status: open
+      status: done
       title: Refresh default-branch posture categories from the published digest
       overview:
         problem: >-
@@ -1927,7 +1927,8 @@ milestones:
         alerts that match the published image, accepting that unfixed
         base CVEs stay visible.
       acceptance_criteria:
-      - The security workflow rescans the 6.7.0 Alpine and Debian digests
+      - The security workflow rescans the newest published Alpine and Debian digests
+      - Blocking rescans use trivy-image-alpine and trivy-image-debian
       - Posture jobs set sarif_category to trivy-posture-alpine and trivy-posture-debian
       guardrail_refs:
       - CI-047

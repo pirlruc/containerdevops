@@ -6,7 +6,7 @@
 |-------|-------|
 | **Folder** | `ops/containerdevops/` |
 | **Remote** | <https://github.com/pirlruc/containerdevops> |
-| **Branch** | `main`. Published tip is **6.8.0**. Hub overview inputs are the caller's. Guardrails 1.17.0, scaffold 1.14.0, commondevops v6.9.0 (`5d8b83d`). The image in the registry is still **6.7.0** until the next image publish. |
+| **Branch** | `main`. Published tip is **6.8.1** after this release. Hub overview inputs are the caller's. Guardrails 1.17.1, scaffold 1.14.2, commondevops v6.9.0 (`5d8b83d`). The registry image moves to **6.8.1** when the release workflow publishes. |
 | **Role** | Reusable GitHub Actions for production container images + IaC + `ci-container` |
 | **Type** | CI infrastructure (not an application image) |
 
@@ -24,14 +24,14 @@ Shared infra/secrets/supply-chain forward to
 
 | Submodule / artifact | Pin |
 |----------------------|-----|
-| `docs/guardrails` | tag **1.17.0** → `9a17ebb269a5ab02899570dd3e40fb72e50ad762` |
-| `.github/scaffold` | tag **1.14.0** → `da8942edf17a0d2736d297c90338fd78b7ec31fb` |
+| `docs/guardrails` | tag **1.17.1** → `8508e93691aa3c4f769ecc215ddc83ecf26e70b2` |
+| `.github/scaffold` | tag **1.14.2** → `615dbbcbe906d62a29e4f4e4118cb94cb119f5a5` |
 | methodologies (links only; not a submodule) | tag **1.12.1** |
-| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.7.0` linux/amd64 `sha256:9568af6b2726a525fd623caf391cec1aa0541e5ee4db10079e10182c40ac4fa1`. Index `sha256:626ca538560276faf04d9abdef268a79d4cf37b77c12eb9798772f644e8dca4f` (`latest` == alpine) |
-| `ghcr.io/pirlruc/ci-container` (debian) | `6.7.0-debian` linux/amd64 `sha256:dd689a89e39bc7dd033644771dbde06429a97ceedaa939da7a5eea06175ea6e6`. Index `sha256:6ad47abe55aeff94e2660bd5eef5b80bedabdd3b194186f8fe7ad7e6deac5309` |
+| `ghcr.io/pirlruc/ci-container` (alpine, unsuffixed) | `6.8.0` linux/amd64 `sha256:80940e1e17a71884052ce3b4859c3c1741e554b5087df1864a89c10a00312264`. Index `sha256:0dc6ad0d8cdcd2dd5cf10c800c1a080ccc001c8af3094700e2123af1bcd39362` (`latest` == alpine). 6.8.1 digests land in the release notes. |
+| `ghcr.io/pirlruc/ci-container` (debian) | `6.8.0-debian` linux/amd64 `sha256:b1910e253e5941d25158a21a4283006f056ec7b8a4a7b539581d10d110458dd0`. Index `sha256:5178201d0dd0447561f07c236d73c33052770fab1d6e8b20ce8c4aae351fc14a` |
 | commondevops `uses:` / `scripts_ref` | tag **v6.9.0** → `5d8b83da2f8f0c0c1bd894ef920619fe127c033e` |
-| `CI_BASE` (ci-lint debian, unsuffixed) | `5.4.0` digest `sha256:9473bd0a4bf654ac5e01f8df6bd8278c7e0d61208baf33a051c79bd8afa47bc2` |
-| `CI_BASE` (ci-lint alpine) | `5.4.0-alpine` digest `sha256:71b45eb68f35020f1598f3e21f20117e87c0dbd6bcb4c9158f3da788b20a849a` |
+| `CI_BASE` (ci-lint debian, unsuffixed) | `6.8.0` digest `sha256:3ed6d8dcbb08abf82e563630f2c1218cf0e8f33bb883ed46770e147113af48b0` |
+| `CI_BASE` (ci-lint alpine) | `6.8.0-alpine` digest `sha256:adaa142df825e1532a799f57004d969fb2899a41d6c2b768ed06c6ded1099007` |
 | `docker/setup-buildx-action` | `4.4.1` → `f87e5991…` |
 | `docker/build-push-action` | `7.4.0` → `c3c9e263…` |
 | `github/codeql-action/upload-sarif` | `4.39.3` → `33d7b85d…` |
@@ -40,7 +40,7 @@ Shared infra/secrets/supply-chain forward to
 | KICS (`container-iac.yml`) | `checkmarx/kics:v2.1.20-debian` linux/amd64 `sha256:aaf7bd61…` (re-confirmed 2026-09-11; no Hub tag for GitHub `v2.1.21`) |
 | dive / CST donors | `v0.13.1` / `1.22.1` digests re-confirmed 2026-09-11 (no newer tags) |
 | Release (reusables callers pin) | **6.1.0** (cache-to on the default branch only; image unchanged) |
-| Release (ci-container image) | **6.7.0** published. Alpine owns the unsuffixed tag. Workflow tip is **6.8.0** |
+| Release (ci-container image) | **6.8.0** published. Alpine owns the unsuffixed tag. Workflow tip publishes **6.8.1**. |
 
 ## Delivery status
 
@@ -100,7 +100,7 @@ python3 .github/scaffold/scripts/issues-sync.py \
 
 ## Known pitfalls
 
-- **Tuesday schedule:** The 2026-10-27 schedule run finished in one second with zero jobs (`startup_failure`). No Tuesday was queued after that, including 2026-11-24 06:17 UTC, while push runs of the same workflow succeeded. The workflow was disabled and enabled again at 08:23 UTC. A one-shot cron at 09:45 UTC the same day also produced no schedule event by 09:59 UTC. The cron is back to `17 6 * * 2`.
+- **Tuesday schedule:** The 2026-10-27 `startup_failure` was missing `actions: read` on the SARIF jobs. That permission is on the caller now. This account's crons land 6 to 9 hours after the minute in the file. Do not change the cron because a check a few hours later still shows no `schedule` event.
 - **Call concurrency:** `github.workflow` inside a reusable workflow is the caller name. `container-iac` and `container-compose-smoke` used `call-<caller>-<run id>`, so a caller that runs both cancelled one job immediately. The groups are now `call-iac-<run id>` and `call-smoke-<run id>`.
 - **Host tool PATH:** `install-container-tools.sh` installs into `$HOME/.local/bin` and appends that directory to `GITHUB_PATH`. A self-hosted runner does not put `~/.local/bin` on the default PATH, so a later step cannot see hadolint without that append.
 - **Release digest append:** `scripts/append-release-digests.sh` must `docker login ghcr.io` with the job token before `imagetools inspect`. Anonymous GHCR pulls of `ci-container` return 401. The awk variable that holds the index digest cannot be named `index`; runner `awk` is gawk and `index` is a builtin. A rerun of the 6.4.0 job checks out tag `6ccc0ab`, so the fixed script is applied to that Release from a checkout of `main`.
@@ -300,6 +300,8 @@ workflows:
 - 2026-08-12: wire Dependabot `registries:` for private git + dhi.io.
 - 2026-08-12: package metadata overrides + Hub/GHCR doc split (CDO-016); release `2.1.0`.
 - 2026-08-11: release `2.0.0` (workflow hygiene, ci-container on ci-lint).
+
+*Last updated: 2026-11-24 — 6.8.1. Rescan pins ci-container 6.8.0 on trivy-image-alpine and trivy-image-debian. CI_BASE is ci-lint 6.8.0. Guardrails 1.17.1. Scaffold 1.14.2.*
 
 *Last updated: 2026-11-24 — The 09:45 UTC one-shot did not create a schedule event. The cron is back to 06:17 UTC Tuesday.*
 

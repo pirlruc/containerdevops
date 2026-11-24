@@ -71,7 +71,7 @@ or the run fails at startup before any step runs.
 | `blocking` | `false` |
 
 Nested commondevops pin: keep `uses:` and `scripts_ref` in lockstep (currently
-tag **v6.7.0**, `1c621c43fa1bee2613ab4996135f85d0c55d59fb`).
+tag **v6.9.0**, `5d8b83da2f8f0c0c1bd894ef920619fe127c033e`).
 
 ## container-build.yml
 
@@ -226,7 +226,7 @@ Secrets: `ghcr_token`, `scripts_token` (both optional; forwarded to
 call at startup when `actions: read` is missing.
 
 `containerdevops-security.yml` uses this reusable for digest-pinned
-`ghcr.io/pirlruc/ci-container:6.7.0@sha256:9568af6b2726a525fd623caf391cec1aa0541e5ee4db10079e10182c40ac4fa1` (CI-026; do not
+`ghcr.io/pirlruc/ci-container:6.8.0@sha256:80940e1e17a71884052ce3b4859c3c1741e554b5087df1864a89c10a00312264` (CI-026; do not
 float `:latest`). Callers pin a released SHA of this file.
 
 ## container-publish.yml

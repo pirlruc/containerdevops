@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [6.8.1] - 2026-11-24
+
+### Fixed
+
+- The scheduled rescan reads the published 6.8.0 digests. 6.8.0 was still scanning 6.7.0.
+- The blocking rescan uses `trivy-image-alpine` and `trivy-image-debian`, the same categories the image workflow uploads, so a default-branch run can close those alerts.
+
+### Changed
+
+- `ci-container` builds on ci-lint 6.8.0. Self-CI job containers use the 6.8.0 ci-lint and ci-supply-chain digests.
+- `docs/guardrails` is 1.17.1 and `.github/scaffold` is 1.14.2.
+
 ## [6.8.0] - 2026-11-24
 
 ### Fixed
